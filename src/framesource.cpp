@@ -29,7 +29,51 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "staticframe.h"
 #include "log.h"
 
-//using namespace boost::interprocess;
+
+static std::map <std::string, FrameSourcePtr (*)()> *framegen = NULL;
+
+void FrameSource::registerFrameGen (const std::string name, FrameSourcePtr (*generator)())
+{
+    assert (generator);
+    if (!framegen) {
+        framegen = new std::map<std::string,FrameSourcePtr(*)()>;
+        framegen->clear();
+        slog()->infoStream() <<"Created framesource generator mapping :" << framegen;
+    }
+    if (framegen->find(name) != framegen->end()) {
+        slog()->errorStream() << "Attemped to register a non unique frame generator function : " << name;
+        assert (0);
+    } else {
+        (*framegen)[name] = generator;
+        slog()->infoStream() <<"Registered factory for " << name <<" objects : " << (void*)generator;
+    }
+}
+
+FrameSourcePtr FrameSource::newSource (const std::string name)
+{
+    assert (framegen);
+    std::map<std::string,FrameSourcePtr(*)()>::iterator i;
+    i = framegen->find(name);
+    if (i != framegen->end()) {
+        FrameSourcePtr (*fg)() = i->second;
+        return fg();
+    } else {
+        slog()->errorStream() << "Could not find a generator for a " << name << " framesource";
+        return FrameSourcePtr();
+    }
+}
+
+std::vector<std::string> FrameSource::enemerateFrameGenTypes()
+{
+    std::vector<std::string> s;
+    if (framegen) {
+        for (std::map<std::string,FrameSourcePtr (*)()>::iterator it = framegen->begin();
+                it != framegen->end(); it++) {
+            s.push_back(it->first);
+        }
+    }
+    return s;
+}
 
 FrameSource::FrameSource (FrameSource::FLAGS flags, FrameSource::POSSIBLE_CHILDREN pc)
 {
@@ -51,8 +95,8 @@ unsigned int FrameSource::getUniqueHandle()
 
 void FrameSource::saveFrames(QXmlStreamWriter *w)
 {
-		assert (w);
-		w->writeStartElement(QString().fromStdString(name));
+    assert (w);
+    w->writeStartElement(QString().fromStdString(name));
     save(w);
     for (unsigned int i=0; i < numChildren(); i++) {
         child(i)->saveFrames(w);
@@ -64,39 +108,38 @@ FrameSourcePtr FrameSource::loadFrames (QXmlStreamReader *e)
 {
     std::string oname;
     FrameSourcePtr fs;
-		assert (e);
-		assert (e->tokenType() == QXmlStreamReader::StartElement);
+    assert (e);
+    assert (e->tokenType() == QXmlStreamReader::StartElement);
     oname = e->name().toString().toStdString();
     slog()->debug(std::string("Loading object called : ") + oname);
-		int col = e->columnNumber();
-    if (oname == "Frame_sequence") {
-			FrameSequencerPtr f(new FrameSequencer);
-			fs = f;
-    } else if (oname == "Static_frame") {
-      StaticFramePtr f(new StaticFrame);
-      fs = f;
+    int col = e->columnNumber();
+    FrameSourcePtr f = FrameSource::newSource(oname);
+    if (f) {
+        fs = f;
     } else {
-			slog()->error(std::string("Attempt to load unknown object type : ")+oname);
+        slog()->error(std::string("Attempt to load unknown object type : ")+oname);
+        e->readNextStartElement();
+        return fs;
     }
-		if (fs) {
-			fs->load (e);
-			if (fs->numPossibleChildren() != NONE) {
-				slog()->debugStream() << fs <<" Loading children";
-				while ((!e->atEnd()) && (e->columnNumber() > col)) {
-					while (!e->atEnd() && !e->isStartElement()){
-						e->readNextStartElement();
-					}
-					if (e->columnNumber() <= col){
-						return fs;
-					}
-					if (e->tokenType() == QXmlStreamReader::StartElement){
-						slog()->debugStream() << fs <<" Loading child";
-						fs->addChild(loadFrames(e));
-					} else {
-						e->readNextStartElement();
-					}
-				}
-      }
+    if (fs) {
+        fs->load (e);
+        if (fs->numPossibleChildren() != NONE) {
+            slog()->debugStream() << fs <<" Loading children";
+            while ((!e->atEnd()) && (e->columnNumber() > col)) {
+                while (!e->atEnd() && !e->isStartElement()) {
+                    e->readNextStartElement();
+                }
+                if (e->columnNumber() <= col) {
+                    return fs;
+                }
+                if (e->tokenType() == QXmlStreamReader::StartElement) {
+                    slog()->debugStream() << fs <<" Loading child";
+                    fs->addChild(loadFrames(e));
+                } else {
+                    e->readNextStartElement();
+                }
+            }
+        }
     }
     return fs;
 }
@@ -104,19 +147,19 @@ FrameSourcePtr FrameSource::loadFrames (QXmlStreamReader *e)
 std::string FrameSource::toString()
 {
     QString text;
-		QXmlStreamWriter *w = new QXmlStreamWriter(&text);
-		saveFrames(w);
-		delete w;
+    QXmlStreamWriter *w = new QXmlStreamWriter(&text);
+    saveFrames(w);
+    delete w;
     return text.toStdString();
 }
 
 FrameSourcePtr FrameSource::fromString (std::string &s)
 {
-		slog()->debugStream() << "Dropping :" << s;
-		QXmlStreamReader *r = new QXmlStreamReader (QString (s.c_str()));
-		r->readNextStartElement();
+    slog()->debugStream() << "Dropping :" << s;
+    QXmlStreamReader *r = new QXmlStreamReader (QString (s.c_str()));
+    r->readNextStartElement();
     FrameSourcePtr f = FrameSource::loadFrames(r);
-		delete r;
+    delete r;
     return f;
 }
 

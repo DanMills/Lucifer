@@ -22,19 +22,34 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <map>
 #include <assert.h>
 #include <iostream>
-#include "point.h"
+#include <stdio.h>
 
+#include "point.h"
 #include "framesource.h"
 #include "framesequencer.h"
 #include "displayframe.h"
 #include "log.h"
+
+static FrameSourcePtr makeFrameSequencer()
+{
+    return boost::make_shared<FrameSequencer>();
+}
+
+class FrameSequencerGen
+{
+public:
+    FrameSequencerGen () {
+        FrameSource::registerFrameGen ("Frame_sequence",makeFrameSequencer);
+    }
+};
+
+static FrameSequencerGen fsr;
 
 FrameSequencer::FrameSequencer () : FrameSource(NOTHING,MANY)
 {
     name  = "Frame_sequence";
     description = "A step sequencer for other frame sources";
     slog()->debugStream() << "Created new frame sequencer " << this;
-
 }
 
 FrameSequencer::~FrameSequencer()
@@ -49,14 +64,14 @@ PlaybackDataPtr FrameSequencer::createPlaybackData ()
 void FrameSequencer::save (QXmlStreamWriter* w)
 {
     assert (w);
-		w->writeAttribute("Repeats",QString().number(1));
-		w->writeAttribute("Mode", "Sequential");
+    w->writeAttribute("Repeats",QString().number(1));
+    w->writeAttribute("Mode", "Sequential");
 }
 
 void FrameSequencer::load(QXmlStreamReader* e)
 {
 //TODO Load the Repeats and mode data
-	e->readNextStartElement();
+    e->readNextStartElement();
 }
 
 FrameSequencerPlayback * FrameSequencer::playback(Playback p)

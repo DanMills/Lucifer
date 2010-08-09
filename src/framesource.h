@@ -151,11 +151,21 @@ public:
 		void saveFrames(QXmlStreamWriter *w);
 		static FrameSourcePtr fromString (std::string &s);
     std::string toString();
+		/// Call this to register your framesource with the system
+		/// @param name is the globally unique name of your class and must match that found in
+		/// the name field of the object derived from FrameSource.
+		/// @param generator is the static generator function that will return a pointer to your class.
+		static void registerFrameGen (const std::string name, FrameSourcePtr (*generator)());
+		/// This is the way most of the system gets new FrameSources of whatever type.
+		/// @param name is the name of the desired FrameSource derived object.
+		static FrameSourcePtr newSource (const std::string name);
+		/// Returns a listing of all frame generator types known to the system.
+		static std::vector<std::string> enemerateFrameGenTypes();
+
 protected:
 	// Overload these to load and save your setup
 	virtual void save (QXmlStreamWriter *w) = 0;
 	virtual void load (QXmlStreamReader *e) = 0;
-
 private:
     FrameSource();
 		// Used to create playback handles

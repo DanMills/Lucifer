@@ -132,9 +132,10 @@ ParameterEditor::ParameterEditor(QWidget* parent) :
     connect (tree,SIGNAL(itemSelectionChanged()),this,SLOT(selectionChangedData()));
     root = NULL;
     available = new QListWidget (this);
-    new QListWidgetItem(tr("Sequencer"), available);
-    new QListWidgetItem(tr("Static Frame"), available);
-    new QListWidgetItem(tr("Abstract generator"), available);
+		std::vector<std::string> fn = FrameSource::enemerateFrameGenTypes();
+		for (unsigned int i=0; i < fn.size(); i++){
+			new QListWidgetItem(tr(fn[i].c_str()), available);
+		}
     hbox = new QHBoxLayout(this);
     hbox->addWidget(tree);
     hbox->addWidget (controls);

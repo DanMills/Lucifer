@@ -29,6 +29,20 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "staticframe.h"
 #include <netinet/in.h>
 
+static FrameSourcePtr makeStaticFrame()
+{
+    return boost::make_shared<StaticFrame>();
+}
+
+class StaticFrameGen
+{
+public:
+    StaticFrameGen () {
+        FrameSource::registerFrameGen ("Static_frame",makeStaticFrame);
+    }
+};
+static StaticFrameGen sfg;
+
 StaticFrame::StaticFrame () : FrameSource(MAKES_FRAMES,NONE)
 {
     name  = "Static_frame";
@@ -59,26 +73,26 @@ void StaticFrame::add_data (const Point &p)
 // but almost every compiler lets you do it.
 unsigned int StaticFrame::ftoi (float f)
 {
-	union {
-		float f;
-		unsigned int i;
-	} u;
-	assert (sizeof(u.f) == sizeof (u.i));
-	u.f = f;
-	unsigned int i = u.i;
-	i = htonl (i);
-	return i;
+    union {
+        float f;
+        unsigned int i;
+    } u;
+    assert (sizeof(u.f) == sizeof (u.i));
+    u.f = f;
+    unsigned int i = u.i;
+    i = htonl (i);
+    return i;
 }
 
 float StaticFrame::itof(unsigned int i)
 {
-	union {
-		float f;
-		unsigned int i;
-	} u;
-	assert (sizeof(u.f) == sizeof (u.i));
-	u.i = ntohl(i);
-	return u.f;
+    union {
+        float f;
+        unsigned int i;
+    } u;
+    assert (sizeof(u.f) == sizeof (u.i));
+    u.i = ntohl(i);
+    return u.f;
 }
 
 
@@ -93,16 +107,16 @@ void StaticFrame::save (QXmlStreamWriter* w)
     QByteArray b;
     // 16 bytes per point
     b.reserve(16 * data_->getPointCount());
-		assert (sizeof (unsigned int) == 4);
-		assert (sizeof (float) == 4);
+    assert (sizeof (unsigned int) == 4);
+    assert (sizeof (float) == 4);
     for (unsigned int i = 0; i < data_->getPointCount(); i++) {
         Point p = data_->getPoint(i);
         unsigned int v;
-				v = ftoi (p.x);
+        v = ftoi (p.x);
         b.append((char*)&v,4);
-				v = ftoi(p.y);
+        v = ftoi(p.y);
         b.append((char*)&v,4);
-				v = ftoi(p.z);
+        v = ftoi(p.z);
         b.append((char*)&v,4);
         b.append(p.r);
         b.append(p.g);
@@ -142,20 +156,20 @@ void StaticFrame::load(QXmlStreamReader* e)
         QByteArray ba;
         ba.reserve(16 * pointcount);
         ba = qUncompress(QByteArray::fromBase64(e->text().toString().toUtf8()));
-				const char *b = ba.constData();
+        const char *b = ba.constData();
         // ba now contains the raw binary frame
         // 16 bytes per point
         slog()->debugStream()<<"ByteArray contains : " << ba.size() << " Bytes";
         for (int i=0; i < ba.size()/16; i++) {
             Point p;
-						const int a = 16 * i;
-						p.x = itof (*(unsigned int*)(b+a));
-						p.y = itof (*(unsigned int*)(b+a+4));
-						p.z = itof (*(unsigned int*)(b+a+8));
-						p.r = b[a+12];
-						p.g = b[a+13];
-						p.b = b[a+14];
-						p.blanked = b[a+15];
+            const int a = 16 * i;
+            p.x = itof (*(unsigned int*)(b+a));
+            p.y = itof (*(unsigned int*)(b+a+4));
+            p.z = itof (*(unsigned int*)(b+a+8));
+            p.r = b[a+12];
+            p.g = b[a+13];
+            p.b = b[a+14];
+            p.blanked = b[a+15];
             data_->addPoint(p);
         }
     } else {
