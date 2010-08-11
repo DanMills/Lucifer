@@ -237,7 +237,7 @@ void ButtonWindow::loadFile(const QString &fn)
         grids.clear();
         tabs->clear();
         while (!r->atEnd()) {
-            if (r->isEndDocument()) {
+            if (r->isEndElement() && (r->name().toString() == "Lucifer")) {
                 break;
             }
             if (r->isStartElement() && (r->name() == "Grid")) {
@@ -257,6 +257,7 @@ void ButtonWindow::loadFile(const QString &fn)
 																QMessageBox::Ok);
     }
     delete r;
+		f.close();
     QApplication::restoreOverrideCursor();
     setCurrentFile(fn);
     statusBar()->showMessage(tr("File Loaded"), 2000);

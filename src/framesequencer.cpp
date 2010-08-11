@@ -71,7 +71,6 @@ void FrameSequencer::save (QXmlStreamWriter* w)
 void FrameSequencer::load(QXmlStreamReader* e)
 {
 //TODO Load the Repeats and mode data
-    e->readNextStartElement();
 }
 
 FrameSequencerPlayback * FrameSequencer::playback(Playback p)

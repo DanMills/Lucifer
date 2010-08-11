@@ -75,6 +75,12 @@ std::vector<std::string> FrameSource::enemerateFrameGenTypes()
     return s;
 }
 
+bool FrameSource::exists (const std::string s)
+{
+	assert (framegen);
+	return (framegen->find(s) != framegen->end());
+}
+
 FrameSource::FrameSource (FrameSource::FLAGS flags, FrameSource::POSSIBLE_CHILDREN pc)
 {
     flags_ = flags;
@@ -98,10 +104,13 @@ void FrameSource::saveFrames(QXmlStreamWriter *w)
     assert (w);
     w->writeStartElement(QString().fromStdString(name));
     save(w);
+    w->writeStartElement("Children");
+    w->writeAttribute("Number", QString().number(numChildren()));
     for (unsigned int i=0; i < numChildren(); i++) {
         child(i)->saveFrames(w);
     }
-    w->writeEndElement();
+    w->writeEndElement();//Children
+    w->writeEndElement();//This
 }
 
 FrameSourcePtr FrameSource::loadFrames (QXmlStreamReader *e)
@@ -109,10 +118,15 @@ FrameSourcePtr FrameSource::loadFrames (QXmlStreamReader *e)
     std::string oname;
     FrameSourcePtr fs;
     assert (e);
-    assert (e->tokenType() == QXmlStreamReader::StartElement);
+		while ((!e->atEnd()) && (e->tokenType() != QXmlStreamReader::StartElement))
+		{
+			e->readNext();
+		}
+		slog()->debugStream() << "Got element : " << e->tokenType() << " : " << e->name().toString().toStdString();
+
     oname = e->name().toString().toStdString();
-    slog()->debug(std::string("Loading object called : ") + oname);
-    int col = e->columnNumber();
+    slog()->info(std::string("Loading object called : ") + oname);
+		assert (exists (oname));
     FrameSourcePtr f = FrameSource::newSource(oname);
     if (f) {
         fs = f;
@@ -122,23 +136,32 @@ FrameSourcePtr FrameSource::loadFrames (QXmlStreamReader *e)
         return fs;
     }
     if (fs) {
+				// load the configuration data for this node
         fs->load (e);
-        if (fs->numPossibleChildren() != NONE) {
-            slog()->debugStream() << fs <<" Loading children";
-            while ((!e->atEnd()) && (e->columnNumber() > col)) {
-                while (!e->atEnd() && !e->isStartElement()) {
-                    e->readNextStartElement();
-                }
-                if (e->columnNumber() <= col) {
-                    return fs;
-                }
-                if (e->tokenType() == QXmlStreamReader::StartElement) {
-                    slog()->debugStream() << fs <<" Loading child";
-                    fs->addChild(loadFrames(e));
-                } else {
-                    e->readNextStartElement();
+				e->readNextStartElement();
+				while ((!e->atEnd()) && (e->tokenType() != QXmlStreamReader::StartElement))
+				{
+					slog()->debugStream() << "Looking for a StartElement tag, got : "<< e->tokenType() << " : " << e->name().toString().toStdString();
+					e->readNext();
+				}
+				slog()->debugStream() << "Got element : " << e->tokenType() << " : " << e->name().toString().toStdString();
+        if (e->name().toString() == "Children") {
+            int nc = e->attributes().value("Number").toString().toInt();
+            e->readNextStartElement();// cursor on first child or next element
+            // depending on number of children
+            if (nc) {
+                slog()->infoStream() << fs <<" Loading " << nc << " children";
+                for (int i=0; i < nc; i++) {
+									while ((!e->atEnd()) && (e->tokenType() != QXmlStreamReader::StartElement)){
+										slog()->debugStream() << "Looking for a child StartElement tag, got : "<< e->tokenType() << " : " << e->name().toString().toStdString();
+										e->readNext();
+									}
+                  fs->addChild(loadFrames(e));
+                  e->readNextStartElement();
                 }
             }
+        } else {
+            slog()->errorStream() << "Malformed file (Missing child section)";
         }
     }
     return fs;

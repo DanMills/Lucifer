@@ -175,7 +175,6 @@ void StaticFrame::load(QXmlStreamReader* e)
     } else {
         slog()->errorStream()<<"Failed to find valid point data";
     }
-    e->readNextStartElement();
 }
 
 FramePtr StaticFrame::data(Playback p)

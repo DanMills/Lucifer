@@ -161,6 +161,8 @@ public:
 		static FrameSourcePtr newSource (const std::string name);
 		/// Returns a listing of all frame generator types known to the system.
 		static std::vector<std::string> enemerateFrameGenTypes();
+		/// Check if framesource type s is valid.
+		static bool exists (const std::string s);
 
 protected:
 	// Overload these to load and save your setup
