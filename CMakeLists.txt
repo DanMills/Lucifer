@@ -23,7 +23,7 @@ set(lucifer_MOC_HDRS src/screendisplay.h src/buttongrid.h src/buttonwindow.h
 src/displayframe.h src/editparams.h src/staticframe.h)
 
 SET(lucifer_RCS
-	src/icons/dialog-apply.svg
+	src/lucifer.qrc
 )
 
 

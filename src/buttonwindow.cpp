@@ -252,12 +252,12 @@ void ButtonWindow::loadFile(const QString &fn)
     }
     if (r->hasError()) {
         slog()->errorStream() << "File read error :" << r->errorString().toStdString();
-				QMessageBox::warning(this, tr("Lucifer"),
-														 r->errorString(),
-																QMessageBox::Ok);
+        QMessageBox::warning(this, tr("Lucifer"),
+                             r->errorString(),
+                             QMessageBox::Ok);
     }
     delete r;
-		f.close();
+    f.close();
     QApplication::restoreOverrideCursor();
     setCurrentFile(fn);
     statusBar()->showMessage(tr("File Loaded"), 2000);
@@ -306,29 +306,33 @@ void ButtonWindow::makeActions()
     openAct = new QAction (tr("&Open"),this);
     openAct->setShortcut(tr("Ctrl+O"));
     openAct->setStatusTip(tr("Open a file"));
-    openAct->setIcon(QIcon("/home/dmills/lucifer/lucifer/src/icons/document-open.svg"));
+    openAct->setIcon(QIcon(":/icons/document-open.svg"));
     connect(openAct, SIGNAL(triggered()), this, SLOT(openFile()));
     saveAct = new QAction (tr("&Save"),this);
     saveAct->setShortcut(tr("Ctrl+S"));
     saveAct->setStatusTip(tr("Save a file"));
-    saveAct->setIcon(QIcon("/home/dmills/lucifer/lucifer/src/icons/document-save.svg"));
+    saveAct->setIcon(QIcon(":/icons/document-save.svg"));
     connect(saveAct, SIGNAL(triggered()), this, SLOT(saveFile()));
     saveAsAct = new QAction (tr("Save As"),this);
     saveAsAct->setStatusTip(tr("Save a file"));
-    saveAsAct->setIcon(QIcon("/home/dmills/lucifer/lucifer/src/icons/document-save-as.svg"));
+    saveAsAct->setIcon(QIcon(":/icons/document-save-as.svg"));
     connect(saveAsAct, SIGNAL(triggered()), this, SLOT(saveAsFile()));
     fullScreenAct = new QAction (tr("Fullscreen mode"),this);
-    fullScreenAct->setIcon(QIcon("/home/dmills/lucifer/lucifer/src/icons/view-fullscreen.svg"));
+    fullScreenAct->setIcon(QIcon(":/icons/view-fullscreen.svg"));
     // Window mode actions
     connect(fullScreenAct, SIGNAL(triggered()), this, SLOT(setFullScreen()));
     windowScreenAct = new QAction (tr("Windowed mode"),this);
-    windowScreenAct->setIcon(QIcon("/home/dmills/lucifer/lucifer/src/icons/view-restore.svg"));
+    windowScreenAct->setIcon(QIcon(":/icons/view-restore.svg"));
     connect(windowScreenAct, SIGNAL(triggered()), this, SLOT(clearFullScreen()));
     // Laser SCRAM switch
     blankLasersAct = new QAction (tr("&Kill Output"),this);
     blankLasersAct->setShortcut(tr("Ctrl+K"));
     blankLasersAct->setStatusTip(tr("Shutdown all laser output"));
-    blankLasersAct->setIcon(QIcon("/home/dmills/lucifer/lucifer/src/icons/process-stop.svg"));
+    blankLasersAct->setIcon(QIcon(":icons/process-stop.svg"));
+		// Import multiple
+		importAct = new QAction (this);
+		importAct->setStatusTip(tr("Import files"));
+		importAct->setIcon(QIcon(":/icons/document-open.svg"));
 
     exitAct = new QAction (tr("Quit"),this);
     exitAct->setStatusTip(tr("Exit the application"));

@@ -77,8 +77,8 @@ std::vector<std::string> FrameSource::enemerateFrameGenTypes()
 
 bool FrameSource::exists (const std::string s)
 {
-	assert (framegen);
-	return (framegen->find(s) != framegen->end());
+    assert (framegen);
+    return (framegen->find(s) != framegen->end());
 }
 
 FrameSource::FrameSource (FrameSource::FLAGS flags, FrameSource::POSSIBLE_CHILDREN pc)
@@ -118,15 +118,15 @@ FrameSourcePtr FrameSource::loadFrames (QXmlStreamReader *e)
     std::string oname;
     FrameSourcePtr fs;
     assert (e);
-		while ((!e->atEnd()) && (e->tokenType() != QXmlStreamReader::StartElement))
-		{
-			e->readNext();
-		}
-		slog()->debugStream() << "Got element : " << e->tokenType() << " : " << e->name().toString().toStdString();
+    while ((!e->atEnd()) && (e->tokenType() != QXmlStreamReader::StartElement))
+    {
+        e->readNext();
+    }
+    slog()->debugStream() << "Got element : " << e->tokenType() << " : " << e->name().toString().toStdString();
 
     oname = e->name().toString().toStdString();
     slog()->info(std::string("Loading object called : ") + oname);
-		assert (exists (oname));
+    assert (exists (oname));
     FrameSourcePtr f = FrameSource::newSource(oname);
     if (f) {
         fs = f;
@@ -136,15 +136,15 @@ FrameSourcePtr FrameSource::loadFrames (QXmlStreamReader *e)
         return fs;
     }
     if (fs) {
-				// load the configuration data for this node
+        // load the configuration data for this node
         fs->load (e);
-				e->readNextStartElement();
-				while ((!e->atEnd()) && (e->tokenType() != QXmlStreamReader::StartElement))
-				{
-					slog()->debugStream() << "Looking for a StartElement tag, got : "<< e->tokenType() << " : " << e->name().toString().toStdString();
-					e->readNext();
-				}
-				slog()->debugStream() << "Got element : " << e->tokenType() << " : " << e->name().toString().toStdString();
+        e->readNextStartElement();
+        while ((!e->atEnd()) && (e->tokenType() != QXmlStreamReader::StartElement))
+        {
+            slog()->debugStream() << "Looking for a StartElement tag, got : "<< e->tokenType() << " : " << e->name().toString().toStdString();
+            e->readNext();
+        }
+        slog()->debugStream() << "Got element : " << e->tokenType() << " : " << e->name().toString().toStdString();
         if (e->name().toString() == "Children") {
             int nc = e->attributes().value("Number").toString().toInt();
             e->readNextStartElement();// cursor on first child or next element
@@ -152,12 +152,12 @@ FrameSourcePtr FrameSource::loadFrames (QXmlStreamReader *e)
             if (nc) {
                 slog()->infoStream() << fs <<" Loading " << nc << " children";
                 for (int i=0; i < nc; i++) {
-									while ((!e->atEnd()) && (e->tokenType() != QXmlStreamReader::StartElement)){
-										slog()->debugStream() << "Looking for a child StartElement tag, got : "<< e->tokenType() << " : " << e->name().toString().toStdString();
-										e->readNext();
-									}
-                  fs->addChild(loadFrames(e));
-                  e->readNextStartElement();
+                    while ((!e->atEnd()) && (e->tokenType() != QXmlStreamReader::StartElement)) {
+                        slog()->debugStream() << "Looking for a child StartElement tag, got : "<< e->tokenType() << " : " << e->name().toString().toStdString();
+                        e->readNext();
+                    }
+                    fs->addChild(loadFrames(e));
+                    e->readNextStartElement();
                 }
             }
         } else {

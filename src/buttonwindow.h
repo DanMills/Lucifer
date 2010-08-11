@@ -60,6 +60,7 @@ private:
     QAction * windowScreenAct;
     QAction * blankLasersAct;
     QAction * exitAct;
+		QAction * importAct;
     QTabWidget * tabs;
 
     bool unsaved;

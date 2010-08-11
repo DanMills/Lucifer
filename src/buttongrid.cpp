@@ -57,8 +57,8 @@ void ButtonGrid::mod () {
 }
 void ButtonGrid::dimensions(int &x, int &y)
 {
-	x = num_x_;
-	y = num_y_;
+    x = num_x_;
+    y = num_y_;
 }
 
 
@@ -70,72 +70,72 @@ ScreenDisplay * ButtonGrid::at (unsigned int x, unsigned int y)
 
 void ButtonGrid::save (QXmlStreamWriter *w)
 {
-	assert (w);
-	w->writeStartElement("Grid");
-	w->writeAttribute("X",QString().number(num_x_));
-	w->writeAttribute("Y",QString().number(num_y_));
-	for (unsigned int y=0; y <num_y_; y++) {
-		for (unsigned x=0; x < num_x_; x++) {
-			ScreenDisplay *s = at (x,y);
-			if (s &&(s->data())) {
-				// Output the co ordinates in the grid
-				w->writeStartElement("Sequence");
-				w->writeAttribute("Pos_X",QString().number(x));
-				w->writeAttribute("Pos_Y",QString().number(y));
-				// Call down into the framesources to output the contents
-				FrameSourcePtr fs = s->data();
-				assert (fs);
-				fs->saveFrames (w);
-				w->writeEndElement();
-			}
-		}
-	}
-	w->writeEndElement(); // Grid
+    assert (w);
+    w->writeStartElement("Grid");
+    w->writeAttribute("X",QString().number(num_x_));
+    w->writeAttribute("Y",QString().number(num_y_));
+    for (unsigned int y=0; y <num_y_; y++) {
+        for (unsigned x=0; x < num_x_; x++) {
+            ScreenDisplay *s = at (x,y);
+            if (s &&(s->data())) {
+                // Output the co ordinates in the grid
+                w->writeStartElement("Sequence");
+                w->writeAttribute("Pos_X",QString().number(x));
+                w->writeAttribute("Pos_Y",QString().number(y));
+                // Call down into the framesources to output the contents
+                FrameSourcePtr fs = s->data();
+                assert (fs);
+                fs->saveFrames (w);
+                w->writeEndElement();
+            }
+        }
+    }
+    w->writeEndElement(); // Grid
 }
 
 ButtonGrid * ButtonGrid::load(QXmlStreamReader* e, QWidget * parent)
 {
-	assert (e);
-	assert (e->name().toString() == "Grid");
-	int x=8,y=8;
-	x=e->attributes().value("X").toString().toInt();
-	y=e->attributes().value("Y").toString().toInt();
-	slog()->infoStream()<<"Creating new button grid dimensions : " << x <<" : " << y;
-	ButtonGrid *g = new ButtonGrid (x,y,parent);
-	while ((!e->atEnd()) && (!e->isEndDocument())){
-		if (e->isEndElement()){
-			slog()->infoStream() << "ButtonGrid found end element : " << e->name().toString().toStdString();
-			if (e->name().toString() == "Grid") {
-				e->readNext();
-				return g;
-			}
-		}
-		while ((!e->atEnd()) && (!e->isStartElement()) && (e->name().toString() != "Sequence")){
-			slog()->infoStream() << "Grid loader looking for a sequence StartElement tag, got : "<<
-			e->tokenType() << " : " << e->name().toString().toStdString();
-			if ((e->isEndElement() && (e->name().toString()=="Grid"))){
-				e->readNext();
-				return g;
-			}
-			e->readNext();
-		}
-		if (e->isStartElement() && (e->name() == "Sequence")){
-			// something to load into one of the buttons in the grid
-			int px = 0;
-			int py = 0;
-			px = e->attributes().value("Pos_X").toString().toInt();
-			py = e->attributes().value("Pos_Y").toString().toInt();
-			slog()->infoStream()<<"Loading sequence at : " << px << " : " << py;
-			e->readNextStartElement();
-			assert (e->tokenType() == QXmlStreamReader::StartElement);
-			FrameSourcePtr fs = FrameSource::loadFrames (e);
-			ScreenDisplay *s = g->at(px,py);
-			assert (s);
-			s->source (fs);
-		} else {
-			e->readNextStartElement();
-		}
-	}
-	return g;
+    assert (e);
+    assert (e->name().toString() == "Grid");
+    int x=8,y=8;
+    x=e->attributes().value("X").toString().toInt();
+    y=e->attributes().value("Y").toString().toInt();
+    slog()->infoStream()<<"Creating new button grid dimensions : " << x <<" : " << y;
+    ButtonGrid *g = new ButtonGrid (x,y,parent);
+    while ((!e->atEnd()) && (!e->isEndDocument())) {
+        if (e->isEndElement()) {
+            slog()->infoStream() << "ButtonGrid found end element : " << e->name().toString().toStdString();
+            if (e->name().toString() == "Grid") {
+                e->readNext();
+                return g;
+            }
+        }
+        while ((!e->atEnd()) && (!e->isStartElement()) && (e->name().toString() != "Sequence")) {
+            slog()->infoStream() << "Grid loader looking for a sequence StartElement tag, got : "<<
+            e->tokenType() << " : " << e->name().toString().toStdString();
+            if ((e->isEndElement() && (e->name().toString()=="Grid"))) {
+                e->readNext();
+                return g;
+            }
+            e->readNext();
+        }
+        if (e->isStartElement() && (e->name() == "Sequence")) {
+            // something to load into one of the buttons in the grid
+            int px = 0;
+            int py = 0;
+            px = e->attributes().value("Pos_X").toString().toInt();
+            py = e->attributes().value("Pos_Y").toString().toInt();
+            slog()->infoStream()<<"Loading sequence at : " << px << " : " << py;
+            e->readNextStartElement();
+            assert (e->tokenType() == QXmlStreamReader::StartElement);
+            FrameSourcePtr fs = FrameSource::loadFrames (e);
+            ScreenDisplay *s = g->at(px,py);
+            assert (s);
+            s->source (fs);
+        } else {
+            e->readNextStartElement();
+        }
+    }
+    return g;
 }
 
