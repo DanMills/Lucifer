@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <fstream>
 
 #include "buttonwindow.h"
-//#include "gzstream.h"
+#include "loadilda.h"
 #include <fstream>
 #include "log.h"
 
@@ -67,9 +67,16 @@ ButtonWindow::ButtonWindow ()
     }
     tabs->setCurrentIndex(0);
     fileMenu = menuBar()->addMenu(tr("&File"));
+    editMenu= menuBar()->addMenu(tr("&Edit"));
+    viewMenu = menuBar()->addMenu(tr("&View"));
+    setupMenu= menuBar()->addMenu(tr("&Setup"));
+    helpMenu= menuBar()->addMenu(tr("&Help"));
+
     fileMenu->addAction (openAct);
     fileMenu->addAction (saveAct);
     fileMenu->addAction (saveAsAct);
+    fileMenu->addSeparator();
+    fileMenu->addAction (importAct);
     fileMenu->addSeparator();
     fileMenu->addAction(exitAct);
     statusBar();
@@ -158,6 +165,34 @@ bool ButtonWindow::saveAsFile()
         return false;
     }
     return saveFile(fn);
+}
+
+void ButtonWindow::importFiles ()
+{
+    QStringList l = QFileDialog::getOpenFileNames (this,tr("Import Files"),
+                    QString(getenv ("HOME")),
+                    tr("ILDA Files (*.ilda *.ild)"));
+    for (int i=0; i < l.size(); i++) {
+        QString s = l[i];
+        Ildaloader ilda;
+        unsigned int error = 0;
+        FrameSourcePtr p = ilda.load (s,error);
+        // Scan the grid arrays looking for somewhere to put this thing.
+        for (unsigned int g=0; g < grids.size(); g++) {
+            int gx, gy;
+            grids[g]->dimensions (gx,gy);
+            for (int x =0; x < gx; x++) {
+                for (int y = 0; y < gy; y++) {
+                    if (!grids[g]->at(x,y)->data()) {
+                        // Got an empty one
+                        grids[g]->at(x,y)->source (p);
+												p = FrameSourcePtr();
+                        break;
+                    }
+                }
+            }
+        }
+    }
 }
 
 bool ButtonWindow::saveFile(const QString &fn)
@@ -329,10 +364,11 @@ void ButtonWindow::makeActions()
     blankLasersAct->setShortcut(tr("Ctrl+K"));
     blankLasersAct->setStatusTip(tr("Shutdown all laser output"));
     blankLasersAct->setIcon(QIcon(":icons/process-stop.svg"));
-		// Import multiple
-		importAct = new QAction (this);
-		importAct->setStatusTip(tr("Import files"));
-		importAct->setIcon(QIcon(":/icons/document-open.svg"));
+    // Import multiple
+    importAct = new QAction (tr("Import files"),this);
+    importAct->setStatusTip(tr("Import multiple files"));
+    importAct->setIcon(QIcon(":/icons/document-open.svg"));
+    connect(importAct, SIGNAL(triggered()),this, SLOT(importFiles()));
 
     exitAct = new QAction (tr("Quit"),this);
     exitAct->setStatusTip(tr("Exit the application"));

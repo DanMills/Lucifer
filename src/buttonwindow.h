@@ -45,6 +45,7 @@ private slots:
     void modified(); // A child has been modified, need to re-save?
     void setFullScreen();
     void clearFullScreen();
+		void importFiles ();
 private:
     std::vector<ButtonGrid *> grids;
     QMenu *fileMenu;
@@ -73,9 +74,5 @@ private:
     void loadSettings();
     void storeSettings();
     void makeActions();
-
-
-
-
 };
 #endif
