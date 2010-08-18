@@ -1,9 +1,13 @@
 /* $Id: matrix.cpp 19 2010-07-03 16:53:57Z dmills $ */
 
+#if 0
+
 // Matrix operations on 4 * 4 matrices
 #include <math.h>
 #include <string.h>
 #include <assert.h>
+
+#include "matrix.h"
 
 /** Dot product of two 2-element vectors */
 #define DOT2(a, b)  ((a)[0]*(b)[0] + (a)[1]*(b)[1])
@@ -18,76 +22,6 @@ do {                        \
    (n)[1] = (u)[2]*(v)[0] - (u)[0]*(v)[2];  \
    (n)[2] = (u)[0]*(v)[1] - (u)[1]*(v)[0];  \
 } while (0)
-
-class Matrix
-{
-public:
-    enum Matrixtype {
-        MATRIX_GENERAL,	/**< general 4x4 matrix */
-        MATRIX_IDENTITY,	/**< identity matrix */
-        MATRIX_3D_NO_ROT,	/**< orthogonal projection and others... */
-        MATRIX_PERSPECTIVE,	/**< perspective projection matrix */
-        MATRIX_2D,		/**< 2-D transformation */
-        MATRIX_2D_NO_ROT,	/**< 2-D scale & translate only */
-        MATRIX_3D		/**< 3-D transformation */
-    };
-
-    Matrix ();
-    Matrix (const Matrix &m);
-    Matrix (const float f[16]);
-    ~Matrix();
-
-    Matrix & operator = (const Matrix &rhs);
-    Matrix & operator = (const float f[16]);
-    Matrix & operator *= (const Matrix &rhs);
-    Matrix & operator *= (const float *mul);
-    const Matrix operator*(const Matrix &other) const;
-
-    // Geometry
-    Matrix & rotate(float angle, float x, float y, float z);
-    Matrix & translate(float x, float y, float z);
-    Matrix & scale(float x, float y, float z);
-
-
-    Matrix & identity();
-
-    // Projection matrices
-    Matrix & viewport(int x, int y, int width, int height,
-                      float zNear, float zFar, float depthMax);
-    Matrix &  ortho (float left, float right,
-                     float bottom, float top,
-                     float nearval, float farval);
-    Matrix & frustum( float left, float right,
-                      float bottom, float top,
-                      float nearval, float farval);
-    Matrix inverse ();
-    void analyse();
-    bool is_length_preserving() const;
-    bool has_rotation() const;
-    bool is_general_scale() const;
-    bool is_dirty() const;
-
-private:
-    void mul4 (float *product, const float *const a, const float *const b) const;
-    void mul34 (float *product, const float *const a, const float *const b) const;
-    Matrix & multf (float *rhs, unsigned int flags_);
-    bool invert_general();
-    bool invert_3d_general();
-    bool invert_3d();
-    bool invert_identity();
-    bool invert_3d_no_rot();
-    bool invert_2d_no_rot();
-    bool invert();
-
-    void analyse_from_scratch();
-    void analyse_from_flags();
-
-    float m[16];
-    float *inv;
-    unsigned int flags;
-    enum Matrixtype type;
-};
-
 
 #define MAT_FLAG_IDENTITY       0     /**< is an identity matrix flag.
 *   (Not actually used - the identity
@@ -334,24 +268,23 @@ bool Matrix::invert_general()
     float *r0, *r1, *r2, *r3;
 
     r0 = wtmp[0], r1 = wtmp[1], r2 = wtmp[2], r3 = wtmp[3];
-
     r0[0] = MAT(m,0,0), r0[1] = MAT(m,0,1),
-                                r0[2] = MAT(m,0,2), r0[3] = MAT(m,0,3),
-                                                            r0[4] = 1.0, r0[5] = r0[6] = r0[7] = 0.0,
+		r0[2] = MAT(m,0,2), r0[3] = MAT(m,0,3),
+    r0[4] = 1.0, r0[5] = r0[6] = r0[7] = 0.0,
 
-                                                                                                 r1[0] = MAT(m,1,0), r1[1] = MAT(m,1,1),
-                                                                                                                             r1[2] = MAT(m,1,2), r1[3] = MAT(m,1,3),
-                                                                                                                                                         r1[5] = 1.0, r1[4] = r1[6] = r1[7] = 0.0,
+		r1[0] = MAT(m,1,0), r1[1] = MAT(m,1,1),
+		r1[2] = MAT(m,1,2), r1[3] = MAT(m,1,3),
+		r1[5] = 1.0, r1[4] = r1[6] = r1[7] = 0.0,
 
-                                                                                                                                                                                              r2[0] = MAT(m,2,0), r2[1] = MAT(m,2,1),
-                                                                                                                                                                                                                          r2[2] = MAT(m,2,2), r2[3] = MAT(m,2,3),
-                                                                                                                                                                                                                                                      r2[6] = 1.0, r2[4] = r2[5] = r2[7] = 0.0,
+		r2[0] = MAT(m,2,0), r2[1] = MAT(m,2,1),
+		r2[2] = MAT(m,2,2), r2[3] = MAT(m,2,3),
+		r2[6] = 1.0, r2[4] = r2[5] = r2[7] = 0.0,
 
-                                                                                                                                                                                                                                                                                           r3[0] = MAT(m,3,0), r3[1] = MAT(m,3,1),
-                                                                                                                                                                                                                                                                                                                       r3[2] = MAT(m,3,2), r3[3] = MAT(m,3,3),
-                                                                                                                                                                                                                                                                                                                                                   r3[7] = 1.0, r3[4] = r3[5] = r3[6] = 0.0;
+		r3[0] = MAT(m,3,0), r3[1] = MAT(m,3,1),
+		r3[2] = MAT(m,3,2), r3[3] = MAT(m,3,3),
+    r3[7] = 1.0, r3[4] = r3[5] = r3[6] = 0.0;
 
-    /* choose pivot - or die */
+		/* choose pivot - or die */
     if (fabsf(r3[0])>fabsf(r2[0])) SWAP_ROWS(r3, r2);
     if (fabsf(r2[0])>fabsf(r1[0])) SWAP_ROWS(r2, r1);
     if (fabsf(r1[0])>fabsf(r0[0])) SWAP_ROWS(r1, r0);
@@ -438,8 +371,8 @@ bool Matrix::invert_general()
     /* eliminate third variable */
     m3 = r3[2]/r2[2];
     r3[3] -= m3 * r2[3], r3[4] -= m3 * r2[4],
-                                  r3[5] -= m3 * r2[5], r3[6] -= m3 * r2[6],
-                                                                r3[7] -= m3 * r2[7];
+		r3[5] -= m3 * r2[5], r3[6] -= m3 * r2[6],
+    r3[7] -= m3 * r2[7];
 
     /* last check */
     if (0.0 == r3[3]) return false;
@@ -453,42 +386,42 @@ bool Matrix::invert_general()
     m2 = r2[3];                 /* now back substitute row 2 */
     s  = 1.0F/r2[2];
     r2[4] = s * (r2[4] - r3[4] * m2), r2[5] = s * (r2[5] - r3[5] * m2),
-            r2[6] = s * (r2[6] - r3[6] * m2), r2[7] = s * (r2[7] - r3[7] * m2);
+    r2[6] = s * (r2[6] - r3[6] * m2), r2[7] = s * (r2[7] - r3[7] * m2);
     m1 = r1[3];
     r1[4] -= r3[4] * m1, r1[5] -= r3[5] * m1,
-                                  r1[6] -= r3[6] * m1, r1[7] -= r3[7] * m1;
+    r1[6] -= r3[6] * m1, r1[7] -= r3[7] * m1;
     m0 = r0[3];
     r0[4] -= r3[4] * m0, r0[5] -= r3[5] * m0,
-                                  r0[6] -= r3[6] * m0, r0[7] -= r3[7] * m0;
+    r0[6] -= r3[6] * m0, r0[7] -= r3[7] * m0;
 
     m1 = r1[2];                 /* now back substitute row 1 */
     s  = 1.0F/r1[1];
     r1[4] = s * (r1[4] - r2[4] * m1), r1[5] = s * (r1[5] - r2[5] * m1),
-            r1[6] = s * (r1[6] - r2[6] * m1), r1[7] = s * (r1[7] - r2[7] * m1);
+    r1[6] = s * (r1[6] - r2[6] * m1), r1[7] = s * (r1[7] - r2[7] * m1);
     m0 = r0[2];
     r0[4] -= r2[4] * m0, r0[5] -= r2[5] * m0,
-                                  r0[6] -= r2[6] * m0, r0[7] -= r2[7] * m0;
+    r0[6] -= r2[6] * m0, r0[7] -= r2[7] * m0;
 
     m0 = r0[1];                 /* now back substitute row 0 */
     s  = 1.0F/r0[0];
     r0[4] = s * (r0[4] - r1[4] * m0), r0[5] = s * (r0[5] - r1[5] * m0),
-            r0[6] = s * (r0[6] - r1[6] * m0), r0[7] = s * (r0[7] - r1[7] * m0);
+		r0[6] = s * (r0[6] - r1[6] * m0), r0[7] = s * (r0[7] - r1[7] * m0);
 
     MAT(out,0,0) = r0[4];
     MAT(out,0,1) = r0[5],
-                   MAT(out,0,2) = r0[6];
+    MAT(out,0,2) = r0[6];
     MAT(out,0,3) = r0[7],
-                   MAT(out,1,0) = r1[4];
+    MAT(out,1,0) = r1[4];
     MAT(out,1,1) = r1[5],
-                   MAT(out,1,2) = r1[6];
+    MAT(out,1,2) = r1[6];
     MAT(out,1,3) = r1[7],
-                   MAT(out,2,0) = r2[4];
+    MAT(out,2,0) = r2[4];
     MAT(out,2,1) = r2[5],
-                   MAT(out,2,2) = r2[6];
+    MAT(out,2,2) = r2[6];
     MAT(out,2,3) = r2[7],
-                   MAT(out,3,0) = r3[4];
+    MAT(out,3,0) = r3[4];
     MAT(out,3,1) = r3[5],
-                   MAT(out,3,2) = r3[6];
+    MAT(out,3,2) = r3[6];
     MAT(out,3,3) = r3[7];
 
     return true;
@@ -1068,29 +1001,30 @@ Matrix &  Matrix::ortho (float left, float right,
  * flag, or MAT_FLAG_GENERAL_SCALE. Marks the MAT_DIRTY_TYPE and
  * MAT_DIRTY_INVERSE dirty flags.
  */
-Matrix & Matrix::scale(float x, float y, float z )
+Matrix Matrix::scale(float x, float y, float z )
 {
-    m[0] *= x;
-    m[4] *= y;
-    m[8]  *= z;
-    m[1] *= x;
-    m[5] *= y;
-    m[9]  *= z;
-    m[2] *= x;
-    m[6] *= y;
-    m[10] *= z;
-    m[3] *= x;
-    m[7] *= y;
-    m[11] *= z;
+		Matrix s;
+    s.m[0] *= x;
+    s.m[4] *= y;
+    s.m[8]  *= z;
+    s.m[1] *= x;
+    s.m[5] *= y;
+    s.m[9]  *= z;
+    s.m[2] *= x;
+    s.m[6] *= y;
+    s.m[10] *= z;
+    s.m[3] *= x;
+    s.m[7] *= y;
+    s.m[11] *= z;
 
     if (fabsf(x - y) < 1e-8 && fabsf(x - z) < 1e-8)
-        flags |= MAT_FLAG_UNIFORM_SCALE;
+        s.flags |= MAT_FLAG_UNIFORM_SCALE;
     else
-        flags |= MAT_FLAG_GENERAL_SCALE;
+        s.flags |= MAT_FLAG_GENERAL_SCALE;
 
-    flags |= (MAT_DIRTY_TYPE |
+    s.flags |= (MAT_DIRTY_TYPE |
               MAT_DIRTY_INVERSE);
-    return *this;
+		return s;
 }
 
 /**
@@ -1146,16 +1080,14 @@ Matrix & Matrix::viewport(int x, int y, int width, int height,
  * Copies ::Identity into matrix and into matrix::inv if not NULL.
  * Sets the matrix type to identity, and clear the dirty flags.
  */
-Matrix &  Matrix::identity()
+Matrix Matrix::identity()
 {
-    memcpy(m, Identity,sizeof(Identity));
-    if (inv)
-        memcpy(inv, Identity, sizeof(Identity));
-    type = MATRIX_IDENTITY;
-    flags &= ~(MAT_DIRTY_FLAGS|
-               MAT_DIRTY_TYPE|
-               MAT_DIRTY_INVERSE);
-    return *this;
+		Matrix i;
+    memcpy(i.m, Identity,sizeof(Identity));
+    i.type = MATRIX_IDENTITY;
+    i.flags &= ~(MAT_DIRTY_FLAGS|
+               MAT_DIRTY_TYPE);
+    return i;
 }
 
 #define ZERO(x) (1<<x)
@@ -1408,3 +1340,4 @@ bool Matrix::is_dirty() const
     return (flags & MAT_DIRTY);
 }
 
+#endif
