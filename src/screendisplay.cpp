@@ -94,11 +94,9 @@ void ScreenDisplay::loadData()
 
 void ScreenDisplay::editData()
 {
-    //if (fs_) {
         ParameterEditor *pe = new ParameterEditor(this);
         pe->load (fs_);
         pe->show();
-    //}
 }
 
 void ScreenDisplay::dragEnterEvent(QDragEnterEvent *event)

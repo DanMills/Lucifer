@@ -153,7 +153,10 @@ ParameterEditor::~ParameterEditor()
 
 void ParameterEditor::load(FrameSourcePtr f)
 {
-    fs = f;
+		if (!f) return;
+		// The big win here is that it means that the serialisation code is well tested
+		std::string s = f->toString();
+		fs = FrameSource::fromString(s);
     if (root) delete root;
     root = NULL;
     tree->clear();

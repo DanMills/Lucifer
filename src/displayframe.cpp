@@ -81,7 +81,6 @@ void DisplayFrame::paintEvent (QPaintEvent *)
     p.setBackground (Qt::black);
     p.setRenderHint(QPainter::HighQualityAntialiasing);
 
-
     const int h = height() - 2 * bw;
     const int w = width() - 2 * bw;
     // Border colour
@@ -93,25 +92,7 @@ void DisplayFrame::paintEvent (QPaintEvent *)
     // Clear the display area
     p.setBrush(QBrush(Qt::black));
     p.drawRect(bw,bw,w,h);
-    if (points && points->getPointCount()>0) {
-        QPen pen;
-        pen.setWidth(1);
-        QColor col;
-        Point po = points->getPoint(0);
-        if (!po.blanked) {
-            pen.setColor (QColor(po.r,po.g,po.b));
-            p.setPen (pen);
-            p.drawPoint(((1.0 + po.x)* w/2.0) + bw,((1.0-po.y)*h/2.0) + bw);
-        }
-        for (unsigned int i = 0; i < points->getPointCount()-1; i++) {
-            Point tp = points->getPoint(i);
-            Point np = points->getPoint(i+1);
-            if (!np.blanked) {
-                pen.setColor (QColor(tp.r,tp.g,tp.b));
-                p.setPen (pen);
-                p.drawLine (((1.0 + tp.x)* w/2.0) + bw,((1.0-tp.y)*h/2.0) + bw,
-                            ((1.0 + np.x)*w/2.0) + bw,((1.0 - np.y)* h/2.0) + bw);
-            }
-        }
-    }
+		if (points){
+			points->render (p,bw,bw,h,w);
+		}
 }

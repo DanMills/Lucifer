@@ -22,22 +22,46 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <vector>
 #include <boost/shared_ptr.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
 #include "point.h"
+
+// For rendering to a qpainter
+#include <QtGui>
 
 class Frame
 {
 public:
     Frame();
     ~Frame();
-
-	  Point getPoint (size_t pos) const;
+		inline Point getPoint (size_t pos) const
+		{
+			assert (pos < points_.size());
+			return points_[pos];
+		};
     unsigned int getPointCount() const;
     void reserve (size_t points);
     void clear ();
     bool isEmpty() const;
     void addPoint (Point p);
+
+		// Geometry operations
+		void scale (const float x, const float y, const float z);
+		void rotate (const float angle,float x,float y,float z);
+		void translate (float x,float y,float z);
+
+		// Rendering operations
+		/// Renders a frame using a supplied QPainter.
+		QPainter & render (QPainter& p,
+											 const int start_x, const int start_y,
+											 const int height, const int width) const;
+		/// Renders a frame to a series of points possibly
+		///doing point pulling and optimisation if appropriate.
+		std::vector<Point> render (const Frame &f) const;
 private:
     std::vector<Point> points_;
+		mutable boost::numeric::ublas::matrix <float> geometry;
+		/// Apply the geometry matrix to the frame
+		void simplify ();
 };
 
 typedef boost::shared_ptr<Frame> FramePtr;

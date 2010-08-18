@@ -169,9 +169,25 @@ bool ButtonWindow::saveAsFile()
 
 void ButtonWindow::importFiles ()
 {
+    QSettings settings;
+    settings.beginGroup ("ILDA Importer");
+    QString home;
+    if (getenv ("HOME")) {
+        home = getenv ("HOME");
+    } else {
+        home = "/";
+    }
+    QString path = settings.value("path",home).toString();
+
+
     QStringList l = QFileDialog::getOpenFileNames (this,tr("Import Files"),
-                    QString(getenv ("HOME")),
+                    path,
                     tr("ILDA Files (*.ilda *.ild)"));
+    if (l.size()) {
+        settings.setValue ("path",QFileInfo(l[0]).absolutePath());
+    }
+    settings.endGroup();
+		QApplication::setOverrideCursor(Qt::WaitCursor);
     for (int i=0; i < l.size(); i++) {
         QString s = l[i];
         Ildaloader ilda;
@@ -186,17 +202,19 @@ void ButtonWindow::importFiles ()
                     if (!grids[g]->at(x,y)->data()) {
                         // Got an empty one
                         grids[g]->at(x,y)->source (p);
-												p = FrameSourcePtr();
+                        p = FrameSourcePtr();
                         break;
                     }
                 }
             }
         }
     }
+    QApplication::restoreOverrideCursor();
+		modified();
 }
 
 bool ButtonWindow::saveFile(const QString &fn)
-{		// Todo - this is painfully slow at the moment
+{
     QFile f(fn);
     if (!f.open(QFile::WriteOnly)) {
         slog()->errorStream()<<"Unable to open file for writing";

@@ -20,23 +20,23 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifndef POINT_INC
 #define POINT_INC
-
+#include <boost/shared_ptr.hpp>
+#include <boost/numeric/ublas/vector.hpp>
 #include <iostream>
 #include <QtGui>
 
 class Point
 {
 public:
-    float x;
-    float y;
-    float z;
-    //QColor colour;
+	enum {X=0, Y=1, Z=2};
+	Point () : v(4)
+	{
+		v[3] = 1.0f;
+	};
+	boost::numeric::ublas::vector<float> v;
 		unsigned char r;
 		unsigned char g;
 		unsigned char b;
     bool blanked;
-
-    //friend std::ostream& operator<< (std::ostream &out, Point &p);
-    //friend std::istream& operator>> (std::istream &in, Point &p);
 };
 #endif

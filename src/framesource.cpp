@@ -207,7 +207,7 @@ bool FrameSource::addChild(FrameSourcePtr child, unsigned int pos)
                 children_.insert (children_.begin() + pos,child);
             }
             // make sure the newly added data source has a correct set of playbacks
-            //child->erasePlaybacks(); ///TODO - FIXME Breaks editor
+            child->erasePlaybacks();
             std::map <Playback, PlaybackDataPtr>::iterator it;
             it = playbacks_.begin();
             while (it != playbacks_.end()) {

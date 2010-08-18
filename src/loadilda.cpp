@@ -212,14 +212,14 @@ StaticFramePtr Ildaloader::readFrameSection(QDataStream & stream, bool is3DFrame
         qint16 x;
         qint16 y;
         stream >> x >> y;
-        p.x = x/32768.0;
-        p.y = y/32768.0;
+        p.v[Point::X] = x/32768.0;
+        p.v[Point::Y] = y/32768.0;
         if (is3DFrame) {
             qint16 z;
             stream >> z;
-            p.z = z/32768.0;
+            p.v[Point::Z] = z/32768.0;
         } else {
-            p.z = 0.0;
+            p.v[Point::Z] = 0.0;
         }
         quint8 state = 0;
         quint8 col;
@@ -286,14 +286,14 @@ StaticFramePtr Ildaloader::readFormat5(QDataStream & stream, bool is3DFrame)
         quint8 r, g, b, state;
 				qint16 x,y;
         stream >> x >> y;
-        p.x = x/32768.0;
-        p.y = y/32768.0;
+        p.v[Point::X] = x/32768.0;
+        p.v[Point::Y] = y/32768.0;
         if (is3DFrame) {
             qint16 z;
             stream >> z;
-            p.z = z/32768.0;
+            p.v[Point::Z] = z/32768.0;
         } else {
-            p.z = 0;
+            p.v[Point::Z] = 0;
         }
         stream >> state >> b >> g >> r;
         p.blanked = ((state & 64) == 64);
