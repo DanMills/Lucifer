@@ -52,6 +52,11 @@ StaticFrame::StaticFrame () : FrameSource(MAKES_FRAMES,NONE)
     repeats = 1;
     dewell = 100;
     useDewell = false;
+		// default geometry = no rotation, no spinning, scale 1:1;
+		//startAngleX = startAngleY = startAngleZ = 0.0;
+		//incrementX = incrementY = incrememtZ = 0;
+		//centerX = centerY = centreZ = 0;
+		//scaleX = scaleY = scaleZ = 1.0;
 }
 
 StaticFrame::~StaticFrame ()
@@ -192,7 +197,9 @@ FramePtr StaticFrame::data(Playback p)
         }
     }
     if (sp->active) {
-			return data_;
+			FramePtr p = boost::make_shared<Frame>();
+			*p = *data_;
+			return p;
     } else {
         sp->active = true;
         sp->repeatsDone = 0;

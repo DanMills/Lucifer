@@ -41,6 +41,9 @@ public:
     bool active;
     QTime dewellStart;
     unsigned int repeatsDone;
+		float angleX;
+		float angleY;
+		float angleZ;
 };
 
 /// A single static frame leaf node.
@@ -68,9 +71,10 @@ private:
     unsigned int  dewell;
     bool useDewell;
     friend class StaticFrameGui;
-
+		// used for load and save of pointsets
 		unsigned int ftoi (float f);
 		float itof(unsigned int i);
+
 };
 
 

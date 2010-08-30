@@ -48,6 +48,8 @@ public:
 		void scale (const float x, const float y, const float z);
 		void rotate (const float angle,float x,float y,float z);
 		void translate (float x,float y,float z);
+		// Apply a projection transform to the output (note z != 0)
+		void projection (float x, float y, float z);
 
 		// Rendering operations
 		/// Renders a frame using a supplied QPainter.

@@ -245,22 +245,36 @@ void Frame::translate (float x,float y,float z)
     geometry = boost::numeric::ublas::prod (geometry,m);
 }
 
+void Frame::projection (float x, float y, float z)
+{
+    assert (z != 0.0);
+    boost::numeric::ublas::matrix <float> m(4,4);
+		m = boost::numeric::ublas::identity_matrix<float>(4);
+    m(3,3) = 0;
+    m(3,2) = 1.0/z;
+    m(0,3) = x;
+    m(1,3) = y;
+    geometry = boost::numeric::ublas::prod (geometry,m);
+}
+
 
 QPainter & Frame::render (QPainter &p,
                           const int start_x, const int start_y,
                           const int height, const int width) const
 {
-		assert (this);
+    assert (this);
     if (getPointCount()>0) {
-				// F gets modified by having the geometry matrix applied
+        // F gets modified by having the geometry matrix applied
         Frame f = *this;
         static int theta = 0;
-        f.rotate (theta +=5,0,1,0);
+        f.rotate (theta +=5,1,1,1);
+				//f.scale (0.5,0.5,0.5);
+        //f.projection (0,0,2);
         f.simplify ();
-				if (f.getPointCount() == 0) {
-					// simplify might have rejected all the points as being outside the frustum
-					return p;
-				}
+        if (f.getPointCount() == 0) {
+            // simplify might have rejected all the points as being outside the frustum
+            return p;
+        }
         QPen pen;
         pen.setWidth(1);
         QColor col;
@@ -286,12 +300,15 @@ QPainter & Frame::render (QPainter &p,
 
 void Frame::simplify ()
 {
-	assert (this);
-	boost::numeric::ublas::matrix <float> mat (4,4);
-	mat = geometry;
-	///TODO - Bypass this if the matrix is allready an identity
-	for (unsigned int i=0; i < getPointCount(); ++i){
-		/// Each 3d point gets multiplied by the geometry matrix to give the output point.
-		points_[i].v = boost::numeric::ublas::prod (points_[i].v,mat);
-	}
+    assert (this);
+    boost::numeric::ublas::matrix <float> mat (4,4);
+    mat = geometry;
+    ///TODO - Bypass this if the matrix is allready an identity
+    for (unsigned int i=0; i < getPointCount(); ++i) {
+        /// Each 3d point gets multiplied by the geometry matrix to give the output point.
+        points_[i].v = boost::numeric::ublas::prod (points_[i].v,mat);
+				float s = 1.0f/points_[i].v[3];
+				points_[i].v[Point::X] *= 2.0/(2.0 - points_[i].v[Point::Z]);
+				points_[i].v[Point::Y] *= 2.0/(2.0 - points_[i].v[Point::Z]);
+    }
 }
