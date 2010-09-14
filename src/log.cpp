@@ -17,6 +17,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 /* $Id: log.cpp 16 2010-06-26 22:35:55Z dmills $ */
 
 #include "log.h"
+#include <QDate>
 
 void Logger::setFileName (std::string filename)
 {
@@ -24,9 +25,9 @@ void Logger::setFileName (std::string filename)
     app = new log4cpp::FileAppender("FileAppender",filename);
     app->setLayout (layout);
     cat->setAppender(app);
+    cat->infoStream() << "Galvanic Lucifer startup at " << QTime::currentTime().toString().toStdString()
+    << " " << QDate::currentDate().toString().toStdString();
 }
-
-
 
 Logger::Logger(std::string filename)
 {
@@ -37,11 +38,14 @@ Logger::Logger(std::string filename)
     app->setLayout(layout);
     cat->setAdditivity(false);
     cat->setAppender(app);
-    cat->setPriority(log4cpp::Priority::DEBUG);
+    cat->setPriority(log4cpp::Priority::INFO);
+    cat->infoStream() << "Galvanic Lucifer startup at " << QTime::currentTime().toString().toStdString()
+    << " " << QDate::currentDate().toString().toStdString();
 };
 
 Logger::~Logger()
 {
+    slog()->infoStream() << "Galvanic Lucifer shutdown at " << QTime::currentTime().toString().toStdString();
     delete cat;
     delete app;
 }
