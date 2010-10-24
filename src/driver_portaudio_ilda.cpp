@@ -1,8 +1,10 @@
 #include "driver_portaudio_ilda.h"
 
 #include <portaudio.h>
+#include <boost/make_shared.hpp>
 #include "log.h"
 #include <string.h>
+
 
 /// This bit of bletcherousnes is because portaudio needs to be
 /// initialised precisely once....
@@ -221,4 +223,25 @@ static int paCallback(const void *, void *outputBuffer,
     }
 	return 0;
 };
+
+/// This boilerplate registers the driver with the system so that it can appear in menus and the like
+
+static DriverPtr makeSoundCardILDA()
+{
+	return boost::make_shared<PA_ILDA>();
+}
+
+class GenPA_ILDA
+{
+	public:
+		GenPA_ILDA () {
+			Driver::registerDriverFactory ("SoundCard (ILDA)",makeSoundCardILDA);
+		}
+};
+
+static GenPA_ILDA pa_ilda;
+
+
+
+
 

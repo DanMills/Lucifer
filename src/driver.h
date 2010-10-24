@@ -4,11 +4,16 @@
 #include <string>
 #include <vector>
 #include "point.h"
+#include <boost/shared_ptr.hpp>
 
 /// Virtual base class for the hardware IO drivers
 
 /// Note if you claim to support something in flags then you MUST overload the appropriate
 /// functions or the base class will throw an assertion failure.
+
+class Driver;
+
+typedef boost::shared_ptr<Driver> DriverPtr;
 
 class Driver
 {
@@ -67,6 +72,15 @@ public:
 		virtual size_t audioChannels();
 		bool audioRequestMoreframes();
 		bool audioMoreframesAvailable();
+
+		/// Driver registration and creation methods from here down
+		static void registerDriverFactory (const std::string name, DriverPtr (*generator)());
+		static DriverPtr newDriver (const std::string name);
+		static std::vector<std::string> enemerateDrivers();
+		static bool exists (const std::string s);
+
 };
+
+
 
 #endif
