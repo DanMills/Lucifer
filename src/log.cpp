@@ -25,8 +25,6 @@ void Logger::setFileName (std::string filename)
     app = new log4cpp::FileAppender("FileAppender",filename);
     app->setLayout (layout);
     cat->setAppender(app);
-    cat->infoStream() << "Galvanic Lucifer startup at " << QTime::currentTime().toString().toStdString()
-    << " " << QDate::currentDate().toString().toStdString();
 }
 
 Logger::Logger(std::string filename)

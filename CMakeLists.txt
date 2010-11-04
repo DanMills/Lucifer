@@ -11,22 +11,26 @@ set(lucifer_SRCS src/framesequencer.cpp
 	src/framesource.cpp src/staticframe.cpp src/main.cpp
 	src/loadilda.cpp src/screendisplay.cpp
 	src/buttongrid.cpp src/buttonwindow.cpp
-	src/point.cpp src/frame.cpp
+  src/frame.cpp src/point.cpp src/driver.cpp
 	src/displayframe.cpp src/editparams.cpp
-	src/log.cpp src/frameroot.cpp
-	src/3d/constant.cpp src/3d/polygon.cpp
-	src/3d/BSPNode.cpp)
+	src/log.cpp src/frameroot.cpp src/colour.cpp
+	src/resampler.cpp
+	src/3DEngine/winding.cpp src/3DEngine/aabb.cpp
+	src/driver_portaudio_ilda.cpp src/head.cpp
+	src/driver_dummy_ilda.cpp
+	src/outputview.cpp)
 
 set(lucifer_HDRS src/framesequencer.h src/loadilda.h
 	src/framesource.h src/point.h
-	src/screendisplay.h src/frame.h src/log.h src/frameroot.h
-	src/3d/aabb.h src/3d/constant.h src/3d/curve.h
-	src/3d/frustum.h src/3d/line.h src/3d/matrix.h src/3d/pi.h
-	src/3d/plane.h src/3d/quaternion.h src/3d/vector.h src/3d/gvector.h
-	src/3d/polygon.h src/3d/BSPnode.h)
+	src/screendisplay.h src/frame.h src/log.h src/frameroot.h src/colour.h
+	src/3DEngine/plane.h src/3DEngine/aabb.h src/3DEngine/plane.h
+	src/resampler.h)
 
 set(lucifer_MOC_HDRS src/screendisplay.h src/buttongrid.h src/buttonwindow.h
-src/displayframe.h src/editparams.h src/staticframe.h)
+	src/displayframe.h src/editparams.h src/staticframe.h src/head.h src/driver.h
+	src/driver_dummy_ilda.h
+	src/driver_portaudio_ilda.h
+	src/outputview.h)
 
 SET(lucifer_RCS
 	src/lucifer.qrc
@@ -36,4 +40,6 @@ SET(lucifer_RCS
 QT4_ADD_RESOURCES(lucifer_RC_SRCS ${lucifer_RCS} )
 QT4_WRAP_CPP( lucifer_MOC_SRCS ${lucifer_MOC_HDRS} )
 add_executable(lucifer ${lucifer_SRCS} ${lucifer_HDRS} ${lucifer_MOC_SRCS} ${lucifer_RC_SRCS})
-target_link_libraries(lucifer ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY} z log4cpp)
+target_link_libraries(lucifer -lrt -lasound -ljack -lpthread  ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY} z
+	log4cpp portaudio.a zita-resampler.so
+)

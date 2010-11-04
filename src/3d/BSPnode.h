@@ -28,19 +28,27 @@ class BSPNode;
 typedef boost::shared_ptr<BSPNode> BSPNodePtr;
 typedef boost::shared_ptr<const BSPNode> ConstBSPNodePtr;
 
+/// A Binary space partitioning tree node
+
 class BSPNode
 {
 public:
     BSPNode();
     ~BSPNode();
 		/// Builds a BSP tree for a list of polygons
-		static BSPNodePtr BuildBSP (WindingPtrVector &polygons);
+		static BSPNodePtr BuildBSP (WindingPtrVector polygons);
+		/// A world axis aligned bounding box for this node and all children
     AABB bounding_box;
+		/// The plane that divides the tree at this level
     Plane3 split_plane;
+		/// Polygons that are in front of the split plane are recursvely stored here
     BSPNodePtr front;
+		/// Polygons that are behind the split plane are recursively stored here.
     BSPNodePtr back;
+		/// In leaf nodes the polygons themselves go here
     WindingPtr winding;
 	private:
+		/// Returns a 'cost' of using the given polygon as a splitting plane
 		static int cost (WindingPtrVector &polygons, ConstWindingPtr splitter);
 };
 

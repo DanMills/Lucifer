@@ -34,14 +34,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 *
 * \subsection step1 Step 1: Opening the box
 *
-* etc...
 */
-
-
-
-
-
-
 
 #include <string>
 #include <iostream>
@@ -49,12 +42,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "buttonwindow.h"
 #include "log.h"
+#include "3DEngine/winding.h"
 
 static const std::string usage(" \
 lucifer [-option] [-option]... [filename.lsf] [filename.ild(a)]\n\
 \n\
 Options are: \n\
-  -l logfile sets the location of the system log file to logfile\n\
   -v log level sets the level of logging, valid options are \n\
     DEBUG (Very verbose), these files get big.\n\
     INFO (default), logs startup, what files are loaded, plus any errors.\n\
@@ -69,14 +62,13 @@ int main (int argc, char **argv)
 {
     bool listPlugs = false;
     bool noReload = false;
-    std::string logname;
     std::string loglevel("INFO");
 
     int c;
     opterr = 0;
     // FIXME GNU SPECIFIC
     char * wd = getcwd (NULL,0);
-    logname = std::string(wd) + "lucifer.log";
+    std::string logname = std::string(wd) + "lucifer.log";
     free (wd);
     while ((c = getopt (argc, argv, "l:v:nhp")) != -1) {
         switch (c) {
@@ -90,19 +82,13 @@ int main (int argc, char **argv)
         case 'n':
             noReload = true;
             break;
-        case 'l':
-            logname=std::string(optarg);
-            break;
         case 'v':
             loglevel = std::string(optarg);
             std::cerr <<  loglevel <<std::endl;
 
             break;
         case '?':
-            if (optopt == 'l') {
-                std::cerr <<  "Option -l requires a filename argument." << std::endl;
-                exit(1);
-            } else if (optopt == 'v') {
+            if (optopt == 'v') {
                 std::cerr <<  "Option -v requires a log level argument." << std::endl;
                 exit(1);
             }	else if (isprint (optopt)) {
@@ -129,6 +115,19 @@ int main (int argc, char **argv)
 			DEBUG, INFO, ERROR.\n";
         exit (1);
     }
+    if (listPlugs) {
+        std::cerr << "Frame generators\n";
+        std::vector<std::string> list = FrameSource::enemerateFrameGenTypes();
+        for (unsigned int i=0; i < list.size(); i++) {
+            std::cerr <<"\t" << list[i] << std::endl;
+        }
+        std::cerr << "IO Drivers\n";
+        std::vector<std::string> listd = Driver::enemerateDrivers();
+        for (unsigned int i=0; i < listd.size(); i++) {
+            std::cerr <<"\t" << listd[i] << std::endl;
+        }
+        exit (0);
+    }
 
     std::vector<std::string> filenames;
     //The non option arguments are file names
@@ -141,12 +140,14 @@ int main (int argc, char **argv)
     QCoreApplication::setOrganizationName("Exponential Software");
     QCoreApplication::setOrganizationDomain("exponent.myzen.co.uk");
     QCoreApplication::setApplicationName("Lucifer");
-    slog()->info("Starting lucifer");
+    slog()->info("Starting Galvanic Lucifer");
+    //polygonTest p;
+
     ButtonWindow grid;
-		for (unsigned int i=0; i < filenames.size(); i++){
-			std::string fn = filenames[i];
-			grid.loadFile (QString().fromStdString(fn));
-		}
+    for (unsigned int i=0; i < filenames.size(); i++) {
+        std::string fn = filenames[i];
+        grid.loadFile (QString().fromStdString(fn));
+    }
     return app.exec();
     return 0;
 }

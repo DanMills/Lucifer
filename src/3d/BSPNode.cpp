@@ -64,7 +64,7 @@ int BSPNode::cost(WindingPtrVector& polygons, ConstWindingPtr splitter)
 
 
 // Danger O(n^2 log n), dont do this often.
-BSPNodePtr BSPNode::BuildBSP(WindingPtrVector& polygons)
+BSPNodePtr BSPNode::BuildBSP(WindingPtrVector polygons)
 {
 	if (polygons.size() == 1){
 		slog()->debugStream() << "Creating leaf node for BSP tree";

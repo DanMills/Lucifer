@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
-
+#include <ostream>
 class	Point
 {
 public:
@@ -32,7 +32,9 @@ public:
     unsigned char b;
     bool blanked;
 
-    Point() : v(4) {};
+    Point() : v(4) {
+        v[3] = 1.0f;
+    };
     Point(const Point& p): v(4)
     {
         v = p.v;
@@ -45,7 +47,7 @@ public:
         v[0] = x;
         v[1] = y;
         v[2] = z;
-        v[3]=0.0f;
+        v[3]=1.0f;
     };
 
     inline float x() const {
@@ -160,6 +162,7 @@ public:
         Point res = *this;
         float size = 1.0/sqrt(res | res);
         res *= size;
+        //res.setW(w()*size);
         return res;
     }
     inline Point &operator *= (const boost::numeric::ublas::matrix <float> mat)
@@ -177,11 +180,22 @@ public:
         ret.blanked = this->blanked;
         return ret;
     }
+    inline Point &operator /= (const float d)
+    {
+        assert (d != 0.0f);
+        float r = 1.0f/d;
+        return *this *=r;
+    }
+
+    friend std::ostream&  operator << (std::ostream&  s, const Point & p);
 
 private:
     static const float epsilon = 1.0e-12;
     boost::numeric::ublas::vector<float> v;
 };
+
+
+
 
 typedef Point Vector;
 

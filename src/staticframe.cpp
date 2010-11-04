@@ -117,11 +117,11 @@ void StaticFrame::save (QXmlStreamWriter* w)
     for (unsigned int i = 0; i < data_->getPointCount(); i++) {
         Point p = data_->getPoint(i);
         unsigned int v;
-        v = ftoi (p.v[Point::X]);
+        v = ftoi (p.x());
         b.append((char*)&v,4);
-        v = ftoi(p.v[Point::Y]);
+        v = ftoi(p.y());
         b.append((char*)&v,4);
-        v = ftoi(p.v[Point::Z]);
+        v = ftoi(p.z());
         b.append((char*)&v,4);
         b.append(p.r);
         b.append(p.g);
@@ -168,9 +168,9 @@ void StaticFrame::load(QXmlStreamReader* e)
         for (int i=0; i < ba.size()/16; i++) {
             Point p;
             const int a = 16 * i;
-            p.v[Point::X] = itof (*(unsigned int*)(b+a));
-            p.v[Point::Y] = itof (*(unsigned int*)(b+a+4));
-            p.v[Point::Z] = itof (*(unsigned int*)(b+a+8));
+            p.setX(itof (*(unsigned int*)(b+a)));
+            p.setY(itof (*(unsigned int*)(b+a+4)));
+            p.setZ(itof (*(unsigned int*)(b+a+8)));
             p.r = b[a+12];
             p.g = b[a+13];
             p.b = b[a+14];

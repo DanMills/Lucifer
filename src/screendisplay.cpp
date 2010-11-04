@@ -43,7 +43,7 @@ ScreenDisplay::ScreenDisplay(QWidget *parent) : DisplayFrame(parent)
     setBorderColour(QColor(Qt::black));
     setBorderWidth(4);
     setIndicatorWidth(1);
-		dragging = false;
+    dragging = false;
     setAcceptDrops(true);
 
 };
@@ -92,55 +92,77 @@ void ScreenDisplay::loadData()
     settings.endGroup();
 }
 
+bool ScreenDisplay::selected()
+{
+    return on;
+}
+
 void ScreenDisplay::editData()
 {
-        ParameterEditor *pe = new ParameterEditor(this);
-        pe->load (fs_);
-        pe->show();
+    ParameterEditor *pe = new ParameterEditor(this);
+    pe->load (fs_);
+    pe->show();
 }
 
 void ScreenDisplay::dragEnterEvent(QDragEnterEvent *event)
 {
     if (event->mimeData()->hasFormat("Text/FrameSource") ||
-			(event->mimeData()->hasFormat("text/uri-list")))
+            (event->mimeData()->hasFormat("text/uri-list")))
         event->acceptProposedAction();
 }
 
 void ScreenDisplay::dropEvent(QDropEvent *event)
 {
-		if (event->mimeData()->hasFormat("Text/FrameSource")){
-			std::string data((char *) event->mimeData()->data("Text/FrameSource").constData());
-			FrameSourcePtr f = FrameSource::fromString(data);
-			if (f) {
-				slog()->infoStream() << "Dropped framesource onto ScreenDisplay "<< this;
-				source (f);
-			}
-			event->acceptProposedAction();
-		} else if (event->mimeData()->hasFormat("text/uri-list")){
-			QList<QUrl> urls = event->mimeData()->urls();
-			if (urls.size() >0){
-				QString s = urls[0].toLocalFile();
-				slog()->infoStream() << "Dropped URI : " << s.toStdString() << " onto ScreenDisplay "<<this;
-				Ildaloader ilda;
-				unsigned int err = 0;
-				FrameSourcePtr fs = ilda.load(s,err,false);
-				if (fs){
-					source (fs);
-				}
-			}
-			event->acceptProposedAction();
+    if (event->mimeData()->hasFormat("Text/FrameSource")) {
+        std::string data((char *) event->mimeData()->data("Text/FrameSource").constData());
+        FrameSourcePtr f = FrameSource::fromString(data);
+        if (f) {
+            slog()->infoStream() << "Dropped framesource onto ScreenDisplay "<< this;
+            source (f);
+        }
+        event->acceptProposedAction();
+    } else if (event->mimeData()->hasFormat("text/uri-list")) {
+        QList<QUrl> urls = event->mimeData()->urls();
+        if (urls.size() >0) {
+            QString s = urls[0].toLocalFile();
+            slog()->infoStream() << "Dropped URI : " << s.toStdString() << " onto ScreenDisplay "<<this;
+            Ildaloader ilda;
+            unsigned int err = 0;
+            FrameSourcePtr fs = ilda.load(s,err,false);
+            if (fs) {
+                source (fs);
+            }
+        }
+        event->acceptProposedAction();
+    }
+}
+
+void ScreenDisplay::setSelected(bool sel)
+{
+		bool e = (sel != on);
+    resetSelected(sel);
+    if (e){
+			emit stateChanged (on);
 		}
 }
 
+void ScreenDisplay::resetSelected(bool sel)
+{
+		bool e = (on != sel);
+    on = sel;
+    if (e) {
+			setIndicatorColour(QColor( on ? Qt::red : Qt::black));
+		}
+}
+
+
 void ScreenDisplay::mouseReleaseEvent (QMouseEvent *e)
 {
-	if (e->button() == Qt::LeftButton && !dragging) {
-		// Start or stop this payback
-		on = !on;
-		setIndicatorColour(QColor( on ? Qt::red : Qt::black));
-		emit stateChanged (on);
-		dragging = false;
-	}
+    if (e->button() == Qt::LeftButton && !dragging) {
+        // Start or stop this payback
+        setSelected(!on);
+        dragging = false;
+    }
 }
 
 void ScreenDisplay::mousePressEvent (QMouseEvent * e)
@@ -151,7 +173,7 @@ void ScreenDisplay::mousePressEvent (QMouseEvent * e)
         e->accept();
     } else if (e->button()==Qt::LeftButton) {
         dragStartPosition = e->pos();
-				dragStartTime.start();
+        dragStartTime.start();
         e->accept();
     }
 }
@@ -162,7 +184,7 @@ void ScreenDisplay::enterEvent (QEvent *e)
     if (e->type() == QEvent::Enter) {
         animate (true,15);
         e->accept();
-				dragging =false;
+        dragging =false;
     } else {
         QWidget::enterEvent (e);
     }
@@ -173,7 +195,7 @@ void ScreenDisplay::leaveEvent (QEvent *e)
     if (e->type()==QEvent::Leave) {
         animate (false,5);
         e->accept();
-				dragging = false;
+        dragging = false;
     } else {
         QWidget::leaveEvent (e);
     }
@@ -199,8 +221,8 @@ void ScreenDisplay::mouseMoveEvent(QMouseEvent *event)
     QByteArray arr (text.c_str(),text.size());
     mimeData->setData("Text/FrameSource", arr);
     drag->setMimeData(mimeData);
-		// Execute the drag action
-		dragging = true;
+    // Execute the drag action
+    dragging = true;
     Qt::DropAction dropAction = drag->exec(Qt::CopyAction | Qt::MoveAction);
 }
 

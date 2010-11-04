@@ -282,7 +282,7 @@ QPainter & Frame::render (QPainter &p,
         if (!po.blanked) {
             pen.setColor (QColor(po.r,po.g,po.b));
             p.setPen (pen);
-            p.drawPoint(((1.0 + po.v[Point::X])* width/2.0) + start_x,((1.0-po.v[Point::Y])*height/2.0) + start_y);
+            p.drawPoint(((1.0 + po.x())* width/2.0) + start_x,((1.0-po.y())*height/2.0) + start_y);
         }
         for (unsigned int i = 0; i < f.getPointCount()-1; i++) {
             Point tp = f.getPoint(i);
@@ -290,8 +290,8 @@ QPainter & Frame::render (QPainter &p,
             if (!np.blanked) {
                 pen.setColor (QColor(tp.r,tp.g,tp.b));
                 p.setPen (pen);
-                p.drawLine (((1.0 + tp.v[Point::X])*width/2.0) + start_x,((1.0-tp.v[Point::Y])*height/2.0) + start_y,
-                            ((1.0 + np.v[Point::X])*width/2.0) + start_x,((1.0-np.v[Point::Y])*height/2.0) + start_y);
+                p.drawLine (((1.0 + tp.x())*width/2.0) + start_x,((1.0-tp.y())*height/2.0) + start_y,
+                            ((1.0 + np.x())*width/2.0) + start_x,((1.0-np.y())*height/2.0) + start_y);
             }
         }
     }
@@ -306,9 +306,9 @@ void Frame::simplify ()
     ///TODO - Bypass this if the matrix is allready an identity
     for (unsigned int i=0; i < getPointCount(); ++i) {
         /// Each 3d point gets multiplied by the geometry matrix to give the output point.
-        points_[i].v = boost::numeric::ublas::prod (points_[i].v,mat);
-				float s = 1.0f/points_[i].v[3];
-				points_[i].v[Point::X] *= 2.0/(2.0 - points_[i].v[Point::Z]);
-				points_[i].v[Point::Y] *= 2.0/(2.0 - points_[i].v[Point::Z]);
+        points_[i]*=mat;
+				//float s = 1.0f/points_[i].w();
+				points_[i].setX(points_[i].x() * 2.0/(2.0 - points_[i].z()));
+				points_[i].setY(points_[i].y() * 2.0/(2.0 - points_[i].z()));
     }
 }

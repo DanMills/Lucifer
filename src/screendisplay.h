@@ -37,12 +37,15 @@ public:
     ScreenDisplay (QWidget *parent = 0);
     ~ScreenDisplay ();
     FrameSourcePtr data();
+		bool selected();
 public slots:
     void advance ();
     void animate (bool run, unsigned int fps);
     void loadData();
 		void editData();
 		void source (FrameSourcePtr fs);
+		void setSelected (bool sel);
+		void resetSelected (bool sel);
 	signals:
     void modified(); //emitted when the underlying data is replaced
     void stateChanged (bool); // emitted when playback is activated or

@@ -3,8 +3,24 @@
 
 #include <string>
 #include <vector>
+#include <qobject.h>
 #include "point.h"
 #include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
+
+/// A fully floating point version of a Point, used in the output pipeline for improved
+/// precision when doing gamma calculations and the like and to avoid rounding errors in the resampler.
+
+
+class PointF
+{
+public:
+    float x;
+    float y;
+    float r;
+    float g;
+    float b;
+};
 
 /// Virtual base class for the hardware IO drivers
 
@@ -15,8 +31,9 @@ class Driver;
 
 typedef boost::shared_ptr<Driver> DriverPtr;
 
-class Driver
+class Driver : public QObject
 {
+	Q_OBJECT
 public:
     Driver();
     virtual ~Driver();
@@ -27,7 +44,7 @@ public:
     virtual std::vector<std::string> enumerateHardware() = 0;
     /// Connect to one of the units in the enumerated list returned by enumerateHardware
     virtual bool connect(unsigned int index) = 0;
-		virtual bool connected();
+    virtual bool connected();
     /// Disconnect from the hardware
     virtual bool disconnect() = 0;
 
@@ -42,9 +59,9 @@ public:
     virtual bool ILDAInterlock (bool);
     virtual size_t ILDABufferFillStatus();
     /// This is called to add new points to the output.
-    virtual size_t ILDANewPoints(std::vector<Point> &pts);
+    virtual size_t ILDANewPoints(std::vector<PointF> &pts, size_t offset);
     /// Called to find out how many points per second the hardware can manage
-    virtual unsigned int ILDAHwPointsperSecond();
+    virtual unsigned int ILDAHwPointsPerSecond();
     /// Call this from the driver to request the application to supply some more points
     bool ILDARequestMorePoints();
 
@@ -64,23 +81,25 @@ public:
     /// How many pins does this interface support?
     virtual unsigned int getGPICount();
     virtual unsigned int getGPOCount();
-		/// Audio IO
-		virtual std::vector <float> readAudio();
-		virtual bool writeAudio (std::vector <float> &samples);
-		virtual size_t audioBufferSpaceFrames ();
-		virtual size_t audioSampleRate ();
-		virtual size_t audioChannels();
-		bool audioRequestMoreframes();
-		bool audioMoreframesAvailable();
+    /// Audio IO
+    virtual std::vector <float> readAudio();
+    virtual bool writeAudio (std::vector <float> &samples);
+    virtual size_t audioBufferSpaceFrames ();
+    virtual size_t audioSampleRate ();
+    virtual size_t audioChannels();
+    bool audioRequestMoreframes();
+    bool audioMoreframesAvailable();
 
-		/// Driver registration and creation methods from here down
-		static void registerDriverFactory (const std::string name, DriverPtr (*generator)());
-		static DriverPtr newDriver (const std::string name);
-		static std::vector<std::string> enemerateDrivers();
-		static bool exists (const std::string s);
+    /// Driver registration and creation methods
+    static void registerDriverFactory (const std::string name, DriverPtr (*generator)());
+    static DriverPtr newDriver (const std::string name);
+    static std::vector<std::string> enemerateDrivers();
+    static bool exists (const std::string s);
+	signals:
+		void ILDARequestMoreData();
+		void ILDAHwPPSChanged(unsigned int pps);
+		void AudioRequestMoreData();
 
+    /// User configuration options for the drivers
 };
-
-
-
 #endif

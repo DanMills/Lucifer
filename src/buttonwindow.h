@@ -25,6 +25,28 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "buttongrid.h"
 
 // The source selector window
+#include "driver.h"
+#include "head.h"
+
+class Selection
+{
+	public:
+		Selection (const unsigned int g, const unsigned int x, const unsigned int y)
+		{
+			g_= g;
+			x_ = x;
+			y_ = y;
+		}
+		~Selection(){};
+		unsigned int grid() {return g_;};
+		unsigned int getX() {return x_;};
+		unsigned int getY() {return y_;};
+	private:
+		unsigned int g_;
+		unsigned int x_;
+		unsigned int y_;
+};
+
 
 class ButtonWindow : public QMainWindow
 {
@@ -46,6 +68,9 @@ private slots:
     void setFullScreen();
     void clearFullScreen();
 		void importFiles ();
+		void selectionChanged (unsigned int x, unsigned int y, unsigned int id, bool down);
+		void selectionModeChanged (int sel);
+		void nextFrameSource();
 private:
     std::vector<ButtonGrid *> grids;
     QMenu *fileMenu;
@@ -63,6 +88,8 @@ private:
     QAction * exitAct;
 		QAction * importAct;
     QTabWidget * tabs;
+		QComboBox * selectionMode;
+		QComboBox * stepMode;
 
     bool unsaved;
     QString fileName;
@@ -74,5 +101,13 @@ private:
     void loadSettings();
     void storeSettings();
     void makeActions();
+    void loadFrame();
+
+		DriverPtr driver;
+		LaserHead head;
+		// The list of currently selected frame sources
+		std::vector<Selection> selections;
+		enum SELECTIONMODE {SINGLE,MULTIPLE,SHUFFLE};
+		SELECTIONMODE mode;
 };
 #endif

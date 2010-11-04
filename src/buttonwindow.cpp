@@ -25,11 +25,18 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "loadilda.h"
 #include <fstream>
 #include "log.h"
+#include "outputview.h"
 
 ButtonWindow::ButtonWindow ()
 {
     loadSettings();
     makeActions();
+
+    driver = Driver::newDriver("Dummy (ILDA)");
+    driver->enumerateHardware();
+    driver->connect(0);
+    head.setDriver(driver);
+
     QToolBar * toolbar = new QToolBar (this);
     toolbar->setMovable (false);
     toolbar->setFloatable(false);
@@ -41,12 +48,12 @@ ButtonWindow::ButtonWindow ()
     toolbar->addAction (windowScreenAct);
     toolbar->addSeparator();
     // This toolbar gets the output heads displayed as thumb nails on it
-    for (unsigned int i=0; i <8; i++) {
-        DisplayFrame *f = new DisplayFrame(this);
-        f->setGeometry(0,0,96,96);
-        f->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
-        toolbar->addWidget (f);
-    }
+    //for (unsigned int i=0; i <8; i++) {
+    //    DisplayFrame *f = new DisplayFrame(this);
+    //    f->setGeometry(0,0,96,96);
+    //    f->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
+    //    toolbar->addWidget (f);
+    //}
     // Multiselect mode
     // Random
     // GPIO indicators
@@ -54,16 +61,35 @@ ButtonWindow::ButtonWindow ()
     // Audio meters
 
     // And the SCRAM button
+    mode = ButtonWindow::SINGLE;
+    selectionMode = new QComboBox (toolbar);
+    selectionMode->addItem(tr("Single"));
+    selectionMode->addItem(tr("Multiple"));
+    selectionMode->addItem(tr("Shuffle"));
+    selectionMode->setToolTip(tr("Frame selection mode"));
+    toolbar->addWidget(selectionMode);
+    connect (selectionMode,SIGNAL(currentIndexChanged(int)),this,SLOT(selectionModeChanged(int)));
+
+
+    stepMode = new QComboBox (toolbar);
+    stepMode->addItem(tr("Manual"));
+    stepMode->addItem(tr("Once"));
+    stepMode->addItem(tr("Beat"));
+    stepMode->setToolTip(tr("Frame loop end condition"));
+    toolbar->addWidget(stepMode);
     toolbar->addAction(blankLasersAct);
+
     addToolBar(toolbar);
 
     tabs = new QTabWidget(this);
     tabs->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
     setCentralWidget(tabs);
     for (unsigned int i=0; i < 24; i++) {
-        grids.push_back (new ButtonGrid(8,8,this));
+        grids.push_back (new ButtonGrid(8,8,i,this));
         tabs->addTab(grids[i],QString("&")+QString().number(i+1));
         connect (grids[i],SIGNAL(modified()), this, SLOT(modified()));
+        connect (grids[i],SIGNAL(clicked(uint,uint,uint,bool)),
+                 this,SLOT(selectionChanged(uint,uint,uint,bool)));
     }
     tabs->setCurrentIndex(0);
     fileMenu = menuBar()->addMenu(tr("&File"));
@@ -83,6 +109,14 @@ ButtonWindow::ButtonWindow ()
     show();
     unsaved = false;
     setCurrentFile(QString());
+    driver = Driver::newDriver("Dummy (ILDA)");
+    connect (&head,SIGNAL(endOfSource()),this,SLOT(nextFrameSource()));
+    head.setDriver(driver);
+    driver->connect(0);
+    OutputView *view = new OutputView (NULL);
+    connect (&head,SIGNAL(newFrame(FramePtr)),view,SLOT(updateDisplay(FramePtr)));
+    view->show();
+
 }
 
 // Load window position and size preferences
@@ -106,6 +140,9 @@ void ButtonWindow::loadSettings()
     }
     pathName = settings.value("path",home).toString();
     slog()->debugStream()<< "default path set to : "<<pathName.toStdString();
+    mode = (ButtonWindow::SELECTIONMODE) settings.value("selectionMode",ButtonWindow::SINGLE).toInt();
+    //selectionMode->setCurrentIndex((int) mode);
+    selectionModeChanged((int) mode);
     settings.endGroup();
 }
 
@@ -118,6 +155,7 @@ void ButtonWindow::storeSettings()
     settings.setValue("pos", pos());
     settings.setValue("fullscreen",bool(windowState() & Qt::WindowFullScreen));
     settings.setValue ("path",pathName);
+    settings.setValue("selectionMode", mode);
     settings.endGroup();
 }
 
@@ -187,7 +225,7 @@ void ButtonWindow::importFiles ()
         settings.setValue ("path",QFileInfo(l[0]).absolutePath());
     }
     settings.endGroup();
-		QApplication::setOverrideCursor(Qt::WaitCursor);
+    QApplication::setOverrideCursor(Qt::WaitCursor);
     for (int i=0; i < l.size(); i++) {
         QString s = l[i];
         Ildaloader ilda;
@@ -210,7 +248,7 @@ void ButtonWindow::importFiles ()
         }
     }
     QApplication::restoreOverrideCursor();
-		modified();
+    modified();
 }
 
 bool ButtonWindow::saveFile(const QString &fn)
@@ -288,6 +326,7 @@ void ButtonWindow::loadFile(const QString &fn)
         slog()->debugStream() << "File is version 1.0.0";
         int count = 0;
         grids.clear();
+        selections.clear();
         tabs->clear();
         while (!r->atEnd()) {
             if (r->isEndElement() && (r->name().toString() == "Lucifer")) {
@@ -295,8 +334,11 @@ void ButtonWindow::loadFile(const QString &fn)
             }
             if (r->isStartElement() && (r->name() == "Grid")) {
                 slog()->debugStream() << "Loading grid : " << count +1;
-                ButtonGrid *g = ButtonGrid::load(r,this);
+                ButtonGrid *g = ButtonGrid::load(r,count,this);
                 grids.push_back(g);
+                connect (grids[count],SIGNAL(modified()), this, SLOT(modified()));
+                connect (grids[count],SIGNAL(clicked(uint,uint,uint,bool)),
+                         this,SLOT(selectionChanged(uint,uint,uint,bool)));
                 tabs->addTab (g,QString("&")+QString().number (++count));
             }
             r->readNextStartElement();
@@ -351,7 +393,6 @@ void ButtonWindow::clearFullScreen()
     slog()->infoStream()<<"Window mode set to windowed";
 }
 
-
 // I hate writing GUI code, so much endless boilerplate
 void ButtonWindow::makeActions()
 {
@@ -392,4 +433,100 @@ void ButtonWindow::makeActions()
     exitAct->setStatusTip(tr("Exit the application"));
     connect(exitAct, SIGNAL(triggered()),qApp, SLOT(quit()));
 }
+
+void ButtonWindow::selectionChanged(unsigned int x, unsigned int y, unsigned int id, bool down)
+{
+    if (down) {
+        // Button pressed
+        if (mode == ButtonWindow::SINGLE) {
+            // Single select mode
+            selections.clear();
+            selections.push_back(Selection(id,x,y));
+            for (unsigned int g = 0; g <grids.size(); g++) {
+                if (g != id) {
+                    grids[g]->clear();
+                } else {
+                    grids[g]->clear(x,y);// This excludes x,y from being cleared
+                    // Push the frame out to the scan head
+                    loadFrame();
+                }
+            }
+        } else {// one of the multiselect modes
+            selections.push_back(Selection(id,x,y));
+						if (selections.size() == 1){
+							// First frame in a multi select, push it to the scanners
+							loadFrame();
+						}
+        }
+    } else {
+        // release the selection
+        if (selections.size()) {
+            unsigned int i;
+            for (i=0; i < selections.size(); i++) {
+                if ((selections[i].grid() == id) &&
+                        (selections[i].getX() == x) &&
+                        (selections[i].getY() == y)) {
+                    selections.erase(selections.begin()+i);
+                    break;
+                }
+            }
+            if (i == 0) {
+                FrameSourcePtr p;
+                // dump whatever is currently playing
+                head.loadFrameSource(p, true);
+            }
+        }
+    }
+    slog()->debugStream() << "Selections:";
+    for (unsigned int i=0; i < selections.size(); i++) {
+        slog()->debugStream() << "\t" << selections[i].grid() << ":" <<
+        selections[i].getX() << ":" << selections[i].getY();
+    }
+}
+
+void ButtonWindow::selectionModeChanged(int sel)
+{
+    enum ButtonWindow::SELECTIONMODE newmode = (ButtonWindow::SELECTIONMODE) sel;
+    if (newmode != mode) {
+        mode = newmode;
+        if (selections.size()) {
+            // may need to do some cleanup
+            if (mode == ButtonWindow::SINGLE) {
+                Selection s = selections[0];
+                selectionChanged(s.getX(),s.getY(),s.grid(),true);
+            }
+            if (mode == ButtonWindow::SHUFFLE) {
+                ///TODO Randomise the list order
+            }
+        }
+    }
+}
+
+void ButtonWindow::loadFrame()
+{
+    if (selections.size()) {
+        Selection s = selections[0];
+        FrameSourcePtr fp = grids[s.grid()]->at(s.getX(),s.getY())->data();
+        if (fp) {
+            head.loadFrameSource(fp);
+        }
+    }
+}
+
+
+void ButtonWindow::nextFrameSource()
+{
+    // drop the currently selected frame source
+    if (selections.size()) {
+        Selection s = selections[0];
+				// remove from the head of the list
+        grids[s.grid()]->at(s.getX(),s.getY())->setSelected(false);
+				// Put it back at the back of the queue
+				grids[s.grid()]->at(s.getX(),s.getY())->setSelected(true);
+    }
+    loadFrame();
+
+}
+
+
 

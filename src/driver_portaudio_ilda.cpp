@@ -22,9 +22,9 @@ PA_ILDA::PA_ILDA() : Driver()
         }
     }
     stream = NULL;
-    sr = 0;
+    sr = 44100;
     shutter = false;
-		ringbuffer = new boost::circular_buffer<Point>(BUFFER_SZ);
+		ringbuffer = new boost::circular_buffer<PointF>(BUFFER_SZ);
 }
 
 PA_ILDA::~PA_ILDA()
@@ -108,6 +108,7 @@ bool PA_ILDA::connect(unsigned int index)
         slog ()->errorStream() << "Card supports no useful sample rates";
         return false;
     }
+    emit ILDAHwPPSChanged(sr);
     slog()->infoStream() << "Card supports " << sr <<" pps";
     // Now set up the callback and start the thing running
     err = Pa_OpenStream(
@@ -119,7 +120,6 @@ bool PA_ILDA::connect(unsigned int index)
               paNoFlag, //flags that can be used to define dither, clip settings and more
               paCallback,
               (void *)this );
-    //don't forget to check errors!
     if (err != paNoError) {
         slog()->errorStream() << "Portaudio reported "<< Pa_GetErrorText(err);
         return false;
@@ -169,12 +169,16 @@ size_t PA_ILDA::ILDABufferFillStatus()
     return ringbuffer->capacity() - ringbuffer->size();
 }
 
-size_t PA_ILDA::ILDANewPoints(std::vector< Point >& pts)
+size_t PA_ILDA::ILDANewPoints(std::vector< PointF >& pts, size_t offset)
 {
-    for (unsigned i=0; i < pts.size(); i++) {
-        ringbuffer->push_back(pts[i]);
+		size_t transfer = pts.size() - offset;
+		if (transfer > (ringbuffer->capacity()- ringbuffer->size())){
+			transfer = ringbuffer->capacity() - ringbuffer->size();
+		}
+    for (unsigned i=0; i < transfer; i++) {
+        ringbuffer->push_back(pts[i+offset]);
     }
-    return pts.size();
+    return transfer;
 }
 
 static int paCallback(const void *, void *outputBuffer,
@@ -190,15 +194,15 @@ static int paCallback(const void *, void *outputBuffer,
         nf = t->ringbuffer->size();
     }
     for (unsigned int i=0; i < nf; i++) {
-        Point p = t->ringbuffer->front();
+        PointF p = t->ringbuffer->front();
         t->ringbuffer->pop_front();
         for (unsigned int j=0; j < t->channels; j++) {
             switch (j) {
             case 0:
-                *out = p.x();
+                *out = p.x;
                 break;
             case 1:
-                *out = p.y();
+                *out = p.y;
                 break;
             case 2:
                 *out = p.r;

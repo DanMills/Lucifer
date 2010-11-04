@@ -40,7 +40,7 @@ public:
     /// @param num_x is the number of buttons to create across the screen.
     /// @param num_y is the number of rows of buttons to create.
     /// @param *parent is the parent widget.
-    ButtonGrid (unsigned int num_x = 8, unsigned int num_y = 8, QWidget *parent = NULL);
+    ButtonGrid (unsigned int num_x = 8, unsigned int num_y = 8,unsigned int id=0 ,QWidget *parent = NULL);
     ~ButtonGrid();
     /// @returns Returns a pointer to the ScreenDisplay corresponding to the given coordinates in the grid.
 
@@ -60,21 +60,30 @@ public:
 		/// @param *w is a pointer to the xmlwriter used to store the data.
     void save (QXmlStreamWriter *w);
     /// A Factory method that creates a button grid from the saved XML.
-
-		///
 		/// @returns a new ButtonGrid loaded from file
 		/// @param *e is the xmlreader containing the button grid.
     /// @param *parent is the parent widget.
-    static ButtonGrid *load(QXmlStreamReader *e, QWidget *parent);
+    static ButtonGrid *load(QXmlStreamReader* e, unsigned int id, QWidget* parent);
 signals:
     /// Emitted when one of the buttons is modified.
     void modified ();
+		void clicked (unsigned int x, unsigned int y, unsigned int id, bool down);
+public slots:
+		/// Emits clicked if state changed
+		void setState (unsigned int x, unsigned int y, bool selected);
+		/// does not emit clicked
+		void clear(int except_x = -1, int except_y=-1);
 private:
     QGridLayout * layout;
+		QSignalMapper * mapper;
     unsigned int num_x_;
     unsigned int num_y_;
+		unsigned int id_;
 private slots:
     void mod ();
+		void stateChanged (int);
+//public slots:
+//    void stat(int);
 };
 
 #endif

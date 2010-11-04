@@ -28,7 +28,7 @@ public:
     bool ILDAShutter (bool);
     bool ILDAInterlock (bool);
     size_t ILDABufferFillStatus();
-    size_t ILDANewPoints (std::vector<Point> &pts);
+    size_t ILDANewPoints (std::vector<PointF> &pts, size_t offset);
     unsigned int ILDAHwPointsPerSecond();
 private:
     PaStream *stream;
@@ -36,7 +36,7 @@ private:
     unsigned int sr;
     bool shutter;
     unsigned int channels;
-    boost::circular_buffer<Point> *ringbuffer;
+    boost::circular_buffer<PointF> *ringbuffer;
     friend int paCallback(const void *inputBuffer, void *outputBuffer,
                           unsigned long framesPerBuffer,
                           const PaStreamCallbackTimeInfo* timeInfo,

@@ -17,7 +17,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 
-
 /* $Id: loadilda.cpp 22 2010-07-24 15:01:51Z dmills $ */
 
 // Loads an ILDA file as a show fragment.
@@ -212,14 +211,14 @@ StaticFramePtr Ildaloader::readFrameSection(QDataStream & stream, bool is3DFrame
         qint16 x;
         qint16 y;
         stream >> x >> y;
-        p.v[Point::X] = x/32768.0;
-        p.v[Point::Y] = y/32768.0;
+        p.setX(x/32768.0);
+        p.setY(y/32768.0);
         if (is3DFrame) {
             qint16 z;
             stream >> z;
-            p.v[Point::Z] = z/32768.0;
+            p.setZ(z/32768.0);
         } else {
-            p.v[Point::Z] = 0.0;
+            p.setZ(0.0f);
         }
         quint8 state = 0;
         quint8 col;
@@ -286,14 +285,14 @@ StaticFramePtr Ildaloader::readFormat5(QDataStream & stream, bool is3DFrame)
         quint8 r, g, b, state;
 				qint16 x,y;
         stream >> x >> y;
-        p.v[Point::X] = x/32768.0;
-        p.v[Point::Y] = y/32768.0;
+        p.setX(x/32768.0);
+        p.setY(y/32768.0);
         if (is3DFrame) {
             qint16 z;
             stream >> z;
-            p.v[Point::Z] = z/32768.0;
+            p.setZ(z/32768.0);
         } else {
-            p.v[Point::Z] = 0;
+            p.setZ(0.0f);
         }
         stream >> state >> b >> g >> r;
         p.blanked = ((state & 64) == 64);
