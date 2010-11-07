@@ -17,8 +17,7 @@ class LaserHead : public QObject
 public:
     LaserHead();
     ~LaserHead();
-    bool setDriver (DriverPtr d);
-    bool setPPS (unsigned int pps = 30000);
+		DriverPtr getDriver() const;
 signals:
     /// Emitted when the frame source runs out of frames.
     void endOfSource();
@@ -30,7 +29,10 @@ signals:
 public slots:
     /// Load a new framesource into the scan head
     bool loadFrameSource (FrameSourcePtr f, bool immediate = false);
+		bool setDriver (std::string name);
+		bool setPPS (unsigned int pps = 30000);
 private:
+		bool setDriver (DriverPtr d);
     unsigned int targetPPS;
     DriverPtr driver;
     FrameSourcePtr fs;
@@ -43,7 +45,7 @@ private slots:
     void dataRequested();
 		void HWPpsChanged(unsigned int newPPS);
 };
-
+typedef boost::shared_ptr<LaserHead> LaserHeadPtr;
 #endif
 
 

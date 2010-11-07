@@ -148,7 +148,7 @@ public:
     virtual FrameGui * controls (QWidget *parent) = 0;
 
 		static FrameSourcePtr loadFrames (QXmlStreamReader* e);
-		void saveFrames(QXmlStreamWriter *w);
+		void saveFrames(QXmlStreamWriter* w);
 		static FrameSourcePtr fromString (std::string &s);
     std::string toString();
 		/// Call this to register your framesource with the system

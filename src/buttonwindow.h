@@ -103,7 +103,7 @@ private:
     void makeActions();
     void loadFrame();
 
-		DriverPtr driver;
+		//DriverPtr driver;
 		LaserHead head;
 		// The list of currently selected frame sources
 		std::vector<Selection> selections;

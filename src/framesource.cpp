@@ -99,7 +99,7 @@ unsigned int FrameSource::getUniqueHandle()
     return hdl++;
 }
 
-void FrameSource::saveFrames(QXmlStreamWriter *w)
+void FrameSource::saveFrames(QXmlStreamWriter* w)
 {
     assert (w);
     w->writeStartElement(QString().fromStdString(name));

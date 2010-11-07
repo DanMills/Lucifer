@@ -22,7 +22,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "frame.h"
 #include <boost/numeric/ublas/matrix.hpp>
 #include <math.h>
-
+// For rendering to a qpainter
+#include <QtGui>
 
 Frame::Frame():
         geometry(4,4)

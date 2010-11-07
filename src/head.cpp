@@ -41,6 +41,13 @@ bool LaserHead::setDriver(DriverPtr d)
     }
 }
 
+bool LaserHead::setDriver(std::string name)
+{
+	DriverPtr d = Driver::newDriver(name);
+	return setDriver(d);
+}
+
+
 void LaserHead::dataRequested()
 {
     if (driver) {
@@ -85,3 +92,9 @@ bool LaserHead::loadFrameSource(FrameSourcePtr f, bool immediate)
     }
     return true;
 }
+
+DriverPtr LaserHead::getDriver() const
+{
+	return driver;
+}
+

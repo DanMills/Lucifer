@@ -43,6 +43,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "buttonwindow.h"
 #include "log.h"
 #include "3DEngine/winding.h"
+#include "engine.h"
 
 static const std::string usage(" \
 lucifer [-option] [-option]... [filename.lsf] [filename.ild(a)]\n\
@@ -102,7 +103,7 @@ int main (int argc, char **argv)
             abort ();
         }
     }
-    setLogFileName(logname);
+    //setLogFileName(logname);
     // Figure out the logger options
     if (loglevel == std::string("DEBUG")) {
         slog()->setPriority(log4cpp::Priority::DEBUG);
@@ -142,6 +143,25 @@ int main (int argc, char **argv)
     QCoreApplication::setApplicationName("Lucifer");
     slog()->info("Starting Galvanic Lucifer");
     //polygonTest p;
+		Engine e;
+
+		e.loadShow("testload.lsf");
+		sleep (1);
+		e.saveShow("test.lsf");
+		for (unsigned int i=0; i < 8; i++){
+			/// Set up the laser heads with dummy drivers
+			e.getHead(i)->setDriver("Dummy (ILDA)");
+			LaserHeadPtr hp = e.getHead(i);
+			assert (hp);
+			DriverPtr dp = hp->getDriver();
+			assert (dp);
+			dp->enumerateHardware();
+			 bool cn = dp->connect(0);
+			 assert (cn);
+			/// Start the laserhead thread.
+			e.startHead(i);
+		}
+
 
     ButtonWindow grid;
     for (unsigned int i=0; i < filenames.size(); i++) {

@@ -32,10 +32,9 @@ ButtonWindow::ButtonWindow ()
     loadSettings();
     makeActions();
 
-    driver = Driver::newDriver("Dummy (ILDA)");
-    driver->enumerateHardware();
-    driver->connect(0);
-    head.setDriver(driver);
+    head.setDriver("Dummy (ILDA)");
+		head.getDriver()->enumerateHardware();
+		head.getDriver()->connect(0);
 
     QToolBar * toolbar = new QToolBar (this);
     toolbar->setMovable (false);
@@ -109,11 +108,12 @@ ButtonWindow::ButtonWindow ()
     show();
     unsaved = false;
     setCurrentFile(QString());
-    driver = Driver::newDriver("Dummy (ILDA)");
     connect (&head,SIGNAL(endOfSource()),this,SLOT(nextFrameSource()));
-    head.setDriver(driver);
-    driver->connect(0);
-    OutputView *view = new OutputView (NULL);
+		head.setDriver("Dummy (ILDA)");
+		head.getDriver()->enumerateHardware();
+		head.getDriver()->connect(0);
+
+		OutputView *view = new OutputView (NULL);
     connect (&head,SIGNAL(newFrame(FramePtr)),view,SLOT(updateDisplay(FramePtr)));
     view->show();
 

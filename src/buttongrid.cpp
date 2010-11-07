@@ -58,8 +58,8 @@ ButtonGrid::~ButtonGrid ()
 
 void ButtonGrid::clear(int except_x, int except_y)
 {
-    for (int x=0; x < num_x_; x++) {
-        for (int y=0; y < num_y_; y++) {
+    for (int x=0; x < (int)num_x_; x++) {
+        for (int y=0; y < (int)num_y_; y++) {
             if ((x != except_x) || (y!= except_y)) {
                 ScreenDisplay *s = at (x,y);
                 if (s) {
