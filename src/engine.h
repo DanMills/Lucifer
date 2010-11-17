@@ -16,8 +16,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-
-
 #ifndef ENGINE_INCL
 #define ENGINE_INCL
 
@@ -29,52 +27,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 /// Maximum number of laser heads supported on a single PC
 #define MAX_HEADS (8)
 
-/// A tiny little shim to put each laser head into its own thread.
-/// With essentially all modern CPUs being multicore this does much to
-/// optimise performance.
-/// HeadThread->start must be called to actually start any head running
-class HeadThread : public QThread
-{
-    Q_OBJECT
-public:
-    HeadThread();
-    virtual ~HeadThread();
-    void run();
-    LaserHeadPtr head;
-};
+
 
 class Engine;
-
-/// A Thread that saves the state of a show
-class ShowSaver : public QThread
-{
-    Q_OBJECT
-public:
-    ShowSaver (Engine* engine_, QXmlStreamWriter* w_);
-    ~ShowSaver();
-    void run ();
-signals:
-    void saved();
-private:
-    QXmlStreamWriter * w;
-    Engine *e;
-};
-
-/// A thread that loads a show
-class ShowLoader : public QThread
-{
-	Q_OBJECT
-	public:
-		ShowLoader (Engine* engine_, QXmlStreamReader* r_);
-		~ShowLoader();
-		void run ();
-	signals:
-		void saved();
-	private:
-		QXmlStreamReader * r;
-		Engine *e;
-};
-
+/// things from engine_impl.h
+class ShowSaver;
+class ShowLoader;
+class ShowImporter;
+class HeadThread;
 
 /// This object holds all the basic frame sources (master copies of the reference counted
 /// ptrs) in sources, so deleting one will probably eventually result in that framesource
@@ -98,31 +58,55 @@ public:
 
     bool loadShow (QString filename, const bool clear = true);
     bool saveShow (QString filename);
+    bool importShow (QStringList filenames, int index = -1);
+
+    /// Copies the frame souce in source to dest.
+    /// source and dest are indicies into the sources table.
+    bool copy (unsigned int dest, unsigned int source);
+		/// Returns a list of mime types understood by the engine
+		std::vector <std::string> mimeTypes(bool local = true) const;
+		/// Returns a mime data set corresponding to a frame source
+		QMimeData * mimeData(int pos);
 
 signals:
+    /// Emitted whenever a framesource is replaced in the main sources vector
     void frameSourceChanged (unsigned long int pos, FrameSourcePtr newSource);
+    /// Emitted when the sise of the sources vector changes
+    void sourcesSizeChanged (size_t);
+    /// Show file has completed loading
     void showLoaded ();
+    /// show file has finished saving
     void showSaved();
+    /// show imported
+    void showImported();
 
 public slots:
     /// Kill all laser output, open the interlocks and scram the pile,
     /// Called by the emergency stop signal (Also WDT timeouts and such).
     void kill ();
+		/// Deal with drag and drop events.
+		bool mimeHandler (const QMimeData * data, int pos);
 private slots:
     void Saved();
     void Loaded();
+    void Imported();
+    void needNewSource(int head);
 private:
     /// Lock held while reading or writing the sources vector as this is prone to reallocation
-    /// and I am not sure if it is atomic.
+    /// and I am not sure if that is atomic.
     QReadWriteLock source_lock;
     std::vector <FrameSourcePtr> sources;
-    HeadThread heads[MAX_HEADS];
+    /// The laser projection heads
+    HeadThread *heads[MAX_HEADS];
+    /// File IO threads and associated locks
     ShowSaver *saver;
     QMutex save_mutex;
     QFile savef;
     QMutex load_mutex;
     QFile loadf;
-		ShowLoader *loader;
+    ShowLoader *loader;
+    QMutex import_mutex;
+    ShowImporter *importer;
 };
 
 typedef boost::shared_ptr<Engine> EnginePtr;

@@ -226,6 +226,20 @@ void StaticFrame::reset (Playback p)
     sp->dewellStart.start();
 }
 
+void StaticFrame::copyDataTo(FrameSourcePtr p) const
+{
+	assert (p);
+	StaticFrame * sf = dynamic_cast<StaticFrame*> (p.get());
+	sf->useDewell = useDewell;
+	sf->dewell = dewell;
+	sf->repeats = repeats;
+	sf->data_->clear();
+	sf->data_->reserve(data_->getPointCount());
+	for (size_t i =0; i < data_->getPointCount(); i++){
+		sf->data_->addPoint(data_->getPoint(i));
+	}
+}
+
 PlaybackDataPtr StaticFrame::createPlaybackData ()
 {
     return PlaybackDataPtr(new StaticFramePlayback);

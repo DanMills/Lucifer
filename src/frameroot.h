@@ -51,6 +51,7 @@ class FrameRoot : public FrameSource
 		size_t frames ();
 		size_t pos(Playback p);
 		void reset(Playback p);
+		void copyDataTo(FrameSourcePtr p) const{};
 
 		void save (QXmlStreamWriter *w);
 		void load (QXmlStreamReader *e);

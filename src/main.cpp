@@ -64,7 +64,10 @@ int main (int argc, char **argv)
     bool listPlugs = false;
     bool noReload = false;
     std::string loglevel("INFO");
-
+    qRegisterMetaType<unsigned long int>("unsigned long int");
+    qRegisterMetaType<FrameSourcePtr>("FrameSourcePtr");
+		qRegisterMetaType<size_t>("size_t");
+		qRegisterMetaType<FramePtr>("FramePtr");
     int c;
     opterr = 0;
     // FIXME GNU SPECIFIC
@@ -143,27 +146,23 @@ int main (int argc, char **argv)
     QCoreApplication::setApplicationName("Lucifer");
     slog()->info("Starting Galvanic Lucifer");
     //polygonTest p;
-		Engine e;
-
-		e.loadShow("testload.lsf");
-		sleep (1);
-		e.saveShow("test.lsf");
-		for (unsigned int i=0; i < 8; i++){
-			/// Set up the laser heads with dummy drivers
-			e.getHead(i)->setDriver("Dummy (ILDA)");
-			LaserHeadPtr hp = e.getHead(i);
-			assert (hp);
-			DriverPtr dp = hp->getDriver();
-			assert (dp);
-			dp->enumerateHardware();
-			 bool cn = dp->connect(0);
-			 assert (cn);
-			/// Start the laserhead thread.
-			e.startHead(i);
-		}
+    EnginePtr e = boost::make_shared<Engine>();
+    for (unsigned int i=0; i < 8; i++) {
+        /// Set up the laser heads with dummy drivers
+        e->getHead(i)->setDriver("Dummy (ILDA)");
+        LaserHeadPtr hp = e->getHead(i);
+        assert (hp);
+        DriverPtr dp = hp->getDriver();
+        assert (dp);
+        dp->enumerateHardware();
+        bool cn = dp->connect(0);
+        assert (cn);
+        /// Start the laserhead thread.
+        e->startHead(i);
+    }
 
 
-    ButtonWindow grid;
+    ButtonWindow grid (e);
     for (unsigned int i=0; i < filenames.size(); i++) {
         std::string fn = filenames[i];
         grid.loadFile (QString().fromStdString(fn));

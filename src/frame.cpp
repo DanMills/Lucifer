@@ -268,7 +268,7 @@ QPainter & Frame::render (QPainter &p,
         // F gets modified by having the geometry matrix applied
         Frame f = *this;
         static int theta = 0;
-        f.rotate (theta +=5,1,1,1);
+        //f.rotate (theta +=5,1,1,1);
 				//f.scale (0.5,0.5,0.5);
         //f.projection (0,0,2);
         f.simplify ();

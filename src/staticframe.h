@@ -57,6 +57,7 @@ public:
     void reserve (size_t points);
     void add_data (const Point &p);
     size_t frames ();
+		void copyDataTo (FrameSourcePtr p) const;
 
     size_t pos(Playback p);
     void reset(Playback p);

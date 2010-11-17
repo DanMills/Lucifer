@@ -25,26 +25,31 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "buttongrid.h"
 
 // The source selector window
-#include "driver.h"
-#include "head.h"
+#include "engine.h"
 
 class Selection
 {
-	public:
-		Selection (const unsigned int g, const unsigned int x, const unsigned int y)
-		{
-			g_= g;
-			x_ = x;
-			y_ = y;
-		}
-		~Selection(){};
-		unsigned int grid() {return g_;};
-		unsigned int getX() {return x_;};
-		unsigned int getY() {return y_;};
-	private:
-		unsigned int g_;
-		unsigned int x_;
-		unsigned int y_;
+public:
+    Selection (const unsigned int g, const unsigned int x, const unsigned int y)
+    {
+        g_= g;
+        x_ = x;
+        y_ = y;
+    }
+    ~Selection() {};
+    unsigned int grid() {
+        return g_;
+    };
+    unsigned int getX() {
+        return x_;
+    };
+    unsigned int getY() {
+        return y_;
+    };
+private:
+    unsigned int g_;
+    unsigned int x_;
+    unsigned int y_;
 };
 
 
@@ -53,10 +58,10 @@ class ButtonWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    ButtonWindow ();
+    ButtonWindow (EnginePtr e, QWidget *parent = NULL);
 public slots:
-		void loadFile(const QString &fn);
-		bool saveFile(const QString &fn);
+    void loadFile(const QString &fn);
+    bool saveFile(const QString &fn);
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -67,11 +72,13 @@ private slots:
     void modified(); // A child has been modified, need to re-save?
     void setFullScreen();
     void clearFullScreen();
-		void importFiles ();
-		void selectionChanged (unsigned int x, unsigned int y, unsigned int id, bool down);
-		void selectionModeChanged (int sel);
-		void nextFrameSource();
+    void importFiles ();
+    void selectionChanged (unsigned int x, unsigned int y, unsigned int id, bool down);
+    void selectionModeChanged (int sel);
+    void sourcesSizeChanged (size_t);
+    //void nextFrameSource();
 private:
+    ButtonWindow();
     std::vector<ButtonGrid *> grids;
     QMenu *fileMenu;
     QMenu *editMenu;
@@ -86,14 +93,16 @@ private:
     QAction * windowScreenAct;
     QAction * blankLasersAct;
     QAction * exitAct;
-		QAction * importAct;
+    QAction * importAct;
     QTabWidget * tabs;
-		QComboBox * selectionMode;
-		QComboBox * stepMode;
+    QComboBox * selectionMode;
+    QComboBox * stepMode;
 
     bool unsaved;
     QString fileName;
     QString pathName;
+
+    EnginePtr engine;
 
     bool saveAs();
     void setCurrentFile(const QString &fn);
@@ -103,11 +112,11 @@ private:
     void makeActions();
     void loadFrame();
 
-		//DriverPtr driver;
-		LaserHead head;
-		// The list of currently selected frame sources
-		std::vector<Selection> selections;
-		enum SELECTIONMODE {SINGLE,MULTIPLE,SHUFFLE};
-		SELECTIONMODE mode;
+    //DriverPtr driver;
+    LaserHead head;
+    // The list of currently selected frame sources
+    std::vector<Selection> selections;
+    enum SELECTIONMODE {SINGLE,MULTIPLE,SHUFFLE};
+    SELECTIONMODE mode;
 };
 #endif

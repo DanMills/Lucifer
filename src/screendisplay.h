@@ -29,12 +29,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "framesource.h"
 #include "displayframe.h"
 #include "point.h"
+#include "engine.h"
 
 class ScreenDisplay : public DisplayFrame
 {
     Q_OBJECT
 public:
-    ScreenDisplay (QWidget *parent = 0);
+    ScreenDisplay (EnginePtr engine_, int id_, QWidget * parent = 0);
     ~ScreenDisplay ();
     FrameSourcePtr data();
 		bool selected();
@@ -48,8 +49,14 @@ public slots:
 		void resetSelected (bool sel);
 	signals:
     void modified(); //emitted when the underlying data is replaced
-    void stateChanged (bool); // emitted when playback is activated or
-    //deactivated by pressing the button
+		/// Emitted when a frame source is drag and dropped onto this displayframe
+		/// Should be hooked to eventually call engine.addFrameSource with
+		///apropriate parameters.
+		//void addFrameSource (FrameSourcePtr p);
+    void stateChanged (bool); // emitted when playback is activated or deactivated by pressing the button
+		//void importClicked();
+		//void dropped(const QMimeData * data);
+
 protected:
 		void dragEnterEvent(QDragEnterEvent *event);
 		void dropEvent(QDropEvent *event);
@@ -67,6 +74,8 @@ private:
 		QPoint dragStartPosition;
 		QTime dragStartTime;
 		bool dragging;
+		int id;
+		EnginePtr engine;
 };
 
 #endif

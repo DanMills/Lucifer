@@ -27,14 +27,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "log.h"
 #include "outputview.h"
 
-ButtonWindow::ButtonWindow ()
+ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
 {
+    engine = e;
     loadSettings();
     makeActions();
-
-    head.setDriver("Dummy (ILDA)");
-		head.getDriver()->enumerateHardware();
-		head.getDriver()->connect(0);
 
     QToolBar * toolbar = new QToolBar (this);
     toolbar->setMovable (false);
@@ -83,13 +80,19 @@ ButtonWindow::ButtonWindow ()
     tabs = new QTabWidget(this);
     tabs->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
     setCentralWidget(tabs);
-    for (unsigned int i=0; i < 24; i++) {
-        grids.push_back (new ButtonGrid(8,8,i,this));
-        tabs->addTab(grids[i],QString("&")+QString().number(i+1));
-        connect (grids[i],SIGNAL(modified()), this, SLOT(modified()));
-        connect (grids[i],SIGNAL(clicked(uint,uint,uint,bool)),
-                 this,SLOT(selectionChanged(uint,uint,uint,bool)));
-    }
+    ButtonGrid *g = new ButtonGrid(engine, 8,8,0,this);
+    grids.push_back (g);
+    // This connection ensures that the grids have a consistent view of what is loaded into the engine
+    connect (&(*engine),SIGNAL(frameSourceChanged(unsigned long int, FrameSourcePtr)),
+             g,SLOT(frameSourceChanged(unsigned long int,FrameSourcePtr)));
+    // This ensures that the number of grids is sufficient for the number of frames loaded into the engine
+    connect (&(*engine),SIGNAL(sourcesSizeChanged(size_t)),this,SLOT(sourcesSizeChanged(size_t)));
+    tabs->addTab(grids[0],QString("&")+QString().number(1));
+    connect (grids[0],SIGNAL(modified()), this, SLOT(modified()));
+    connect (grids[0],SIGNAL(clicked(uint,uint,uint,bool)),
+             this,SLOT(selectionChanged(uint,uint,uint,bool)));
+
+
     tabs->setCurrentIndex(0);
     fileMenu = menuBar()->addMenu(tr("&File"));
     editMenu= menuBar()->addMenu(tr("&Edit"));
@@ -108,13 +111,9 @@ ButtonWindow::ButtonWindow ()
     show();
     unsaved = false;
     setCurrentFile(QString());
-    connect (&head,SIGNAL(endOfSource()),this,SLOT(nextFrameSource()));
-		head.setDriver("Dummy (ILDA)");
-		head.getDriver()->enumerateHardware();
-		head.getDriver()->connect(0);
-
-		OutputView *view = new OutputView (NULL);
-    connect (&head,SIGNAL(newFrame(FramePtr)),view,SLOT(updateDisplay(FramePtr)));
+    //connect (&head,SIGNAL(endOfSource()),this,SLOT(nextFrameSource()));
+    OutputView *view = new OutputView (NULL);
+    connect ((&(*engine->getHead(0))),SIGNAL(newFrame(FramePtr)),view,SLOT(updateDisplay(FramePtr)));
     view->show();
 
 }
@@ -168,6 +167,20 @@ void ButtonWindow::closeEvent(QCloseEvent *event)
         event->ignore();
     }
 }
+
+void ButtonWindow::sourcesSizeChanged(size_t s)
+{
+    while (s > 64 * grids.size()) {
+        // We dont have enough tabs to represent all the frameSources we have loaded.
+        ButtonGrid *g = new ButtonGrid(engine, 8,8,64 * grids.size(),this);
+        grids.push_back (g);
+        // This connection ensures that the grids have a consistent view of what is loaded into the engine
+        connect (&(*engine),SIGNAL(frameSourceChanged(unsigned long int, FrameSourcePtr)),
+                 g,SLOT(frameSourceChanged(unsigned long int,FrameSourcePtr)));
+        tabs->addTab(g,QString("&")+QString().number(grids.size()));
+    }
+}
+
 
 bool ButtonWindow::maybeSave()
 {
@@ -225,61 +238,14 @@ void ButtonWindow::importFiles ()
         settings.setValue ("path",QFileInfo(l[0]).absolutePath());
     }
     settings.endGroup();
-    QApplication::setOverrideCursor(Qt::WaitCursor);
-    for (int i=0; i < l.size(); i++) {
-        QString s = l[i];
-        Ildaloader ilda;
-        unsigned int error = 0;
-        FrameSourcePtr p = ilda.load (s,error);
-        // Scan the grid arrays looking for somewhere to put this thing.
-        for (unsigned int g=0; g < grids.size(); g++) {
-            int gx, gy;
-            grids[g]->dimensions (gx,gy);
-            for (int x =0; x < gx; x++) {
-                for (int y = 0; y < gy; y++) {
-                    if (!grids[g]->at(x,y)->data()) {
-                        // Got an empty one
-                        grids[g]->at(x,y)->source (p);
-                        p = FrameSourcePtr();
-                        break;
-                    }
-                }
-            }
-        }
-    }
-    QApplication::restoreOverrideCursor();
+    engine->importShow(l,-1);
     modified();
 }
 
 bool ButtonWindow::saveFile(const QString &fn)
 {
-    QFile f(fn);
-    if (!f.open(QFile::WriteOnly)) {
-        slog()->errorStream()<<"Unable to open file for writing";
-        QMessageBox::warning(this, tr("Lucifer"),
-                             tr("The file could not be opened."),
-                             QMessageBox::Ok);
-        QApplication::restoreOverrideCursor();
-        statusBar()->showMessage(tr("File save error"), 5000);
-        return false;
-    }
-    QApplication::setOverrideCursor(Qt::WaitCursor);
-    slog()->infoStream()<<"Saving file : " << fn.toStdString();
-    QXmlStreamWriter *w = new QXmlStreamWriter(&f);
-    w->setAutoFormatting(true);
-    w->writeStartDocument();
-    w->writeStartElement("Lucifer");
-    w->writeAttribute("Version","1.0.0");
-    for (unsigned int i=0; i < grids.size(); i++) {
-        grids[i]->save(w);
-    }
-    w->writeEndElement();// Lucifer show
-    w->writeEndDocument();
-    delete w;
-    f.close();
-    QApplication::restoreOverrideCursor();
-    slog()->infoStream()<<"File saved";
-    setCurrentFile(fn);
+
+    engine->saveShow(fn);
     statusBar()->showMessage(tr("File saved"), 2000);
     return true;
 }
@@ -298,63 +264,9 @@ void ButtonWindow::openFile()
 
 void ButtonWindow::loadFile(const QString &fn)
 { // Todo - this is painfully slow at the moment
-    QApplication::setOverrideCursor(Qt::WaitCursor);
+    // QApplication::setOverrideCursor(Qt::WaitCursor);
     slog()->infoStream()<<"Loading show file : " << fn.toStdString();
-    QFile f(fn);
-    if (!f.open(QFile::ReadOnly)) {
-        slog()->errorStream()<<"Error opening file";
-        QMessageBox::warning(this, tr("Lucifer"),
-                             tr("The file could not be opened."),
-                             QMessageBox::Ok);
-        QApplication::restoreOverrideCursor();
-        statusBar()->showMessage(tr("File Not Loaded"), 5000);
-        return;
-    }
-    QXmlStreamReader *r = new QXmlStreamReader(&f);
-    while (!r->atEnd()) {
-        // Find the document head and check that this is the correct file format
-        if (r->name().toString() == "Lucifer") {
-            slog()->debugStream() << "Found a Lucifer header";
-            break;
-        }
-        slog()->debugStream() << "Element name : " << r->name().toString().toStdString();
-        r->readNext();
-    }
-    if ((!r->hasError ()) && (r->attributes().value("Version") == "1.0.0")) {
-        // Ok, a V1.00 Lucifer file has been found
-        // Next up sit in a loop looking for "Grid" elements and creating the grids
-        slog()->debugStream() << "File is version 1.0.0";
-        int count = 0;
-        grids.clear();
-        selections.clear();
-        tabs->clear();
-        while (!r->atEnd()) {
-            if (r->isEndElement() && (r->name().toString() == "Lucifer")) {
-                break;
-            }
-            if (r->isStartElement() && (r->name() == "Grid")) {
-                slog()->debugStream() << "Loading grid : " << count +1;
-                ButtonGrid *g = ButtonGrid::load(r,count,this);
-                grids.push_back(g);
-                connect (grids[count],SIGNAL(modified()), this, SLOT(modified()));
-                connect (grids[count],SIGNAL(clicked(uint,uint,uint,bool)),
-                         this,SLOT(selectionChanged(uint,uint,uint,bool)));
-                tabs->addTab (g,QString("&")+QString().number (++count));
-            }
-            r->readNextStartElement();
-        }
-        tabs->setCurrentIndex(0);
-    }
-    if (r->hasError()) {
-        slog()->errorStream() << "File read error :" << r->errorString().toStdString();
-        QMessageBox::warning(this, tr("Lucifer"),
-                             r->errorString(),
-                             QMessageBox::Ok);
-    }
-    delete r;
-    f.close();
-    QApplication::restoreOverrideCursor();
-    setCurrentFile(fn);
+    engine->loadShow(fn);
     statusBar()->showMessage(tr("File Loaded"), 2000);
 }
 
@@ -453,10 +365,10 @@ void ButtonWindow::selectionChanged(unsigned int x, unsigned int y, unsigned int
             }
         } else {// one of the multiselect modes
             selections.push_back(Selection(id,x,y));
-						if (selections.size() == 1){
-							// First frame in a multi select, push it to the scanners
-							loadFrame();
-						}
+            if (selections.size() == 1) {
+                // First frame in a multi select, push it to the scanners
+                loadFrame();
+            }
         }
     } else {
         // release the selection
@@ -513,20 +425,20 @@ void ButtonWindow::loadFrame()
     }
 }
 
-
+#if 0
 void ButtonWindow::nextFrameSource()
 {
     // drop the currently selected frame source
     if (selections.size()) {
         Selection s = selections[0];
-				// remove from the head of the list
+        // remove from the head of the list
         grids[s.grid()]->at(s.getX(),s.getY())->setSelected(false);
-				// Put it back at the back of the queue
-				grids[s.grid()]->at(s.getX(),s.getY())->setSelected(true);
+        // Put it back at the back of the queue
+        grids[s.grid()]->at(s.getX(),s.getY())->setSelected(true);
     }
     loadFrame();
 
 }
 
-
+#endif
 

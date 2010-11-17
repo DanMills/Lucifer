@@ -113,6 +113,16 @@ void FrameSource::saveFrames(QXmlStreamWriter* w)
     w->writeEndElement();//This
 }
 
+FrameSourcePtr FrameSource::clone() const
+{
+	FrameSourcePtr fs = FrameSource::newSource(name);
+	copyDataTo (fs);
+	for (unsigned int i=0; i < numChildren(); i++){
+		fs->addChild(child(i)->clone());
+	}
+	return fs;
+}
+
 FrameSourcePtr FrameSource::loadFrames (QXmlStreamReader *e)
 {
     std::string oname;
@@ -186,7 +196,8 @@ FrameSourcePtr FrameSource::fromString (std::string &s)
     return f;
 }
 
-FrameSourcePtr FrameSource::child(unsigned int pos) {
+FrameSourcePtr FrameSource::child(unsigned int pos) const
+{
     if (children_.size() > pos) {
         return children_[pos];
     } else {
@@ -274,7 +285,7 @@ void FrameSource::erasePlaybacks()
     }
 }
 
-FrameSource::POSSIBLE_CHILDREN FrameSource::numPossibleChildren()
+FrameSource::POSSIBLE_CHILDREN FrameSource::numPossibleChildren() const
 {
     return pos_children_;
 }
@@ -293,7 +304,7 @@ void FrameSource::eraseChildren()
     children_.clear();
 }
 
-unsigned int FrameSource::numChildren()
+unsigned int FrameSource::numChildren() const
 {
     return children_.size();
 }

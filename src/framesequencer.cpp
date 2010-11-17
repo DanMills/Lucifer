@@ -73,6 +73,12 @@ void FrameSequencer::load(QXmlStreamReader* e)
 //TODO Load the Repeats and mode data
 }
 
+void FrameSequencer::copyDataTo(FrameSourcePtr p) const
+{
+// TODO once we have some instance data it will need copying here
+}
+
+
 FrameSequencerPlayback * FrameSequencer::playback(Playback p)
 {
     FrameSequencerPlayback *pt = (FrameSequencerPlayback*) getPlayback(p);

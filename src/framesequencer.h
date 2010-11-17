@@ -59,6 +59,8 @@ public:
     FramePtr data (Playback p);
     PlaybackDataPtr createPlaybackData ();
 
+		void copyDataTo (FrameSourcePtr p) const;
+
     size_t frames ();
     size_t pos(Playback p);
     void reset(Playback p);

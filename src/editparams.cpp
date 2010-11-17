@@ -23,7 +23,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "editparams.h"
 #include <assert.h>
 #include "framesequencer.h"
-#include "frameroot.h"
 #include "log.h"
 
 ShowTreeWidget::ShowTreeWidget(QWidget *parent) : QTreeWidget(parent)
@@ -166,11 +165,11 @@ void ParameterEditor::load(FrameSourcePtr f)
     } else {
         setWindowTitle("Editor");
     }
-    FrameRootPtr r = boost::make_shared<FrameRoot>();
-		if (fs){
-		r->addChild(fs);
-		}
-    root = populateTree (root,r);
+    //FrameRootPtr r = boost::make_shared<FrameRoot>();
+		//if (fs){
+		//r->addChild(fs);
+		//}
+    //root = populateTree (root,r);
     tree->addTopLevelItem(root);
     hbox->removeWidget(controls);
     controls->deleteLater();

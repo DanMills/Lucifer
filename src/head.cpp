@@ -6,6 +6,9 @@ LaserHead::LaserHead()
     frame_index = 0;
     resampler.setInputPPS(targetPPS);
     resampler.setOutputPPS(30000);
+    //selection_mode = 0;
+    //step_mode = 0;
+		//currentSelection = -1;
 }
 
 LaserHead::~LaserHead()
@@ -43,8 +46,8 @@ bool LaserHead::setDriver(DriverPtr d)
 
 bool LaserHead::setDriver(std::string name)
 {
-	DriverPtr d = Driver::newDriver(name);
-	return setDriver(d);
+    DriverPtr d = Driver::newDriver(name);
+    return setDriver(d);
 }
 
 
@@ -95,6 +98,121 @@ bool LaserHead::loadFrameSource(FrameSourcePtr f, bool immediate)
 
 DriverPtr LaserHead::getDriver() const
 {
-	return driver;
+    return driver;
+}
+#if 0
+std::vector< std::string> LaserHead::enumerateSelectionModes()
+{
+    std::vector<std::string> res;
+    res.push_back(std::string("Single"));
+    res.push_back(std::string("Multiple"));
+    res.push_back(std::string("Shuffle"));
+    return res;
 }
 
+std::vector< std::string > LaserHead::enumerateStepModes()
+{
+    std::vector<std::string> res;
+		res.push_back(std::string("Loop"));
+    res.push_back(std::string("Manual"));
+    res.push_back(std::string("Once"));
+    res.push_back(std::string("Beat"));
+    return res;
+}
+
+int LaserHead::getNextSelection()
+{
+	selection_lock.lock();
+	// deal with empty selection first
+	if (selections.size() == 0){
+		if (currentSelection != -1){
+			emit currentSelectionChanged (currentSelection,-1);
+			currentSelection = -1;
+		}
+		return -1;
+	}
+	int oldsel = currentSelection;
+	switch (step_mode){
+		case 0: //loop
+			if (selections.size()==1){
+					currentSelection = selections[0];
+			} else {
+				selections.push_back(selections[0]);
+				selections.erase(selections.begin());
+				currentSelection = selections[0];
+			}
+
+
+
+
+	}
+}
+
+
+void LaserHead::select(unsigned int pos, bool active)
+{
+    selection_lock.lock();
+    if (active) {
+        if (selection_mode == 0) {
+            // Single selection mode
+            while (selections.size()>1) {
+                int s = selections[selections.size()-1];
+                selections.erase(selections.back());
+                emit selectionsChanged(s,false);
+            }
+            if (selections.size()>0) {
+                if (selections[0] != pos) {
+                    emit selectionsChanged(selections[0],false);
+                }
+                selections[0] = pos;
+            } else {
+                selections.push_back(pos);
+            }
+            emit selectionsChanged(selections[0],true);
+        } else {
+            // one of the multi select modes
+            for (unsigned int i=0; i < selections.size(); i++) {
+                if (selections[i] == pos) {
+                    selection_lock.unlock();
+                    return;
+                }
+            }
+            selections.push_back(pos);
+            emit selectionsChanged(pos,true);
+        }
+    } else {
+        // deselecting
+        for (unsigned int i=0; i < selections.size(); i++) {
+            if (selections[i] == pos) {
+                selections.erase(selections.begin()+i);
+                emit selectionsChanged(i,false);
+                break;
+            }
+        }
+    }
+    selection_lock.unlock();
+}
+void LaserHead::setSelectionMode(const unsigned int mode)
+{
+    if (selection_mode != mode) {
+        selection_mode = mode;
+        if (mode == 0) {
+            // Single select mode
+            if (selections.size() >0) {
+                // Dump all the non current selections
+                select (selections[0],true);
+            }
+        }
+        emit selectionModeChanged (selection_mode);
+    }
+}
+
+void LaserHead::setStepMode(const unsigned int mode)
+{
+    if (step_mode != mode) {
+        mode = step_mode;
+        emit stepModeChanged(mode);
+    }
+}
+
+#endif

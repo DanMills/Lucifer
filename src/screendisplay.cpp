@@ -31,8 +31,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "editparams.h"
 #include "log.h"
 
-ScreenDisplay::ScreenDisplay(QWidget *parent) : DisplayFrame(parent)
+ScreenDisplay::ScreenDisplay (EnginePtr engine_, int id_, QWidget * parent) : DisplayFrame(parent)
 {
+    id = id_;
+    engine = engine_;
     playback_ = -1;
     on = false;
     timer = new QTimer (this);
@@ -62,6 +64,8 @@ void ScreenDisplay::animate (bool run, unsigned int fps)
 
 void ScreenDisplay::loadData()
 {
+    assert (engine);
+
     // Called to Import an ILDA graphics file
     // This remembers the last path used
     QSettings settings;
@@ -76,18 +80,14 @@ void ScreenDisplay::loadData()
     QString filename = QFileDialog::getOpenFileName(this,
                        tr("Open File"), path, tr("ILDA Files (*.ild *.ilda)"));
     if (!filename.isEmpty()) {
-        Ildaloader ilda;
-        unsigned int err = 0;
-        FrameSourcePtr fs = ilda.load(filename,err,false);
-        if (fs) {
-            settings.setValue ("path",QFileInfo(filename).absolutePath());
-            source (fs);
-        } else {
-            QMessageBox::warning(this, tr("Lucifer"),
-                                 tr("Unable to read ILDA file or file invalid"),
-                                 QMessageBox::Ok);
+        QStringList names;
+        names.append(filename);
+        engine->importShow(names, id);
+    } else {
+        QMessageBox::warning(this, tr("Lucifer"),
+                             tr("Unable to read ILDA file or file invalid"),
+                             QMessageBox::Ok);
 
-        }
     }
     settings.endGroup();
 }
@@ -106,53 +106,47 @@ void ScreenDisplay::editData()
 
 void ScreenDisplay::dragEnterEvent(QDragEnterEvent *event)
 {
-    if (event->mimeData()->hasFormat("Text/FrameSource") ||
-            (event->mimeData()->hasFormat("text/uri-list")))
-        event->acceptProposedAction();
+    std::vector <std::string> valid_types;
+    valid_types = engine->mimeTypes();
+    for (unsigned int i=0; i < valid_types.size(); i++) {
+        if (event->mimeData()->hasFormat(QString().fromStdString(valid_types[i]))) {
+            event->acceptProposedAction();
+            break;
+        }
+    }
 }
 
 void ScreenDisplay::dropEvent(QDropEvent *event)
 {
-    if (event->mimeData()->hasFormat("Text/FrameSource")) {
-        std::string data((char *) event->mimeData()->data("Text/FrameSource").constData());
-        FrameSourcePtr f = FrameSource::fromString(data);
-        if (f) {
-            slog()->infoStream() << "Dropped framesource onto ScreenDisplay "<< this;
-            source (f);
-        }
-        event->acceptProposedAction();
-    } else if (event->mimeData()->hasFormat("text/uri-list")) {
-        QList<QUrl> urls = event->mimeData()->urls();
-        if (urls.size() >0) {
-            QString s = urls[0].toLocalFile();
-            slog()->infoStream() << "Dropped URI : " << s.toStdString() << " onto ScreenDisplay "<<this;
-            Ildaloader ilda;
-            unsigned int err = 0;
-            FrameSourcePtr fs = ilda.load(s,err,false);
-            if (fs) {
-                source (fs);
+    std::vector <std::string> valid_types;
+    valid_types = engine->mimeTypes();
+    for (unsigned int i=0; i < valid_types.size(); i++) {
+        if (event->mimeData()->hasFormat(QString().fromStdString(valid_types[i]))) {
+            if (engine->mimeHandler(event->mimeData(),id)) {
+                event->acceptProposedAction();
+                break;
             }
         }
-        event->acceptProposedAction();
     }
-}
+};
+
 
 void ScreenDisplay::setSelected(bool sel)
 {
-		bool e = (sel != on);
+    bool e = (sel != on);
     resetSelected(sel);
-    if (e){
-			emit stateChanged (on);
-		}
+    if (e) {
+        emit stateChanged (on);
+    }
 }
 
 void ScreenDisplay::resetSelected(bool sel)
 {
-		bool e = (on != sel);
+    bool e = (on != sel);
     on = sel;
     if (e) {
-			setIndicatorColour(QColor( on ? Qt::red : Qt::black));
-		}
+        setIndicatorColour(QColor( on ? Qt::red : Qt::black));
+    }
 }
 
 
@@ -214,16 +208,15 @@ void ScreenDisplay::mouseMoveEvent(QMouseEvent *event)
         return;
     }
     QDrag *drag = new QDrag(this);
-    QMimeData *mimeData = new QMimeData;
-    // This is ugly, but does mean that the file save and load code is well tested
-    std::string text = fs_->toString();
-    // now setup the mime type to hold this data
-    QByteArray arr (text.c_str(),text.size());
-    mimeData->setData("Text/FrameSource", arr);
+    QMimeData *mimeData = engine->mimeData(id);
     drag->setMimeData(mimeData);
+    drag->setPixmap(QPixmap().grabWidget(this,
+                                         QRect(4,4,this->size().width()-8, this->size().height()-8))
+                    .scaled (48,48,Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
     // Execute the drag action
     dragging = true;
-    Qt::DropAction dropAction = drag->exec(Qt::CopyAction | Qt::MoveAction);
+    /*Qt::DropAction dropAction = */drag->exec(Qt::CopyAction | Qt::MoveAction);
+
 }
 
 

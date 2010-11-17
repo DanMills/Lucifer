@@ -109,6 +109,7 @@ std::vector<float> Driver::readAudio()
 bool Driver::writeAudio(std::vector< float >&)
 {
     assert (false);
+    return false;
 }
 
 size_t Driver::audioBufferSpaceFrames()
