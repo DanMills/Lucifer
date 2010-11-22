@@ -216,7 +216,6 @@ void ScreenDisplay::mouseMoveEvent(QMouseEvent *event)
     // Execute the drag action
     dragging = true;
     /*Qt::DropAction dropAction = */drag->exec(Qt::CopyAction | Qt::MoveAction);
-
 }
 
 

@@ -76,6 +76,7 @@ private slots:
     void selectionChanged (unsigned int x, unsigned int y, unsigned int id, bool down);
     void selectionModeChanged (int sel);
     void sourcesSizeChanged (size_t);
+		void status(QString text, int time);
     //void nextFrameSource();
 private:
     ButtonWindow();

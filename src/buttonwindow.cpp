@@ -43,6 +43,8 @@ ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
     toolbar->addAction (fullScreenAct);
     toolbar->addAction (windowScreenAct);
     toolbar->addSeparator();
+
+    connect (&(*engine),SIGNAL(message(QString,int)),this,SLOT(status(QString,int)));
     // This toolbar gets the output heads displayed as thumb nails on it
     //for (unsigned int i=0; i <8; i++) {
     //    DisplayFrame *f = new DisplayFrame(this);
@@ -74,12 +76,28 @@ ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
     stepMode->setToolTip(tr("Frame loop end condition"));
     toolbar->addWidget(stepMode);
     toolbar->addAction(blankLasersAct);
-
     addToolBar(toolbar);
-
-    tabs = new QTabWidget(this);
+    QFrame *frame = new QFrame(this);
+		setCentralWidget(frame);
+    QVBoxLayout *vlayout = new QVBoxLayout(frame);
+    frame->setLayout(vlayout);
+    tabs = new QTabWidget();
     tabs->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
-    setCentralWidget(tabs);
+    QFrame *headframe = new QFrame();
+    vlayout->addWidget(headframe);
+    vlayout->addWidget(tabs);
+    headframe->setFixedHeight(128);
+    QHBoxLayout *hlayout = new QHBoxLayout (this);
+    headframe->setLayout(hlayout);
+    // Heads
+    for (unsigned int i=0; i < MAX_HEADS; i++) {
+				OutputView *ov = new OutputView (this);
+        hlayout->addWidget(ov);
+				connect ((&(*engine->getHead(i))),SIGNAL(newFrame(FramePtr)),ov,SLOT(updateDisplay(FramePtr)));
+    }
+
+
+    //setCentralWidget(tabs);
     ButtonGrid *g = new ButtonGrid(engine, 8,8,0,this);
     grids.push_back (g);
     // This connection ensures that the grids have a consistent view of what is loaded into the engine
@@ -112,9 +130,9 @@ ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
     unsaved = false;
     setCurrentFile(QString());
     //connect (&head,SIGNAL(endOfSource()),this,SLOT(nextFrameSource()));
-    OutputView *view = new OutputView (NULL);
-    connect ((&(*engine->getHead(0))),SIGNAL(newFrame(FramePtr)),view,SLOT(updateDisplay(FramePtr)));
-    view->show();
+    //OutputView *view = new OutputView (NULL);
+    //connect ((&(*engine->getHead(0))),SIGNAL(newFrame(FramePtr)),view,SLOT(updateDisplay(FramePtr)));
+    //view->show();
 
 }
 
@@ -246,9 +264,15 @@ bool ButtonWindow::saveFile(const QString &fn)
 {
 
     engine->saveShow(fn);
-    statusBar()->showMessage(tr("File saved"), 2000);
+    statusBar()->showMessage(tr("File saving"), 20000);
     return true;
 }
+
+void ButtonWindow::status(QString text, int time)
+{
+    statusBar()->showMessage(text,time);
+}
+
 
 void ButtonWindow::openFile()
 {
@@ -267,7 +291,7 @@ void ButtonWindow::loadFile(const QString &fn)
     // QApplication::setOverrideCursor(Qt::WaitCursor);
     slog()->infoStream()<<"Loading show file : " << fn.toStdString();
     engine->loadShow(fn);
-    statusBar()->showMessage(tr("File Loaded"), 2000);
+    statusBar()->showMessage(tr("File Loading"), 20000);
 }
 
 void ButtonWindow::setCurrentFile(const QString &fn)

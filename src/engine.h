@@ -79,6 +79,8 @@ signals:
     void showSaved();
     /// show imported
     void showImported();
+		/// Status message
+		void message (QString text, int time);
 
 public slots:
     /// Kill all laser output, open the interlocks and scram the pile,

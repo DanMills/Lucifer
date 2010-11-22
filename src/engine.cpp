@@ -21,9 +21,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "engine_impl.h"
 #include "log.h"
 #include "loadilda.h"
+#if __unix
 #include <unistd.h>
 #include <pthread.h>
-
+#endif
 
 HeadThread::HeadThread()
 {
@@ -35,21 +36,21 @@ HeadThread::~HeadThread()
 
 void HeadThread::run()
 {
-    slog()->debugStream() << "Starting laserhead thread " << std::hex << currentThreadId();
+	slog()->debugStream() << "Starting laserhead thread " << std::hex << currentThreadId();
     /// TODO - Come up with a way to put things into windows soft RT scheduling class
 #if __unix
-		pthread_t tid = pthread_self();
+    pthread_t tid = pthread_self();
     struct sched_param sp;
     sp.sched_priority = 20;
     int err;
     err = pthread_setschedparam(tid,SCHED_FIFO,&sp);
     if (err) {
-    slog()->errorStream() <<"Failed to set RT scheduling for laserhead control thread :" << strerror(err);
+        slog()->errorStream() <<"Failed to set RT scheduling for laserhead control thread :" << strerror(err);
     } else {
         slog()->infoStream() <<"Set posix RT scheduling for projection thread";
     }
 #endif
-		head = boost::make_shared<LaserHead>();
+    head = boost::make_shared<LaserHead>();
     exec();
 }
 
@@ -59,17 +60,20 @@ Engine::Engine(QObject* parent) : QObject(parent)
     loader = NULL;
     importer = NULL;
     slog()->infoStream() << "New laser show engine created : " << this;
+		emit message (tr("Starting show engine"),5000);
     QSignalMapper *map = new QSignalMapper(this);
     connect (map,SIGNAL(mapped(int)),this,SLOT(needNewSource(int)));
     for (unsigned int i=0; i < MAX_HEADS; i++) {
+				emit message(tr("Starting projector head"),5000);
         heads[i]=new HeadThread;
-				startHead(i);// Bring up the laser head thread
-				while (!heads[i]->head){ // Wait for the head to come up
-					usleep (10000);
-				}
+        startHead(i);// Bring up the laser head thread
+        while (!heads[i]->head) { // Wait for the head to come up
+            usleep (10000);
+        }
         map->setMapping(&(*heads[i]->head),i);
         connect(&(*heads[i]->head),SIGNAL(endOfSource()),map,SLOT(map()));
     }
+    emit message (tr("Laser projection engine is up and running"),5000);
 }
 
 Engine::~Engine()
@@ -185,7 +189,9 @@ bool Engine::mimeHandler(const QMimeData* data, int pos)
         QString id(data->data("Text/x-index").constData());
         int source_id = id.toInt();
         slog()->infoStream() <<"Dropped copy onto of " << source_id << " onto " << pos;
-        return copy (pos,source_id);
+        // The copy can potentially take a while so run it in the background
+        QtConcurrent::run(this,&Engine::copy,pos,source_id);
+        return true;
     } else if (data->hasFormat("Text/x-FrameSource")) {
         std::string s((char *) data->data("x-Text/FrameSource").constData());
         FrameSourcePtr f = FrameSource::fromString(s);
@@ -220,7 +226,7 @@ QMimeData* Engine::mimeData(int pos)
 
 bool Engine::startHead(const size_t pos)
 {
-		assert (heads[pos]);
+    assert (heads[pos]);
     if (pos < MAX_HEADS) {
         if (!heads[pos]->isRunning()) {
             heads[pos]->start(QThread::HighestPriority);
@@ -233,6 +239,7 @@ bool Engine::startHead(const size_t pos)
         return false;
     }
     slog()->infoStream()<< "Head " << pos << " Started";
+		emit message (tr("Head started"),5000);
     return true;
 }
 
@@ -250,6 +257,7 @@ void Engine::Saved()
     save_mutex.unlock();
     slog()->debugStream() << "Show saved, thread terminated";
     emit showSaved();
+		emit message(tr("Show Saved"),5000);
 }
 
 void Engine::Loaded()
@@ -258,12 +266,14 @@ void Engine::Loaded()
     load_mutex.unlock();
     slog()->debugStream() << "Show loaded, thread terminated";
     emit showLoaded();
+		emit message(tr("Show Loaded"),5000);
 }
 
 
 bool Engine::saveShow(QString filename)
 {
     slog()->infoStream() << "Saving file : " <<filename.toStdString();
+		emit message(tr("Saving File : ") + filename,5000);
     if (save_mutex.tryLock()) {
         if (saver) {
             delete saver;
@@ -272,6 +282,7 @@ bool Engine::saveShow(QString filename)
         if (!savef.open(QFile::WriteOnly)) {
             save_mutex.unlock();
             slog()->errorStream() << "Couldn't open file for writing : " << loadf.errorString().toStdString();
+						emit message (tr("Failed to save file : ") + filename,10000);
             return false;
         }
         QXmlStreamWriter *w = new QXmlStreamWriter(&savef);
@@ -282,6 +293,7 @@ bool Engine::saveShow(QString filename)
         return true;
     } else {
         slog()->errorStream() << "Show save already in progress";
+				emit message (tr("Show save already in progress"),5000);
         return false;
     }
 }
@@ -422,13 +434,14 @@ bool Engine::importShow(QStringList filenames, int index)
             delete importer;
         }
         importer = new ShowImporter(this,filenames,index);
+				emit message (tr("Importing frames"),5000);
         connect (importer,SIGNAL(finished()),this,SLOT(Imported()));
         slog()->debugStream() << "Starting file importer thread";
         importer->start();
         return true;
     } else {
         slog()->errorStream() <<"Another import is already running.";
-        /// TODO Import already running
+        message (tr("Another import is running!"),20000);
         return false;
     }
 }
@@ -439,6 +452,7 @@ void Engine::Imported()
     import_mutex.unlock();
     slog()->debugStream() << "file Imported, thread terminated";
     emit showImported();
+		emit message (tr("Frames imported"),5000);
 }
 
 
@@ -471,9 +485,7 @@ void ShowImporter::run()
 // called as a callback whenever one of the laser heads needs a new set of frames to output
 void Engine::needNewSource(int head)
 {
-    if (head == 0) {
-        heads[head]->head->loadFrameSource(getFrameSource(0));
-    }
+        heads[head]->head->loadFrameSource(getFrameSource(8 * head));
 }
 
 

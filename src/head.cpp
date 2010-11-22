@@ -66,7 +66,7 @@ void LaserHead::dataRequested()
             emit newFrame(fp);
             if (!fp) {
                 FrameSourcePtr p;
-                fs = p;
+								loadFrameSource(p,false);
                 emit endOfSource();
             } else {
                 std::vector<Point> p;

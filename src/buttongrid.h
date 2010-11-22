@@ -70,6 +70,7 @@ public slots:
 		/// Used to update the displayed grid
 		void frameSourceChanged(unsigned long int pos, FrameSourcePtr newSource);
 		/// called when the screen display menu item import is selected
+
 private:
     QGridLayout * layout;
 		QSignalMapper * mapper;
