@@ -43,7 +43,7 @@ public:
 
 typedef boost::shared_ptr<PlaybackData> PlaybackDataPtr;
 
-typedef unsigned int Playback;
+typedef  int Playback;
 
 class FrameGui;
 class FrameSource;

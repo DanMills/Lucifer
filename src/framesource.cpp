@@ -93,9 +93,9 @@ FrameSource::~FrameSource ()
     slog()->debugStream() << "Deleting Framesource : " << this;
 }
 
-unsigned int FrameSource::getUniqueHandle()
+Playback FrameSource::getUniqueHandle()
 {
-    unsigned static int hdl = 0;
+    static int hdl = 1;
     return hdl++;
 }
 

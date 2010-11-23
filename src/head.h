@@ -1,15 +1,37 @@
 /// Laser projector head
-#ifndef HEAD_INCL
-#define HEAD_INCL
+/* head.h is part of lucifer a laser show controller.
+
+Copyrignt 2010 Dan Mills <dmills@exponent.myzen.co.uk>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; version 2 dated June, 1991.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
 
 #include <QtCore>
 #include <vector>
+#include <boost/shared_ptr.hpp>
 #include "driver.h"
 #include "colour.h"
 #include "framesource.h"
 #include "resampler.h"
 #include "colour.h"
 #include "point.h"
+#include "playbacklist.h"
+
+#ifndef HEAD_INC
+#define HEAD_INC
+
+
 
 class LaserHead : public QObject
 {
@@ -17,17 +39,18 @@ class LaserHead : public QObject
 public:
     LaserHead();
     ~LaserHead();
-		DriverPtr getDriver() const;
-		/// Returns a list of the selection modes this head supports
-		//std::vector<std::string> enumerateSelectionModes();
-		/// returns a list of the step modes this head supports
-		//std::vector<std::string> enumerateStepModes();
-		/// Set the selection mode
-		//void setSelectionMode (const unsigned int mode);
-		/// Set the step modes
-		//void setStepMode (const unsigned int mode);
+    DriverPtr getDriver() const;
+    /// Returns a list of the selection modes this head supports
+    QStringList enumerateSelectionModes() const;
+    /// returns a list of the step modes this head supports
+    QStringList enumerateStepModes() const;
+    /// Set the selection mode
+    void setSelectionMode (const PlaybackList::SelectionModes mode);
+    /// Set the step modes
+    void setStepMode (const PlaybackList::StepModes mode);
+
 signals:
-		//FrameSourcePtr requestNewSource(unsigned int index);
+    //FrameSourcePtr requestNewSource(unsigned int index);
     /// Emitted when the frame source runs out of frames.
     void endOfSource();
     /// Emitted when the scan hardware buffer empties.
@@ -35,21 +58,21 @@ signals:
     /// emitted whenever the displayed frame changes.
     /// Useful for output window updates
     void newFrame (FramePtr frame);
-		/// Emitted whenever the currently projected source changes
-		//void currentSelectionChanged (unsigned int oldsel, unsigned int newsel);
-		/// Emitted when any selection changes
-		//void selectionsChanged (unsigned int sel, bool active);
-		//void selectionModeChanged (unsigned int mode);
-		//void stepModeChanged (unsigned int mode);
+    /// Emitted whenever the currently projected source changes
+    //void currentSelectionChanged (unsigned int oldsel, unsigned int newsel);
+    /// Emitted when any selection changes
+    //void selectionsChanged (unsigned int sel, bool active);
+    //void selectionModeChanged (unsigned int mode);
+    //void stepModeChanged (unsigned int mode);
 public slots:
     /// Load a new framesource into the scan head
     bool loadFrameSource (FrameSourcePtr f, bool immediate = false);
-		bool setDriver (std::string name);
-		bool setPPS (unsigned int pps = 30000);
-		//void select (unsigned int pos, bool active);
+    bool setDriver (std::string name);
+    bool setPPS (unsigned int pps = 30000);
+    void select (unsigned int pos, bool active);
 private:
-		bool setDriver (DriverPtr d);
-		int currentSelection;
+    bool setDriver (DriverPtr d);
+    int currentSelection;
     unsigned int targetPPS;
     DriverPtr driver;
     FrameSourcePtr fs;
@@ -58,16 +81,15 @@ private:
     size_t frame_index;
     Resample resampler;
     ColourTrimmer colourTrim[3];
-		//unsigned int selection_mode;
-		//unsigned int step_mode;
-		//std::vector <unsigned int> selections;
-		//QMutex selection_lock;
+    PlaybackList sources;
 
 private slots:
     void dataRequested();
-		void HWPpsChanged(unsigned int newPPS);
+    void HWPpsChanged(unsigned int newPPS);
 };
+
 typedef boost::shared_ptr<LaserHead> LaserHeadPtr;
+
 #endif
 
 
