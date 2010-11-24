@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 LaserHead::LaserHead(Engine* e)
 {
-		engine = e;
+    engine = e;
     targetPPS = 30000;
     frame_index = 0;
     resampler.setInputPPS(targetPPS);
@@ -71,35 +71,43 @@ bool LaserHead::setDriver(std::string name)
 
 void LaserHead::dataRequested()
 {
-		std::cerr << "!";
     if (driver) {
-        size_t t = driver->ILDANewPoints(pointBuf, frame_index);
-        frame_index +=t;
-        if (frame_index >= pointBuf.size()) {
-            pointBuf.clear();
-            frame_index = 0;
-            FramePtr fp;
-            if (fs) {
-                fp = fs->data(pb);
-            }
-            emit newFrame(fp);
-            if (!fp) {
-                FrameSourcePtr p;
-                int s;
-                s = sources.getNextFramesource();
-                if (s > -1) {
-										assert (engine);
-                    p = engine->getFrameSource(s);
+        while (driver->ILDABufferFillStatus() > 300) {
+            size_t t = driver->ILDANewPoints(pointBuf, frame_index);
+            frame_index +=t;
+            if (frame_index >= pointBuf.size()) {
+                pointBuf.clear();
+                frame_index = 0;
+                FramePtr fp;
+                if (fs) {
+                    fp = fs->data(pb);
                 }
-                loadFrameSource(p,false);
-                emit endOfSource();
-            } else {
-                std::vector<Point> p;
-                p.reserve(fp->getPointCount());
-                for (unsigned int i=0; i < fp->getPointCount(); i++) {
-                    p.push_back(fp->getPoint(i));
+                if (!fp) {
+                    FrameSourcePtr p;
+                    int s;
+                    s = sources.getNextFramesource();
+                    if (s > -1) {
+                        assert (engine);
+                        p = engine->getFrameSource(s);
+                    }
+                    loadFrameSource(p,false);
+                    emit endOfSource();
+										if (fs) {
+											fp = fs->data(pb);
+										}
                 }
-                pointBuf = resampler.run(p);
+                emit newFrame(fp);
+                if (fp){
+                    std::vector<Point> p;
+                    p.reserve(fp->getPointCount());
+                    for (unsigned int i=0; i < fp->getPointCount(); i++) {
+                        p.push_back(fp->getPoint(i));
+                    }
+                    pointBuf = resampler.run(p);
+                }
+                if (!fs) {
+                    break;
+                }
             }
         }
     }
@@ -128,26 +136,26 @@ DriverPtr LaserHead::getDriver() const
 
 QStringList LaserHead::enumerateSelectionModes()const
 {
-	return sources.selectionModeList();
+    return sources.selectionModeList();
 }
 
 QStringList LaserHead::enumerateStepModes() const
 {
-	return sources.stepModeList();
+    return sources.stepModeList();
 }
 
 void LaserHead::select(unsigned int pos, bool active)
 {
-	sources.select(pos,active);
+    sources.select(pos,active);
 }
 
 void LaserHead::setSelectionMode(const PlaybackList::SelectionModes mode)
 {
-	sources.setSelectionMode(mode);
+    sources.setSelectionMode(mode);
 }
 
 void LaserHead::setStepMode(const PlaybackList::StepModes mode)
 {
-	sources.setStepMode(mode);
+    sources.setStepMode(mode);
 }
 
