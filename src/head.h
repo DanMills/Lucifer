@@ -17,6 +17,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+
+#ifndef HEAD_INC
+#define HEAD_INC
+
 #include <QtCore>
 #include <vector>
 #include <boost/shared_ptr.hpp>
@@ -28,14 +32,17 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "point.h"
 #include "playbacklist.h"
 
-#ifndef HEAD_INC
-#define HEAD_INC
+// This neds to be forward declared to make LaserheadPtr available when engine.h
+// includes this file
+class LaserHead;
+typedef boost::shared_ptr<LaserHead> LaserHeadPtr;
+#include "engine.h"
 
 class LaserHead : public QObject
 {
     Q_OBJECT
 public:
-    LaserHead();
+    LaserHead(Engine * e);
     ~LaserHead();
     DriverPtr getDriver() const;
     /// Returns a list of the selection modes this head supports
@@ -69,6 +76,7 @@ public slots:
     bool setPPS (unsigned int pps = 30000);
     void select (unsigned int pos, bool active);
 private:
+		Engine * engine;
     bool setDriver (DriverPtr d);
     int currentSelection;
     unsigned int targetPPS;
@@ -86,7 +94,7 @@ private slots:
     void HWPpsChanged(unsigned int newPPS);
 };
 
-typedef boost::shared_ptr<LaserHead> LaserHeadPtr;
+
 
 #endif
 

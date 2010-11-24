@@ -15,21 +15,23 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#include <QtCore>
-#include <boost/shared_ptr.hpp>
-#include "frame.h"
-#include "framesource.h"
-#include "head.h"
 
 #ifndef ENGINE_INCL
 #define ENGINE_INCL
 
-
-/// Maximum number of laser heads supported on a single PC
-#define MAX_HEADS (8)
+#include <QtCore>
+#include <boost/shared_ptr.hpp>
+#include "frame.h"
+#include "framesource.h"
+//#include "head.h"
 
 class Engine;
 typedef boost::shared_ptr<Engine> EnginePtr;
+
+#include "head.h"
+
+/// Maximum number of laser heads supported on a single PC
+#define MAX_HEADS (8)
 
 /// things from engine_impl.h
 class ShowSaver;

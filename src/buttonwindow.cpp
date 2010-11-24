@@ -85,7 +85,7 @@ ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
     vlayout->addWidget(headframe);
     vlayout->addWidget(tabs);
     headframe->setFixedHeight(128);
-    QHBoxLayout *hlayout = new QHBoxLayout (this);
+    QHBoxLayout *hlayout = new QHBoxLayout ();
     headframe->setLayout(hlayout);
     // Heads
     for (unsigned int i=0; i < MAX_HEADS; i++) {
@@ -94,8 +94,6 @@ ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
 				connect ((&(*engine->getHead(i))),SIGNAL(newFrame(FramePtr)),ov,SLOT(updateDisplay(FramePtr)));
     }
 
-
-    //setCentralWidget(tabs);
     ButtonGrid *g = new ButtonGrid(engine, 8,8,0,this);
     grids.push_back (g);
     // This connection ensures that the grids have a consistent view of what is loaded into the engine
@@ -127,11 +125,6 @@ ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
     show();
     unsaved = false;
     setCurrentFile(QString());
-    //connect (&head,SIGNAL(endOfSource()),this,SLOT(nextFrameSource()));
-    //OutputView *view = new OutputView (NULL);
-    //connect ((&(*engine->getHead(0))),SIGNAL(newFrame(FramePtr)),view,SLOT(updateDisplay(FramePtr)));
-    //view->show();
-
 }
 
 // Load window position and size preferences
@@ -157,7 +150,7 @@ void ButtonWindow::loadSettings()
     slog()->debugStream()<< "default path set to : "<<pathName.toStdString();
     mode = (ButtonWindow::SELECTIONMODE) settings.value("selectionMode",ButtonWindow::SINGLE).toInt();
     //selectionMode->setCurrentIndex((int) mode);
-    selectionModeChanged((int) mode);
+    //selectionModeChanged((int) mode);
     settings.endGroup();
 }
 
@@ -367,7 +360,7 @@ void ButtonWindow::makeActions()
     exitAct->setStatusTip(tr("Exit the application"));
     connect(exitAct, SIGNAL(triggered()),qApp, SLOT(quit()));
 }
-
+#if 0
 void ButtonWindow::selectionChanged(unsigned int x, unsigned int y, unsigned int id, bool down)
 {
     if (down) {
@@ -463,4 +456,4 @@ void ButtonWindow::nextFrameSource()
 }
 
 #endif
-
+#endif

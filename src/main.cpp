@@ -149,16 +149,16 @@ int main (int argc, char **argv)
     EnginePtr e = boost::make_shared<Engine>();
     for (unsigned int i=0; i < 8; i++) {
         /// Set up the laser heads with dummy drivers
-        e->getHead(i)->setDriver("Dummy (ILDA)");
-        LaserHeadPtr hp = e->getHead(i);
-        assert (hp);
-        DriverPtr dp = hp->getDriver();
-        assert (dp);
-        dp->enumerateHardware();
-        bool cn = dp->connect(0);
-        assert (cn);
-        /// Start the laserhead thread.
-        e->startHead(i);
+        //e->getHead(i)->setDriver("Dummy (ILDA)");
+        //LaserHeadPtr hp = e->getHead(i);
+        //assert (hp);
+        //DriverPtr dp = hp->getDriver();
+        //assert (dp);
+        //dp->enumerateHardware();
+        //bool cn = dp->connect(0);
+        //assert (cn);
+        // Start the laserhead thread.
+        //e->startHead(i);
     }
 
 

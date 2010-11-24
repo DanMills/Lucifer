@@ -17,10 +17,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "head.h"
+#include "engine.h"
 
-LaserHead::LaserHead()
+LaserHead::LaserHead(Engine* e)
 {
-    //engine = e;
+		engine = e;
     targetPPS = 30000;
     frame_index = 0;
     resampler.setInputPPS(targetPPS);
@@ -86,7 +87,8 @@ void LaserHead::dataRequested()
                 int s;
                 s = sources.getNextFramesource();
                 if (s > -1) {
-                    //p = engine->getFrameSource(s);
+										assert (engine);
+                    p = engine->getFrameSource(s);
                 }
                 loadFrameSource(p,false);
                 emit endOfSource();

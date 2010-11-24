@@ -71,8 +71,8 @@ private slots:
     void setFullScreen();
     void clearFullScreen();
     void importFiles ();
-    void selectionChanged (unsigned int x, unsigned int y, unsigned int id, bool down);
-    void selectionModeChanged (int sel);
+    //void selectionChanged (unsigned int x, unsigned int y, unsigned int id, bool down);
+    //void selectionModeChanged (int sel);
     void sourcesSizeChanged (size_t);
 		void status(QString text, int time);
     //void nextFrameSource();
@@ -112,7 +112,7 @@ private:
     void loadFrame();
 
     //DriverPtr driver;
-    LaserHead head;
+    //LaserHead head;
     // The list of currently selected frame sources
     std::vector<Selection> selections;
     enum SELECTIONMODE {SINGLE,MULTIPLE,SHUFFLE};
