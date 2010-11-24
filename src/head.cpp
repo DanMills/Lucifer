@@ -71,6 +71,7 @@ bool LaserHead::setDriver(std::string name)
 
 void LaserHead::dataRequested()
 {
+		std::cerr << "!";
     if (driver) {
         size_t t = driver->ILDANewPoints(pointBuf, frame_index);
         frame_index +=t;

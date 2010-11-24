@@ -134,7 +134,7 @@ int PlaybackList::next(bool running)
     if (selections.size()) {
         return selections[0];
     }
-    return -1;
+    return 0;//-1;
 }
 
 QStringList PlaybackList::selectionModeList() const

@@ -113,28 +113,12 @@ void FrameSource::saveFrames(QXmlStreamWriter* w)
 
 FrameSourcePtr FrameSource::clone() const
 {
-	FrameSourcePtr fs = FrameSource::newSource(name);
-	copyDataTo (fs);
-	for (unsigned int i=0; i < numChildren(); i++){
-		fs->addChild(child(i)->clone());
-	}
-	return fs;/* head.h is part of lucifer a laser show controller.
-
-	Copyrignt 2010 Dan Mills <dmills@exponent.myzen.co.uk>
-
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; version 2 dated June, 1991.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program; if not, write to the Free Software
-	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-	*/
+    FrameSourcePtr fs = FrameSource::newSource(name);
+    copyDataTo (fs);
+    for (unsigned int i=0; i < numChildren(); i++) {
+        fs->addChild(child(i)->clone());
+    }
+    return fs;
 }
 
 FrameSourcePtr FrameSource::loadFrames (QXmlStreamReader *e)
@@ -263,28 +247,43 @@ Playback FrameSource::createPlayback ()
 
 void FrameSource::createPlayback (Playback p)
 {
+    QMutexLocker l (&playbackLock);
+    slog()->debugStream() << "Creating playback : " << p;
+    createPlaybackInternal(p);
+}
+
+void FrameSource::createPlaybackInternal (Playback p)
+{
     assert (playbacks_.find (p) == playbacks_.end());
-    slog()->debugStream() << this << " Creating playback : " << p;
     playbacks_[p] = createPlaybackData();
     // now do the children
     for (unsigned int i=0; i < numChildren(); i++) {
-        child(i)->createPlayback(p);
+        child(i)->createPlaybackInternal(p);
     }
+
 }
 
 void FrameSource::deletePlayback(Playback p)
+{
+    QMutexLocker l(&playbackLock);
+    deletePlaybackInternal (p);
+}
+
+/// Called with the playbackLock held
+void FrameSource::deletePlaybackInternal(Playback p)
 {
     assert (playbacks_.find (p) != playbacks_.end());
     slog()->debugStream() << this << " Deleting playback : " << p;
     playbacks_.erase (p);
     // now do the children
     for (unsigned int i=0; i < numChildren(); i++) {
-        child(i)->deletePlayback(p);
+        child(i)->deletePlaybackInternal(p);
     }
 }
 
 PlaybackData * FrameSource::getPlayback (Playback p)
 {
+    QMutexLocker l(&playbackLock);
     assert (playbacks_.find (p) != playbacks_.end());
     return &(*playbacks_.find(p)->second);
 }
@@ -292,10 +291,16 @@ PlaybackData * FrameSource::getPlayback (Playback p)
 void FrameSource::erasePlaybacks()
 {
     slog()->debugStream() << this << " Erasing all playbacks";
+    QMutexLocker l(&playbackLock);
+    erasePlaybacksInternal();
+}
+
+void FrameSource::erasePlaybacksInternal()
+{
     playbacks_.clear();
     // now do the children
     for (unsigned int i=0; i < numChildren(); i++) {
-        child(i)->erasePlaybacks();
+        child(i)->erasePlaybacksInternal();
     }
 }
 

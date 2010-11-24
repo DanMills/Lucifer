@@ -61,8 +61,8 @@ Engine::Engine(QObject* parent) : QObject(parent)
     importer = NULL;
     slog()->infoStream() << "New laser show engine created : " << this;
     emit message (tr("Starting show engine"),5000);
-    QSignalMapper *map = new QSignalMapper(this);
-    connect (map,SIGNAL(mapped(int)),this,SLOT(needNewSource(int)));
+    //QSignalMapper *map = new QSignalMapper(this);
+    //connect (map,SIGNAL(mapped(int)),this,SLOT(needNewSource(int)));
     for (unsigned int i=0; i < MAX_HEADS; i++) {
         emit message(tr("Starting projector head"),5000);
         heads[i]=new HeadThread (this);
@@ -70,8 +70,11 @@ Engine::Engine(QObject* parent) : QObject(parent)
         while (!heads[i]->head) { // Wait for the head to come up
             usleep (10000);
         }
-        map->setMapping(&(*heads[i]->head),i);
-        connect(&(*heads[i]->head),SIGNAL(endOfSource()),map,SLOT(map()));
+        //map->setMapping(&(*heads[i]->head),i);
+        //connect(&(*heads[i]->head),SIGNAL(endOfSource()),map,SLOT(map()));
+				getHead(i)->setDriver("Dummy (ILDA)");
+				getHead(i)->getDriver()->enumerateHardware();
+				getHead(i)->getDriver()->connect(0);
     }
     emit message (tr("Laser projection engine is up and running"),5000);
 }
@@ -497,9 +500,9 @@ void ShowImporter::run()
 
 
 // called as a callback whenever one of the laser heads needs a new set of frames to output
-void Engine::needNewSource(int head)
-{
-    heads[head]->head->loadFrameSource(getFrameSource(8 * head));
-}
+//void Engine::needNewSource(int head)
+//{
+//    heads[head]->head->loadFrameSource(getFrameSource(8 * head));
+//}
 
 

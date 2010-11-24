@@ -176,10 +176,15 @@ private:
     FrameSource();
     // Used to create playback handles
     static Playback getUniqueHandle ();
+		// These are called with the playbackLock mutex held
+		void deletePlaybackInternal (Playback p);
+		void erasePlaybacksInternal();
+		void createPlaybackInternal (Playback p);
     std::vector<FrameSourcePtr> children_;
     enum POSSIBLE_CHILDREN pos_children_;
     enum FLAGS flags_;
     std::map <Playback, PlaybackDataPtr> playbacks_;
+		QMutex playbackLock;
 };
 
 class FrameGui : public QGroupBox

@@ -95,7 +95,7 @@ private slots:
     void Saved();
     void Loaded();
     void Imported();
-    void needNewSource(int head);
+    //void needNewSource(int head);
 private:
     /// Lock held while reading or writing the sources vector as this is prone to reallocation
     /// and I am not sure if that is atomic.
