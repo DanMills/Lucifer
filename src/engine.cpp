@@ -16,7 +16,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-
 #include "engine.h"
 #include "engine_impl.h"
 #include "log.h"
@@ -262,7 +261,8 @@ void Engine::kill()
 
 void Engine::Saved()
 {
-    savef.close();
+    saveCompressor->close();
+		delete saveCompressor;
     save_mutex.unlock();
     slog()->debugStream() << "Show saved, thread terminated";
     emit showSaved();
@@ -271,7 +271,8 @@ void Engine::Saved()
 
 void Engine::Loaded()
 {
-    loadf.close();
+    loadCompressor->close();
+		delete loadCompressor;
     load_mutex.unlock();
     slog()->debugStream() << "Show loaded, thread terminated";
     emit showLoaded();
@@ -287,14 +288,16 @@ bool Engine::saveShow(QString filename)
         if (saver) {
             delete saver;
         }
-        savef.setFileName(filename);
-        if (!savef.open(QFile::WriteOnly)) {
+        savef.setFileName (filename);
+				saveCompressor = new QtIOCompressor (&savef,6,10 * 1024 * 1024);
+        if (!saveCompressor->open(QIODevice::WriteOnly)) {
+						delete saveCompressor;
             save_mutex.unlock();
-            slog()->errorStream() << "Couldn't open file for writing : " << loadf.errorString().toStdString();
+            slog()->errorStream() << "Couldn't open file for writing : " << saveCompressor->errorString().toStdString();
             emit message (tr("Failed to save file : ") + filename,10000);
             return false;
         }
-        QXmlStreamWriter *w = new QXmlStreamWriter(&savef);
+        QXmlStreamWriter *w = new QXmlStreamWriter(saveCompressor);
         saver = new ShowSaver(this,w);
         connect (saver,SIGNAL(finished()),this,SLOT(Saved()));
         slog()->debugStream() << "Starting file saver thread";
@@ -316,7 +319,9 @@ bool Engine::loadShow(QString filename, const bool clear)
             delete loader;
         }
         loadf.setFileName(filename);
-        if (!loadf.open(QFile::ReadOnly)) {
+				loadCompressor = new QtIOCompressor (&loadf,6,10 *1024 * 1024);
+        if (!loadCompressor->open(QFile::ReadOnly)) {
+						delete loadCompressor;
             load_mutex.unlock();
             slog()->errorStream() << "Couldn't open file for reading : " << loadf.errorString().toStdString();
             return false;
@@ -338,7 +343,7 @@ bool Engine::loadShow(QString filename, const bool clear)
             sources.clear();
             source_lock.unlock();
         }
-        QXmlStreamReader *r = new QXmlStreamReader(&loadf);
+        QXmlStreamReader *r = new QXmlStreamReader(loadCompressor);
         loader = new ShowLoader(this,r);
         connect (loader,SIGNAL(finished()),this,SLOT(Loaded()));
         slog()->debugStream() << "Starting file loader thread";

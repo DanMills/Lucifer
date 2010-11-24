@@ -129,7 +129,7 @@ void StaticFrame::save (QXmlStreamWriter* w)
     // XML is icky for binary data so we convert to base 64
     // This is still better then saving each point as its own element.
     w->writeStartElement("PointList");
-    w->writeCharacters(qCompress(b).toBase64());
+    w->writeCharacters(b.toBase64());
     w->writeEndElement();
 }
 
@@ -158,7 +158,7 @@ void StaticFrame::load(QXmlStreamReader* e)
         e->readNext();
         QByteArray ba;
         ba.reserve(16 * pointcount);
-        ba = qUncompress(QByteArray::fromBase64(e->text().toString().toUtf8()));
+        ba = QByteArray::fromBase64(e->text().toString().toUtf8());
         const char *b = ba.constData();
         // ba now contains the raw binary frame
         // 16 bytes per point

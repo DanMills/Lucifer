@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <boost/shared_ptr.hpp>
 #include "frame.h"
 #include "framesource.h"
-//#include "head.h"
+#include "qtiocompressor.h"
 
 class Engine;
 typedef boost::shared_ptr<Engine> EnginePtr;
@@ -105,11 +105,13 @@ private:
     HeadThread *heads[MAX_HEADS];
     /// File IO threads and associated locks
     ShowSaver *saver;
+		QtIOCompressor * saveCompressor;
     QMutex save_mutex;
     QFile savef;
     QMutex load_mutex;
     QFile loadf;
     ShowLoader *loader;
+		QtIOCompressor * loadCompressor;
     QMutex import_mutex;
     ShowImporter *importer;
 };

@@ -19,7 +19,8 @@ set(lucifer_SRCS src/framesequencer.cpp
 	src/driver_portaudio_ilda.cpp src/head.cpp
 	src/driver_dummy_ilda.cpp
 	src/outputview.cpp
-	src/engine.cpp src/playbacklist.cpp)
+	src/engine.cpp src/playbacklist.cpp
+	src/qtiocompressor.cpp)
 
 set(lucifer_HDRS src/framesequencer.h src/loadilda.h
 	src/framesource.h src/point.h
@@ -33,7 +34,8 @@ set(lucifer_MOC_HDRS src/screendisplay.h src/buttongrid.h src/buttonwindow.h
 	src/driver_portaudio_ilda.h
 	src/outputview.h
 	src/engine.h src/playbacklist.h
-	src/engine_impl.h)
+	src/engine_impl.h
+	src/qtiocompressor.h)
 
 SET(lucifer_RCS
 	src/lucifer.qrc
