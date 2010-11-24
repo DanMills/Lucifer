@@ -16,8 +16,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-/* $Id: screendisplay.h 14 2010-06-26 20:07:45Z dmills $ */
-
 #ifndef SCREEN_DISP_INC
 #define SCREEN_DISP_INC
 

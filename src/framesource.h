@@ -15,7 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-/* $Id: framesource.h 22 2010-07-24 15:01:51Z dmills $ */
 
 #ifndef FRAMESOURCE_INC
 #define FRAMESOURCE_INC

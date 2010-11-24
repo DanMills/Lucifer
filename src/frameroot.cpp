@@ -1,4 +1,4 @@
-/*framesequencer.cpp is part of lucifer a laser show controller.
+/*frameroot.cpp is part of lucifer a laser show controller.
 
 Copyrignt 2010 Dan Mills <dmills@exponent.myzen.co.uk>
 
@@ -16,16 +16,11 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-/* $Id: framesequencer.cpp 22 2010-07-24 15:01:51Z dmills $ */
-
-//#include <vector>
-//#include <map>
 #include <assert.h>
 #include <iostream>
 
 #include "framesource.h"
 #include "frameroot.h"
-//#include "displayframe.h"
 #include "log.h"
 
 FrameRoot::FrameRoot () : FrameSource(NOTHING,ONE)

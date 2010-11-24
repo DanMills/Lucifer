@@ -15,8 +15,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-/* $Id: staticframe.h 22 2010-07-24 15:01:51Z dmills $ */
-
 #ifndef STATICFRAME_INC
 #define STATICFRAME_INC
 

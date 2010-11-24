@@ -16,8 +16,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-/* $Id: frame.cpp 3 2010-05-19 20:42:53Z dmills $ */
-
 #include <assert.h>
 #include "frame.h"
 #include <boost/numeric/ublas/matrix.hpp>
