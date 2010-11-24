@@ -1,0 +1,67 @@
+Lucifer is a C++ project written with the QT toolkit, 
+class names (mostly!) follow the QT convention:
+
+ThisIsAClass, thisIsAMethod, thisisalocal;
+
+Braces are generally K&R 
+
+if (a==b){
+	foo(a);
+	bar(b);
+} else {
+	quux(a-b);
+};
+
+
+Indentation: I will stuff the patch through 
+AStyle anyway, see if I care! 
+
+A word about threading: I hate waiting, QTConcurrent::run() 
+is there for a reason, but please be careful, 
+locking bugs are hard to find.  
+
+For things like slow copy operations use QTConcurrent, 
+for things that may take a long while to run (file IO), set up an 
+explicit thread and take a lock in the engine to prevent it 
+going away from under you.  
+
+We mostly use C with classes rather then full on C++, please keep 
+it that way, you may be called Scott Meyers, I am not and neither 
+is the guy who has to work on this in a years time. 
+
+There are some C++ STL and even some Boost bits that are so 
+useful that they are worth learning:
+
+std::vector<t>
+std::map<T1,T2>
+boost::shared_ptr<T>
+
+Are used extensively. 
+
+Anything which does 
+T *p = new T;
+Will get looked at askance (there are sometimes reasons, but 
+they should be rare), better is:
+
+boost::shared_ptr<T> p = boost::make_shared<T>()
+
+as this is implicitly reference counted and will automatically 
+be deleted when it goes out of scope for the last time (Trust me, 
+massive win given the number of threads involved), there are 
+caveats to this when working with arrays, see the boost 
+documentation.
+
+We do NOT do modal dialogue boxes without explicit user action
+(file selection boxes), never pop up some stupid status screen 
+in front of the user, it is just wrong.
+There is a status bar you can scribble on if you must.
+
+All of these notes are intended as just that Notes, not rules, 
+there are always times when something else makes better sense, 
+but I am the arbiter of taste in this matter.  
+
+Dan.
+
+
+
+

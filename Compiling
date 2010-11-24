@@ -1,0 +1,21 @@
+Prerequisites:
+galvanic Lucifer requires the following libraries to be 
+installed (Together with their development headers) 
+before it can be compiled. 
+
+Boost		http://www.boost.org (Should be in the standard 
+		package repositories for Linux).
+Zita Resampler 	http://www.kokkinizita.net/linuxaudio/zita-resampler/resampler.html
+log4cpp 	http://log4cpp.sourceforge.net/ (Should also be 
+		in the standard repositories for your distro)
+QT4 		http://qt.nokia.com (Should definitely be in the standard 
+		repositories if on Linux).
+Freetype	(Not yet, but it is coming).
+
+For changes to the build system you will need cmake.
+
+For compilation you will need a make plus whatever your usual c++ toolchain is. 
+
+Have Fun.
+
+ 
