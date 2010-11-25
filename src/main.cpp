@@ -42,7 +42,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "buttonwindow.h"
 #include "log.h"
-#include "3DEngine/winding.h"
 #include "engine.h"
 
 static const std::string usage(" \
@@ -147,21 +146,6 @@ int main (int argc, char **argv)
     slog()->info("Starting Galvanic Lucifer");
     //polygonTest p;
     EnginePtr e = boost::make_shared<Engine>();
-    for (unsigned int i=0; i < 8; i++) {
-        /// Set up the laser heads with dummy drivers
-        //e->getHead(i)->setDriver("Dummy (ILDA)");
-        //LaserHeadPtr hp = e->getHead(i);
-        //assert (hp);
-        //DriverPtr dp = hp->getDriver();
-        //assert (dp);
-        //dp->enumerateHardware();
-        //bool cn = dp->connect(0);
-        //assert (cn);
-        // Start the laserhead thread.
-        //e->startHead(i);
-    }
-
-
     ButtonWindow grid (e);
     for (unsigned int i=0; i < filenames.size(); i++) {
         std::string fn = filenames[i];

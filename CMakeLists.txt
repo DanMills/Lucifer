@@ -15,7 +15,6 @@ set(lucifer_SRCS src/framesequencer.cpp
 	src/displayframe.cpp src/editparams.cpp
 	src/log.cpp src/colour.cpp
 	src/resampler.cpp
-	src/3DEngine/winding.cpp src/3DEngine/aabb.cpp
 	src/driver_portaudio_ilda.cpp src/head.cpp
 	src/driver_dummy_ilda.cpp
 	src/outputview.cpp
@@ -25,7 +24,6 @@ set(lucifer_SRCS src/framesequencer.cpp
 set(lucifer_HDRS src/framesequencer.h src/loadilda.h
 	src/framesource.h src/point.h
 	src/screendisplay.h src/frame.h src/log.h src/colour.h
-	src/3DEngine/plane.h src/3DEngine/aabb.h src/3DEngine/plane.h
 	src/resampler.h)
 
 set(lucifer_MOC_HDRS src/screendisplay.h src/buttongrid.h src/buttonwindow.h
