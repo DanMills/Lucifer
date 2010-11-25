@@ -68,7 +68,6 @@ bool LaserHead::setDriver(std::string name)
     return setDriver(d);
 }
 
-
 void LaserHead::dataRequested()
 {
     if (driver) {
@@ -92,12 +91,12 @@ void LaserHead::dataRequested()
                     }
                     loadFrameSource(p,false);
                     emit endOfSource();
-										if (fs) {
-											fp = fs->data(pb);
-										}
+                    if (fs) {
+                        fp = fs->data(pb);
+                    }
                 }
                 emit newFrame(fp);
-                if (fp){
+                if (fp) {
                     std::vector<Point> p;
                     p.reserve(fp->getPointCount());
                     for (unsigned int i=0; i < fp->getPointCount(); i++) {
