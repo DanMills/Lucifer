@@ -44,5 +44,5 @@ QT4_ADD_RESOURCES(lucifer_RC_SRCS ${lucifer_RCS} )
 QT4_WRAP_CPP( lucifer_MOC_SRCS ${lucifer_MOC_HDRS} )
 add_executable(lucifer ${lucifer_SRCS} ${lucifer_HDRS} ${lucifer_MOC_SRCS} ${lucifer_RC_SRCS})
 target_link_libraries(lucifer -lrt -lasound -ljack -lpthread  ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY} z
-	log4cpp portaudio.a zita-resampler.so
+	log4cpp portaudio zita-resampler
 )
