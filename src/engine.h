@@ -66,10 +66,10 @@ public:
     /// Copies the frame souce in source to dest.
     /// source and dest are indicies into the sources table.
     bool copy (unsigned int dest, unsigned int source);
-		/// Returns a list of mime types understood by the engine
-		std::vector <std::string> mimeTypes(bool local = true) const;
-		/// Returns a mime data set corresponding to a frame source
-		QMimeData * mimeData(int pos);
+    /// Returns a list of mime types understood by the engine
+    std::vector <std::string> mimeTypes(bool local = true) const;
+    /// Returns a mime data set corresponding to a frame source
+    QMimeData * mimeData(int pos);
 
 signals:
     /// Emitted whenever a framesource is replaced in the main sources vector
@@ -82,25 +82,25 @@ signals:
     void showSaved();
     /// show imported
     void showImported();
-		/// Status message
-		void message (QString text, int time);
-		void setIndicator (unsigned int pos, QColor col);
+    /// Status message
+    void message (QString text, int time);
+    void setIndicator (unsigned int pos, QColor col);
 
 public slots:
     /// Kill all laser output, open the interlocks and scram the pile,
     /// Called by the emergency stop signal (Also WDT timeouts and such).
     void kill ();
-		/// Deal with drag and drop events.
-		bool mimeHandler (const QMimeData * data, int pos);
-		/// A frame select button has been clicked
-		void clicked(const int pos);
-		/// for a deselect
-		void deselect (const int pos);
+    /// Deal with drag and drop events.
+    bool mimeHandler (const QMimeData * data, int pos);
+    /// A frame select button has been clicked
+    void clicked(const int pos);
+    /// force a deselect
+    void deselect (const int pos);
 private slots:
     void Saved();
     void Loaded();
     void Imported();
-		void selectionChangedData(unsigned int, bool);
+    void selectionChangedData(unsigned int, bool);
 private:
     /// Lock held while reading or writing the sources vector as this is prone to reallocation
     /// and I am not sure if that is atomic.
@@ -110,13 +110,13 @@ private:
     HeadThread *heads[MAX_HEADS];
     /// File IO threads and associated locks
     ShowSaver *saver;
-		QtIOCompressor * saveCompressor;
+    QtIOCompressor * saveCompressor;
     QMutex save_mutex;
     QFile savef;
     QMutex load_mutex;
     QFile loadf;
     ShowLoader *loader;
-		QtIOCompressor * loadCompressor;
+    QtIOCompressor * loadCompressor;
     QMutex import_mutex;
     ShowImporter *importer;
 };

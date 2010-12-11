@@ -15,8 +15,8 @@ class PlaybackList : public QObject
 public:
     PlaybackList(QObject *parent = NULL);
     ~PlaybackList();
-    enum SelectionModes {SINGLE,MULTIPLE,SHUFFLE};
-    enum StepModes {ONCE,LOOP,MANUAL,BEAT};
+    enum SelectionModes {SINGLE=0,MULTIPLE,SHUFFLE};
+    enum StepModes {ONCE=0,LOOP,MANUAL,BEAT};
 		QStringList selectionModeList() const;
 		QStringList stepModeList () const;
 		bool isSelected (const int i);
@@ -36,8 +36,6 @@ signals:
     void selectionChanged (unsigned int pos, bool sel);
     /// Request to load the specified object
     void load (unsigned int pos);
-		/// load the specified object now dumping current playing object;
-		void loadNow (unsigned int pos);
     /// Emitted when we wish to replace the current selection
     void dumpCurrentSelection();
 private:

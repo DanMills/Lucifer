@@ -1,6 +1,7 @@
 
 #include <algorithm>
 #include <functional>
+#include "log.h"
 #include "playbacklist.h"
 
 
@@ -9,23 +10,28 @@ PlaybackList::PlaybackList(QObject *parent) : QObject(parent)
     selMode = SINGLE;
     stepMode = LOOP;
     currentIndex = -1;
-		lock = new QMutex (QMutex::Recursive);
+    lock = new QMutex (QMutex::Recursive);
 }
 PlaybackList::~PlaybackList()
 {
-		delete lock;
+    delete lock;
 }
 
 void PlaybackList::select(unsigned int pos, bool active)
 {
-		QMutexLocker l (lock);
+    slog()->infoStream() << "Playback selected "<< pos << " : " << (active ? "on" : "off");
+    slog()->debugStream() << "Selection mode : " << selectionModeList()[selMode].toStdString();
+    slog()->debugStream() << "Step mode : " << stepModeList()[stepMode].toStdString();
+    QMutexLocker l (lock);
     if (!active) {
         for (unsigned int i=0; i < selections.size(); i++) {
             if (selections[i] == pos) {
                 selections.erase(selections.begin()+i);
-								emit selectionChanged (pos,false);
+                emit selectionChanged (pos,false);
                 if (i==0) {
-										emit dumpCurrentSelection();
+                    slog ()->debugStream() << "Dumping current playback";
+                    currentIndex= -1;
+                    emit dumpCurrentSelection();
                     next (false);
                 }
                 break;
@@ -35,6 +41,7 @@ void PlaybackList::select(unsigned int pos, bool active)
         // adding a selection
         for (unsigned int i=0; i < selections.size(); i++) {
             if (selections[i] == pos) {
+                slog()->debugStream() << "Adding playback allready in list : deselecting";
                 // Allready selected
                 // so deselect it
                 select (pos, false);
@@ -42,15 +49,18 @@ void PlaybackList::select(unsigned int pos, bool active)
             }
         }
         if (selMode==SINGLE) {
+            slog()->debugStream() << "Adding single selection : " << pos;
             for (unsigned int i=0; i < selections.size();i++) {
                 emit selectionChanged(selections[i],false);
             }
             selections.clear();
+            currentIndex= -1;
+            emit dumpCurrentSelection();
             selections.push_back(pos);
-						emit dumpCurrentSelection();
             next(false);
-						emit selectionChanged(pos,true);
+            emit selectionChanged(pos,true);
         } else {
+            slog()->debugStream() << "Adding in a multi select mode : " << pos;
             selections.push_back(pos);
             emit selectionChanged(pos,true);
         }
@@ -68,43 +78,49 @@ PlaybackList::StepModes PlaybackList::getStepMode() const
 
 void PlaybackList::setSelectionMode(PlaybackList::SelectionModes mode)
 {
+    slog()->infoStream() << "Setting selection mode : " << selectionModeList()[mode].toStdString() << " : " << (int) mode;
     if (mode == SINGLE) {
-				QMutexLocker l (lock);
+        QMutexLocker l (lock);
         while (selections.size() > 1) {
             emit selectionChanged(selections[selections.size()-1],false);
             selections.erase(selections.end()-1);
         }
-        selMode = mode;
     }
+    selMode = mode;
 }
 
 void PlaybackList::setStepMode(PlaybackList::StepModes mode)
 {
+    slog()->infoStream() << "Setting step mode : " << stepModeList()[mode].toStdString();
     stepMode = mode;
 }
 
 void PlaybackList::beatDetected()
 {
     if (stepMode == BEAT) {
-        currentIndex = next();
+        currentIndex = next(true);
+        emit dumpCurrentSelection();
     }
 }
 
 void PlaybackList::manualStepClicked()
 {
     if (stepMode == MANUAL) {
-        currentIndex = next();
+        currentIndex = next(true);
+        emit dumpCurrentSelection();
     }
 }
 
 void PlaybackList::clear()
 {
-	QMutexLocker l(lock);
-	while (selections.size() > 1) {
-		emit selectionChanged(selections[selections.size()-1],false);
-		selections.erase(selections.end()-1);
-	}
-	emit dumpCurrentSelection();
+    slog ()->debugStream() << "Clearing playback list";
+    QMutexLocker l(lock);
+    while (selections.size() > 1) {
+        emit selectionChanged(selections[selections.size()-1],false);
+        selections.erase(selections.end()-1);
+    }
+    currentIndex= -1;
+    emit dumpCurrentSelection();
 }
 
 
@@ -124,7 +140,7 @@ int PlaybackList::getFrameSource()
 
 int PlaybackList::next(bool running)
 {		//selections.push_back(rand()%64);
-		QMutexLocker l (lock);
+    QMutexLocker l (lock);
     if (selections.size()) {
         int oldsel = selections[0];
         switch (stepMode) {
@@ -176,13 +192,13 @@ QStringList PlaybackList::stepModeList() const
 
 bool PlaybackList::isSelected(const int sel)
 {
-	QMutexLocker l (lock);
-	for (unsigned int i=0; i < selections.size(); i++){
-		if (selections[i]==(unsigned) sel){
-			return true;
-		}
-	}
-	return false;
+    QMutexLocker l (lock);
+    for (unsigned int i=0; i < selections.size(); i++) {
+        if (selections[i]==(unsigned) sel) {
+            return true;
+        }
+    }
+    return false;
 }
 
 

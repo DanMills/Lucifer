@@ -43,40 +43,24 @@ ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
     toolbar->addSeparator();
 
     connect (&(*engine),SIGNAL(message(QString,int)),this,SLOT(status(QString,int)));
-    // This toolbar gets the output heads displayed as thumb nails on it
-    //for (unsigned int i=0; i <8; i++) {
-    //    DisplayFrame *f = new DisplayFrame(this);
-    //    f->setGeometry(0,0,96,96);
-    //    f->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
-    //    toolbar->addWidget (f);
-    //}
-    // Multiselect mode
-    // Random
-    // GPIO indicators
-    // Midi indicator
-    // Audio meters
 
-    // And the SCRAM button
-    mode = ButtonWindow::SINGLE;
     selectionMode = new QComboBox (toolbar);
-    selectionMode->addItem(tr("Single"));
-    selectionMode->addItem(tr("Multiple"));
-    selectionMode->addItem(tr("Shuffle"));
+    selectionMode->addItems(engine->getHead(0)->enumerateSelectionModes());
     selectionMode->setToolTip(tr("Frame selection mode"));
     toolbar->addWidget(selectionMode);
-    //connect (selectionMode,SIGNAL(currentIndexChanged(int)),this,SLOT(selectionModeChanged(int)));
-
+    connect (selectionMode,SIGNAL(currentIndexChanged(int)),this,SLOT(selectionModeData(int)));
 
     stepMode = new QComboBox (toolbar);
-    stepMode->addItem(tr("Manual"));
-    stepMode->addItem(tr("Once"));
-    stepMode->addItem(tr("Beat"));
+    stepMode->addItems(engine->getHead(0)->enumerateStepModes());
     stepMode->setToolTip(tr("Frame loop end condition"));
     toolbar->addWidget(stepMode);
+    connect (stepMode,SIGNAL(currentIndexChanged(int)),this,SLOT(stepModeData(int)));
+    // And the SCRAM button
     toolbar->addAction(blankLasersAct);
+
     addToolBar(toolbar);
     QFrame *frame = new QFrame(this);
-		setCentralWidget(frame);
+    setCentralWidget(frame);
     QVBoxLayout *vlayout = new QVBoxLayout(frame);
     frame->setLayout(vlayout);
     tabs = new QTabWidget();
@@ -89,9 +73,9 @@ ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
     headframe->setLayout(hlayout);
     // Heads
     for (unsigned int i=0; i < MAX_HEADS; i++) {
-				OutputView *ov = new OutputView (this);
+        OutputView *ov = new OutputView (this);
         hlayout->addWidget(ov);
-				connect ((&(*engine->getHead(i))),SIGNAL(newFrame(FramePtr)),ov,SLOT(updateDisplay(FramePtr)));
+        connect ((&(*engine->getHead(i))),SIGNAL(newFrame(FramePtr)),ov,SLOT(updateDisplay(FramePtr)));
     }
 
     ButtonGrid *g = new ButtonGrid(engine, 8,8,0,this);
@@ -146,9 +130,8 @@ void ButtonWindow::loadSettings()
     }
     pathName = settings.value("path",home).toString();
     slog()->debugStream()<< "default path set to : "<<pathName.toStdString();
-    mode = (ButtonWindow::SELECTIONMODE) settings.value("selectionMode",ButtonWindow::SINGLE).toInt();
+    //int mode = settings.value("selectionMode","0").toInt();
     //selectionMode->setCurrentIndex((int) mode);
-    //selectionModeChanged((int) mode);
     settings.endGroup();
 }
 
@@ -161,7 +144,7 @@ void ButtonWindow::storeSettings()
     settings.setValue("pos", pos());
     settings.setValue("fullscreen",bool(windowState() & Qt::WindowFullScreen));
     settings.setValue ("path",pathName);
-    settings.setValue("selectionMode", mode);
+    // settings.setValue("selectionMode", mode);
     settings.endGroup();
 }
 
@@ -276,8 +259,7 @@ void ButtonWindow::openFile()
 }
 
 void ButtonWindow::loadFile(const QString &fn)
-{ // Todo - this is painfully slow at the moment
-    // QApplication::setOverrideCursor(Qt::WaitCursor);
+{
     slog()->infoStream()<<"Loading show file : " << fn.toStdString();
     engine->loadShow(fn);
     statusBar()->showMessage(tr("File Loading"), 20000);
@@ -318,6 +300,26 @@ void ButtonWindow::clearFullScreen()
     slog()->infoStream()<<"Window mode set to windowed";
 }
 
+void ButtonWindow::selectionModeData(int mode)
+{
+    for (unsigned int i = 0; i < MAX_HEADS; i++) {
+        LaserHeadPtr h = engine->getHead(i);
+        if (h) {
+            h->setSelectionMode((PlaybackList::SelectionModes)mode);
+        }
+    }
+}
+
+void ButtonWindow::stepModeData(int mode)
+{
+    for (unsigned int i = 0; i < MAX_HEADS; i++) {
+        LaserHeadPtr h = engine->getHead(i);
+        if (h) {
+            h->setStepMode((PlaybackList::StepModes) mode);
+        }
+    }
+}
+
 // I hate writing GUI code, so much endless boilerplate
 void ButtonWindow::makeActions()
 {
@@ -348,6 +350,7 @@ void ButtonWindow::makeActions()
     blankLasersAct->setShortcut(tr("Ctrl+K"));
     blankLasersAct->setStatusTip(tr("Shutdown all laser output"));
     blankLasersAct->setIcon(QIcon(":icons/process-stop.svg"));
+    connect (blankLasersAct,SIGNAL(triggered()), &(*engine),SLOT(kill()));
     // Import multiple
     importAct = new QAction (tr("Import files"),this);
     importAct->setStatusTip(tr("Import multiple files"));
@@ -358,100 +361,4 @@ void ButtonWindow::makeActions()
     exitAct->setStatusTip(tr("Exit the application"));
     connect(exitAct, SIGNAL(triggered()),qApp, SLOT(quit()));
 }
-#if 0
-void ButtonWindow::selectionChanged(unsigned int x, unsigned int y, unsigned int id, bool down)
-{
-    if (down) {
-        // Button pressed
-        if (mode == ButtonWindow::SINGLE) {
-            // Single select mode
-            selections.clear();
-            selections.push_back(Selection(id,x,y));
-            for (unsigned int g = 0; g <grids.size(); g++) {
-                if (g != id) {
-                    grids[g]->clear();
-                } else {
-                    grids[g]->clear(x,y);// This excludes x,y from being cleared
-                    // Push the frame out to the scan head
-                    loadFrame();
-                }
-            }
-        } else {// one of the multiselect modes
-            selections.push_back(Selection(id,x,y));
-            if (selections.size() == 1) {
-                // First frame in a multi select, push it to the scanners
-                loadFrame();
-            }
-        }
-    } else {
-        // release the selection
-        if (selections.size()) {
-            unsigned int i;
-            for (i=0; i < selections.size(); i++) {
-                if ((selections[i].grid() == id) &&
-                        (selections[i].getX() == x) &&
-                        (selections[i].getY() == y)) {
-                    selections.erase(selections.begin()+i);
-                    break;
-                }
-            }
-            if (i == 0) {
-                FrameSourcePtr p;
-                // dump whatever is currently playing
-                head.loadFrameSource(p, true);
-            }
-        }
-    }
-    slog()->debugStream() << "Selections:";
-    for (unsigned int i=0; i < selections.size(); i++) {
-        slog()->debugStream() << "\t" << selections[i].grid() << ":" <<
-        selections[i].getX() << ":" << selections[i].getY();
-    }
-}
 
-void ButtonWindow::selectionModeChanged(int sel)
-{
-    enum ButtonWindow::SELECTIONMODE newmode = (ButtonWindow::SELECTIONMODE) sel;
-    if (newmode != mode) {
-        mode = newmode;
-        if (selections.size()) {
-            // may need to do some cleanup
-            if (mode == ButtonWindow::SINGLE) {
-                Selection s = selections[0];
-                selectionChanged(s.getX(),s.getY(),s.grid(),true);
-            }
-            if (mode == ButtonWindow::SHUFFLE) {
-                ///TODO Randomise the list order
-            }
-        }
-    }
-}
-
-void ButtonWindow::loadFrame()
-{
-    if (selections.size()) {
-        Selection s = selections[0];
-        FrameSourcePtr fp = grids[s.grid()]->at(s.getX(),s.getY())->data();
-        if (fp) {
-            head.loadFrameSource(fp);
-        }
-    }
-}
-
-#if 0
-void ButtonWindow::nextFrameSource()
-{
-    // drop the currently selected frame source
-    if (selections.size()) {
-        Selection s = selections[0];
-        // remove from the head of the list
-        grids[s.grid()]->at(s.getX(),s.getY())->setSelected(false);
-        // Put it back at the back of the queue
-        grids[s.grid()]->at(s.getX(),s.getY())->setSelected(true);
-    }
-    loadFrame();
-
-}
-
-#endif
-#endif

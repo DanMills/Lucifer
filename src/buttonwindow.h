@@ -76,6 +76,8 @@ private slots:
     void sourcesSizeChanged (size_t);
 		void status(QString text, int time);
     //void nextFrameSource();
+		void selectionModeData (int);
+		void stepModeData (int);
 private:
     ButtonWindow();
     std::vector<ButtonGrid *> grids;
@@ -114,8 +116,8 @@ private:
     //DriverPtr driver;
     //LaserHead head;
     // The list of currently selected frame sources
-    std::vector<Selection> selections;
-    enum SELECTIONMODE {SINGLE,MULTIPLE,SHUFFLE};
-    SELECTIONMODE mode;
+    //std::vector<Selection> selections;
+    //enum SELECTIONMODE {SINGLE,MULTIPLE,SHUFFLE};
+    //SELECTIONMODE mode;
 };
 #endif
