@@ -61,20 +61,19 @@ Engine::Engine(QObject* parent) : QObject(parent)
     importer = NULL;
     slog()->infoStream() << "New laser show engine created : " << this;
     emit message (tr("Starting show engine"),5000);
-    //QSignalMapper *map = new QSignalMapper(this);
-    //connect (map,SIGNAL(mapped(int)),this,SLOT(needNewSource(int)));
     for (unsigned int i=0; i < MAX_HEADS; i++) {
         emit message(tr("Starting projector head"),5000);
         heads[i]=new HeadThread (this);
         startHead(i);// Bring up the laser head thread
+    }
+    for (unsigned int i=0; i < MAX_HEADS; i++) {
         while (!heads[i]->head) { // Wait for the head to come up
             usleep (10000);
         }
-        //map->setMapping(&(*heads[i]->head),i);
-        //connect(&(*heads[i]->head),SIGNAL(endOfSource()),map,SLOT(map()));
-				getHead(i)->setDriver("Dummy (ILDA)");
-				getHead(i)->getDriver()->enumerateHardware();
-				getHead(i)->getDriver()->connect(0);
+        connect (&(*heads[i]->head),SIGNAL(selectionChanged (uint, bool)),this,SLOT(selectionChangedData(uint,bool)));
+        getHead(i)->setDriver("Dummy (ILDA)");
+        getHead(i)->getDriver()->enumerateHardware();
+        getHead(i)->getDriver()->connect(0);
     }
     emit message (tr("Laser projection engine is up and running"),5000);
 }
@@ -84,9 +83,9 @@ Engine::~Engine()
     slog()->infoStream() << "Stopping show engine";
     kill();
     for (unsigned int i=0; i < MAX_HEADS; i++) {
-			if (heads[i]){
-					heads[i]->quit();
-			}
+        if (heads[i]) {
+            heads[i]->quit();
+        }
     }
     for (unsigned int i=0; i < MAX_HEADS; i++) {
         ///UGLY Hack to get the threads stopped before we exit
@@ -253,11 +252,11 @@ void Engine::kill()
     for (unsigned int i=0; i < MAX_HEADS; i++) {
         LaserHeadPtr h = getHead(i);
         if (h) {
-            h->loadFrameSource(FrameSourcePtr(), true);
-						DriverPtr d = h->getDriver();
-            if (d){
-							d->ILDAShutter(false);
-						}
+            h->kill();
+            DriverPtr d = h->getDriver();
+            if (d) {
+                d->ILDAShutter(false);
+            }
         }
     }
 }
@@ -265,7 +264,7 @@ void Engine::kill()
 void Engine::Saved()
 {
     saveCompressor->close();
-		delete saveCompressor;
+    delete saveCompressor;
     save_mutex.unlock();
     slog()->debugStream() << "Show saved, thread terminated";
     emit showSaved();
@@ -275,7 +274,7 @@ void Engine::Saved()
 void Engine::Loaded()
 {
     loadCompressor->close();
-		delete loadCompressor;
+    delete loadCompressor;
     load_mutex.unlock();
     slog()->debugStream() << "Show loaded, thread terminated";
     emit showLoaded();
@@ -292,9 +291,9 @@ bool Engine::saveShow(QString filename)
             delete saver;
         }
         savef.setFileName (filename);
-				saveCompressor = new QtIOCompressor (&savef,6,10 * 1024 * 1024);
+        saveCompressor = new QtIOCompressor (&savef,6,10 * 1024 * 1024);
         if (!saveCompressor->open(QIODevice::WriteOnly)) {
-						delete saveCompressor;
+            delete saveCompressor;
             save_mutex.unlock();
             slog()->errorStream() << "Couldn't open file for writing : " << saveCompressor->errorString().toStdString();
             emit message (tr("Failed to save file : ") + filename,10000);
@@ -322,9 +321,9 @@ bool Engine::loadShow(QString filename, const bool clear)
             delete loader;
         }
         loadf.setFileName(filename);
-				loadCompressor = new QtIOCompressor (&loadf,6,10 *1024 * 1024);
+        loadCompressor = new QtIOCompressor (&loadf,6,10 *1024 * 1024);
         if (!loadCompressor->open(QFile::ReadOnly)) {
-						delete loadCompressor;
+            delete loadCompressor;
             load_mutex.unlock();
             slog()->errorStream() << "Couldn't open file for reading : " << loadf.errorString().toStdString();
             return false;
@@ -498,11 +497,31 @@ void ShowImporter::run()
     }
 }
 
+void Engine::clicked(const int pos)
+{
+    LaserHeadPtr h = getHead(0);
+    if (h) {
+        h->select(pos,!(h->isSelected(pos)));
+    }
+}
 
-// called as a callback whenever one of the laser heads needs a new set of frames to output
-//void Engine::needNewSource(int head)
-//{
-//    heads[head]->head->loadFrameSource(getFrameSource(8 * head));
-//}
+void Engine::deselect(const int pos)
+{
+    for (int i=0; i < MAX_HEADS; i++) {
+        LaserHeadPtr h = getHead(i);
+        if (h) {
+            h->select (pos,false);
+        }
+    }
+}
+
+void Engine::selectionChangedData(unsigned int pos, bool active)
+{
+    if (!active) {
+        emit setIndicator (pos,Qt::black);
+    } else {
+        emit setIndicator (pos,Qt::red);
+    }
+}
 
 

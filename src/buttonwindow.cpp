@@ -64,7 +64,7 @@ ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
     selectionMode->addItem(tr("Shuffle"));
     selectionMode->setToolTip(tr("Frame selection mode"));
     toolbar->addWidget(selectionMode);
-    connect (selectionMode,SIGNAL(currentIndexChanged(int)),this,SLOT(selectionModeChanged(int)));
+    //connect (selectionMode,SIGNAL(currentIndexChanged(int)),this,SLOT(selectionModeChanged(int)));
 
 
     stepMode = new QComboBox (toolbar);
@@ -103,10 +103,8 @@ ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
     connect (&(*engine),SIGNAL(sourcesSizeChanged(size_t)),this,SLOT(sourcesSizeChanged(size_t)));
     tabs->addTab(grids[0],QString("&")+QString().number(1));
     connect (grids[0],SIGNAL(modified()), this, SLOT(modified()));
-    connect (grids[0],SIGNAL(clicked(uint,uint,uint,bool)),
-             this,SLOT(selectionChanged(uint,uint,uint,bool)));
-
-
+    //connect (grids[0],SIGNAL(clicked(uint,uint,uint,bool)),
+    //         this,SLOT(selectionChanged(uint,uint,uint,bool)));
     tabs->setCurrentIndex(0);
     fileMenu = menuBar()->addMenu(tr("&File"));
     editMenu= menuBar()->addMenu(tr("&Edit"));

@@ -3,7 +3,7 @@ class names (mostly!) follow the QT convention:
 
 ThisIsAClass, thisIsAMethod, thisisalocal;
 
-Braces are generally K&R
+Braces are generally:
 
 if (a==b){
 	foo(a);

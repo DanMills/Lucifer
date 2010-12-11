@@ -43,12 +43,14 @@ public:
     void setIndicatorWidth (unsigned int width);
 		/// Set the indicator colour.
 		/// @param colour the colour to be used for the indicator.
-    void setIndicatorColour (QColor colour);
-		/// Set the border colour.
-		/// @param colour the colour to be used for the border.
-    void setBorderColour (QColor colour);
 		/// Clear the display.
     void clear ();
+public slots:
+		void setIndicatorColour (QColor colour);
+		/// Set the border colour.
+		/// @param colour the colour to be used for the border.
+		void setBorderColour (QColor colour);
+
 protected:
     void paintEvent (QPaintEvent *e);
 private:

@@ -49,10 +49,7 @@ public:
     QStringList enumerateSelectionModes() const;
     /// returns a list of the step modes this head supports
     QStringList enumerateStepModes() const;
-    /// Set the selection mode
-    void setSelectionMode (const PlaybackList::SelectionModes mode);
-    /// Set the step modes
-    void setStepMode (const PlaybackList::StepModes mode);
+		bool isSelected (const int pos);
 
 signals:
     //FrameSourcePtr requestNewSource(unsigned int index);
@@ -66,15 +63,19 @@ signals:
     /// Emitted whenever the currently projected source changes
     //void currentSelectionChanged (unsigned int oldsel, unsigned int newsel);
     /// Emitted when any selection changes
-    //void selectionsChanged (unsigned int sel, bool active);
-    //void selectionModeChanged (unsigned int mode);
-    //void stepModeChanged (unsigned int mode);
+    void selectionChanged (unsigned int sel, bool active);
+    void selectionModeChanged (unsigned int mode);
+    void stepModeChanged (unsigned int mode);
 public slots:
-    /// Load a new framesource into the scan head
-    bool loadFrameSource (FrameSourcePtr f, bool immediate = false);
     bool setDriver (std::string name);
     bool setPPS (unsigned int pps = 30000);
     void select (unsigned int pos, bool active);
+		/// Set the selection mode
+		void setSelectionMode (const PlaybackList::SelectionModes mode);
+		/// Set the step modes
+		void setStepMode (const PlaybackList::StepModes mode);
+		/// Kill the output
+		void kill();
 private:
 		Engine * engine;
     bool setDriver (DriverPtr d);
@@ -92,6 +93,10 @@ private:
 private slots:
     void dataRequested();
     void HWPpsChanged(unsigned int newPPS);
+		void selectionChangedData (unsigned int sel, bool active);
+		void dump();
+		/// Load a new framesource into the scan head
+		bool loadFrameSource (FrameSourcePtr f, bool immediate = false);
 };
 
 

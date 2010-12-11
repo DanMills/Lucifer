@@ -34,7 +34,7 @@ ScreenDisplay::ScreenDisplay (EnginePtr engine_, int id_, QWidget * parent) : Di
     id = id_;
     engine = engine_;
     playback_ = -1;
-    on = false;
+    //on = false;
     timer = new QTimer (this);
     connect(timer, SIGNAL(timeout()),this, SLOT (advance()));
     popup.addAction (tr("Import"),this,SLOT(loadData()));
@@ -45,6 +45,7 @@ ScreenDisplay::ScreenDisplay (EnginePtr engine_, int id_, QWidget * parent) : Di
     setIndicatorWidth(1);
     dragging = false;
     setAcceptDrops(true);
+		connect (this,SIGNAL(clicked(int)),&(*engine),SLOT(clicked(int)));
 
 };
 
@@ -90,11 +91,6 @@ void ScreenDisplay::loadData()
     settings.endGroup();
 }
 
-bool ScreenDisplay::selected()
-{
-    return on;
-}
-
 void ScreenDisplay::editData()
 {
     ParameterEditor *pe = new ParameterEditor(this);
@@ -128,31 +124,30 @@ void ScreenDisplay::dropEvent(QDropEvent *event)
     }
 };
 
+//void ScreenDisplay::setSelected(bool sel)
+//{
+//    bool e = (sel != on);
+//    resetSelected(sel);
+//    if (e) {
+//        emit stateChanged (on);
+//    }
+//}
 
-void ScreenDisplay::setSelected(bool sel)
-{
-    bool e = (sel != on);
-    resetSelected(sel);
-    if (e) {
-        emit stateChanged (on);
-    }
-}
-
-void ScreenDisplay::resetSelected(bool sel)
-{
-    bool e = (on != sel);
-    on = sel;
-    if (e) {
-        setIndicatorColour(QColor( on ? Qt::red : Qt::black));
-    }
-}
+//void ScreenDisplay::resetSelected(bool sel)
+//{
+//    bool e = (on != sel);
+//    on = sel;
+//    if (e) {
+//        setIndicatorColour(QColor( on ? Qt::red : Qt::black));
+//    }
+//}
 
 
 void ScreenDisplay::mouseReleaseEvent (QMouseEvent *e)
 {
     if (e->button() == Qt::LeftButton && !dragging) {
-        // Start or stop this payback
-        setSelected(!on);
+        //Button clicked
+        emit clicked(id);
         dragging = false;
     }
 }
@@ -213,7 +208,7 @@ void ScreenDisplay::mouseMoveEvent(QMouseEvent *event)
                     .scaled (48,48,Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
     // Execute the drag action
     dragging = true;
-    /*Qt::DropAction dropAction = */drag->exec(Qt::CopyAction | Qt::MoveAction);
+    drag->exec(Qt::CopyAction | Qt::MoveAction);
 }
 
 

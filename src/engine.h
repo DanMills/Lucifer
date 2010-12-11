@@ -84,6 +84,7 @@ signals:
     void showImported();
 		/// Status message
 		void message (QString text, int time);
+		void setIndicator (unsigned int pos, QColor col);
 
 public slots:
     /// Kill all laser output, open the interlocks and scram the pile,
@@ -91,11 +92,15 @@ public slots:
     void kill ();
 		/// Deal with drag and drop events.
 		bool mimeHandler (const QMimeData * data, int pos);
+		/// A frame select button has been clicked
+		void clicked(const int pos);
+		/// for a deselect
+		void deselect (const int pos);
 private slots:
     void Saved();
     void Loaded();
     void Imported();
-    //void needNewSource(int head);
+		void selectionChangedData(unsigned int, bool);
 private:
     /// Lock held while reading or writing the sources vector as this is prone to reallocation
     /// and I am not sure if that is atomic.

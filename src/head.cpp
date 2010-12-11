@@ -26,7 +26,8 @@ LaserHead::LaserHead(Engine* e)
     frame_index = 0;
     resampler.setInputPPS(targetPPS);
     resampler.setOutputPPS(30000);
-
+		connect (&sources,SIGNAL(selectionChanged(uint,bool)),this,SLOT(selectionChangedData(uint,bool)));
+		connect (&sources,SIGNAL(dumpCurrentSelection()),this,SLOT(dump()));
 }
 
 LaserHead::~LaserHead()
@@ -112,6 +113,11 @@ void LaserHead::dataRequested()
     }
 }
 
+void LaserHead::dump()
+{
+	loadFrameSource(FrameSourcePtr(),true);
+}
+
 bool LaserHead::loadFrameSource(FrameSourcePtr f, bool immediate)
 {
     if (fs) {
@@ -151,10 +157,26 @@ void LaserHead::select(unsigned int pos, bool active)
 void LaserHead::setSelectionMode(const PlaybackList::SelectionModes mode)
 {
     sources.setSelectionMode(mode);
+		emit selectionModeChanged (mode);
 }
 
 void LaserHead::setStepMode(const PlaybackList::StepModes mode)
 {
     sources.setStepMode(mode);
+		emit stepModeChanged(mode);
 }
 
+bool LaserHead::isSelected(const int pos)
+{
+		return sources.isSelected (pos);
+}
+
+void LaserHead::selectionChangedData (unsigned int sel, bool active)
+{
+		emit selectionChanged (sel,active);
+}
+
+void LaserHead::kill()
+{
+	sources.clear();
+}

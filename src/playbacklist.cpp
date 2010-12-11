@@ -9,19 +9,23 @@ PlaybackList::PlaybackList(QObject *parent) : QObject(parent)
     selMode = SINGLE;
     stepMode = LOOP;
     currentIndex = -1;
+		lock = new QMutex (QMutex::Recursive);
 }
 PlaybackList::~PlaybackList()
 {
+		delete lock;
 }
+
 void PlaybackList::select(unsigned int pos, bool active)
 {
+		QMutexLocker l (lock);
     if (!active) {
         for (unsigned int i=0; i < selections.size(); i++) {
             if (selections[i] == pos) {
                 selections.erase(selections.begin()+i);
-                emit selectionChanged (pos,false);
+								emit selectionChanged (pos,false);
                 if (i==0) {
-                    // Current selection changed
+										emit dumpCurrentSelection();
                     next (false);
                 }
                 break;
@@ -43,8 +47,9 @@ void PlaybackList::select(unsigned int pos, bool active)
             }
             selections.clear();
             selections.push_back(pos);
-            emit selectionChanged(pos,true);
+						emit dumpCurrentSelection();
             next(false);
+						emit selectionChanged(pos,true);
         } else {
             selections.push_back(pos);
             emit selectionChanged(pos,true);
@@ -64,6 +69,7 @@ PlaybackList::StepModes PlaybackList::getStepMode() const
 void PlaybackList::setSelectionMode(PlaybackList::SelectionModes mode)
 {
     if (mode == SINGLE) {
+				QMutexLocker l (lock);
         while (selections.size() > 1) {
             emit selectionChanged(selections[selections.size()-1],false);
             selections.erase(selections.end()-1);
@@ -91,6 +97,17 @@ void PlaybackList::manualStepClicked()
     }
 }
 
+void PlaybackList::clear()
+{
+	QMutexLocker l(lock);
+	while (selections.size() > 1) {
+		emit selectionChanged(selections[selections.size()-1],false);
+		selections.erase(selections.end()-1);
+	}
+	emit dumpCurrentSelection();
+}
+
+
 int PlaybackList::getNextFramesource ()
 {
     if ((stepMode == ONCE) || (stepMode == LOOP) || (currentIndex == -1)) {
@@ -106,7 +123,8 @@ int PlaybackList::getFrameSource()
 
 
 int PlaybackList::next(bool running)
-{
+{		//selections.push_back(rand()%64);
+		QMutexLocker l (lock);
     if (selections.size()) {
         int oldsel = selections[0];
         switch (stepMode) {
@@ -134,7 +152,7 @@ int PlaybackList::next(bool running)
     if (selections.size()) {
         return selections[0];
     }
-    return 0;//-1;
+    return -1;
 }
 
 QStringList PlaybackList::selectionModeList() const
@@ -156,5 +174,15 @@ QStringList PlaybackList::stepModeList() const
     return l;
 }
 
+bool PlaybackList::isSelected(const int sel)
+{
+	QMutexLocker l (lock);
+	for (unsigned int i=0; i < selections.size(); i++){
+		if (selections[i]==(unsigned) sel){
+			return true;
+		}
+	}
+	return false;
+}
 
 
