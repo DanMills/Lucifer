@@ -90,6 +90,8 @@ public slots:
     /// Kill all laser output, open the interlocks and scram the pile,
     /// Called by the emergency stop signal (Also WDT timeouts and such).
     void kill ();
+		/// Undo a kill
+		void restart();
     /// Deal with drag and drop events.
     bool mimeHandler (const QMimeData * data, int pos);
     /// A frame select button has been clicked

@@ -144,7 +144,6 @@ int main (int argc, char **argv)
     QCoreApplication::setOrganizationDomain("exponent.myzen.co.uk");
     QCoreApplication::setApplicationName("Lucifer");
     slog()->info("Starting Galvanic Lucifer");
-    //polygonTest p;
     EnginePtr e = boost::make_shared<Engine>();
     ButtonWindow grid (e);
     for (unsigned int i=0; i < filenames.size(); i++) {

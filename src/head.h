@@ -76,6 +76,7 @@ public slots:
 		void setStepMode (const PlaybackList::StepModes mode);
 		/// Kill the output
 		void kill();
+		void restart();
 private:
 		Engine * engine;
     bool setDriver (DriverPtr d);
@@ -89,6 +90,7 @@ private:
     Resample resampler;
     ColourTrimmer colourTrim[3];
     PlaybackList sources;
+		bool killed;
 
 private slots:
     void dataRequested();

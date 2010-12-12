@@ -71,13 +71,13 @@ private slots:
     void setFullScreen();
     void clearFullScreen();
     void importFiles ();
-    //void selectionChanged (unsigned int x, unsigned int y, unsigned int id, bool down);
-    //void selectionModeChanged (int sel);
+		void userKill();
     void sourcesSizeChanged (size_t);
 		void status(QString text, int time);
-    //void nextFrameSource();
 		void selectionModeData (int);
 		void stepModeData (int);
+protected:
+		void keyPressEvent(QKeyEvent *event);
 private:
     ButtonWindow();
     std::vector<ButtonGrid *> grids;
@@ -86,6 +86,7 @@ private:
     QMenu *viewMenu;
     QMenu *setupMenu;
     QMenu *helpMenu;
+		QMenu *headsMenu;
 
     QAction * openAct;
     QAction * saveAct;
@@ -95,8 +96,10 @@ private:
     QAction * blankLasersAct;
     QAction * exitAct;
     QAction * importAct;
+		QAction * startAct;
     QTabWidget * tabs;
-    QComboBox * selectionMode;
+
+		QComboBox * selectionMode;
     QComboBox * stepMode;
 
     bool unsaved;
@@ -113,11 +116,5 @@ private:
     void makeActions();
     void loadFrame();
 
-    //DriverPtr driver;
-    //LaserHead head;
-    // The list of currently selected frame sources
-    //std::vector<Selection> selections;
-    //enum SELECTIONMODE {SINGLE,MULTIPLE,SHUFFLE};
-    //SELECTIONMODE mode;
 };
 #endif

@@ -26,6 +26,7 @@ LaserHead::LaserHead(Engine* e)
     frame_index = 0;
     resampler.setInputPPS(targetPPS);
     resampler.setOutputPPS(30000);
+		killed = false;
 		connect (&sources,SIGNAL(selectionChanged(uint,bool)),this,SLOT(selectionChangedData(uint,bool)));
 		connect (&sources,SIGNAL(dumpCurrentSelection()),this,SLOT(dump()));
 }
@@ -123,7 +124,11 @@ bool LaserHead::loadFrameSource(FrameSourcePtr f, bool immediate)
     if (fs) {
         fs->deletePlayback(pb);
     }
-    fs = f;
+    if (!killed){
+			fs = f;
+		} else {
+			fs = FrameSourcePtr();
+		}
     if (fs) {
         pb = fs->createPlayback();
     }
@@ -179,4 +184,10 @@ void LaserHead::selectionChangedData (unsigned int sel, bool active)
 void LaserHead::kill()
 {
 	sources.clear();
+	killed = true;
+}
+
+void LaserHead::restart()
+{
+	killed = false;
 }

@@ -259,7 +259,25 @@ void Engine::kill()
             }
         }
     }
+    slog()->critStream() << "Laser output killed!";
 }
+
+void Engine::restart()
+{
+	slog()->critStream() << "Laser output restarted!";
+	for (unsigned int i=0; i < MAX_HEADS; i++) {
+		LaserHeadPtr h = getHead(i);
+		if (h) {
+			h->restart();
+			DriverPtr d = h->getDriver();
+			if (d) {
+				d->ILDAShutter(true);
+			}
+		}
+	}
+}
+
+
 
 void Engine::Saved()
 {
