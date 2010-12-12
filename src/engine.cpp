@@ -542,4 +542,8 @@ void Engine::selectionChangedData(unsigned int pos, bool active)
     }
 }
 
+void Engine::manualNext()
+{
+	emit manualTrigger();
+}
 

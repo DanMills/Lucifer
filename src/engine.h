@@ -85,6 +85,7 @@ signals:
     /// Status message
     void message (QString text, int time);
     void setIndicator (unsigned int pos, QColor col);
+		void manualTrigger();
 
 public slots:
     /// Kill all laser output, open the interlocks and scram the pile,
@@ -98,6 +99,8 @@ public slots:
     void clicked(const int pos);
     /// force a deselect
     void deselect (const int pos);
+		/// Called to manually go to next framesource in manual mode
+		void manualNext();
 private slots:
     void Saved();
     void Loaded();

@@ -32,59 +32,59 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 /// HeadThread->start must be called to actually start any head running
 class HeadThread : public QThread
 {
-	Q_OBJECT
-	public:
-		HeadThread(Engine * e);
-		virtual ~HeadThread();
-		void run();
-		LaserHeadPtr head;
-	private:
-		Engine * engine;
+    Q_OBJECT
+public:
+    HeadThread(Engine * e);
+    virtual ~HeadThread();
+    void run();
+    LaserHeadPtr head;
+private:
+    Engine * engine;
 };
 
 /// A Thread that saves the state of a show
 class ShowSaver : public QThread
 {
-	Q_OBJECT
-	public:
-		ShowSaver (Engine* engine_, QXmlStreamWriter* w_);
-		~ShowSaver();
-		void run ();
-	signals:
-		void saved();
-	private:
-		QXmlStreamWriter * w;
-		Engine *e;
+    Q_OBJECT
+public:
+    ShowSaver (Engine* engine_, QXmlStreamWriter* w_);
+    ~ShowSaver();
+    void run ();
+signals:
+    void saved();
+private:
+    QXmlStreamWriter * w;
+    Engine *e;
 };
 
 /// A thread that loads a show
 class ShowLoader : public QThread
 {
-	Q_OBJECT
-	public:
-		ShowLoader (Engine* engine_, QXmlStreamReader* r_);
-		~ShowLoader();
-		void run ();
-	signals:
-		void saved();
-	private:
-		QXmlStreamReader * r;
-		Engine *e;
+    Q_OBJECT
+public:
+    ShowLoader (Engine* engine_, QXmlStreamReader* r_);
+    ~ShowLoader();
+    void run ();
+signals:
+    void saved();
+private:
+    QXmlStreamReader * r;
+    Engine *e;
 };
 
 /// A Thread that imports a foregin show file
 class ShowImporter : public QThread
 {
-	Q_OBJECT
-	public:
-		ShowImporter (Engine* engine_, QStringList fileName, int index = -1);
-		~ShowImporter();
-		void run ();
-	signals:
-		void imported();
-	private:
-		QStringList name;
-		Engine *e;
-		int idx;
+    Q_OBJECT
+public:
+    ShowImporter (Engine* engine_, QStringList fileName, int index = -1);
+    ~ShowImporter();
+    void run ();
+signals:
+    void imported();
+private:
+    QStringList name;
+    Engine *e;
+    int idx;
 };
 #endif

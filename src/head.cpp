@@ -22,13 +22,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 LaserHead::LaserHead(Engine* e)
 {
     engine = e;
-    targetPPS = 30000;
+    targetPPS = 12000;
     frame_index = 0;
     resampler.setInputPPS(targetPPS);
     resampler.setOutputPPS(30000);
     killed = false;
     connect (&sources,SIGNAL(selectionChanged(uint,bool)),this,SLOT(selectionChangedData(uint,bool)));
     connect (&sources,SIGNAL(dumpCurrentSelection()),this,SLOT(dump()));
+		connect (&(*engine),SIGNAL(manualTrigger()),this,SLOT(manual()));
 }
 
 LaserHead::~LaserHead()
@@ -181,10 +182,20 @@ void LaserHead::selectionChangedData (unsigned int sel, bool active)
     emit selectionChanged (sel,active);
 }
 
+void LaserHead::manual()
+{
+    sources.manualStepClicked();
+}
+
+void LaserHead::beat()
+{
+    sources.beatDetected();
+}
+
 void LaserHead::kill()
 {
     killed = true;
-		loadFrameSource(FrameSourcePtr(),true);
+    loadFrameSource(FrameSourcePtr(),true);
 }
 
 void LaserHead::restart()

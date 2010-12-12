@@ -15,7 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-/* $Id: loadilda.h 6 2010-05-20 21:12:50Z dmills $ */
 
 #ifndef LOAD_ILDA_INC
 #define LOAD_ILDA_INC

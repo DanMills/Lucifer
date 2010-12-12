@@ -384,10 +384,16 @@ void ButtonWindow::userKill()
 
 void ButtonWindow::keyPressEvent(QKeyEvent* event)
 {
-    if (event->key()==Qt::Key_Escape) {
+    switch (event->key()){
+			case Qt::Key_Escape :
         userKill();
         return;
-    }
-    QWidget::keyPressEvent(event);
+				break;
+			case Qt::Key_F1 :
+				engine->manualNext();
+				break;
+			default:
+				QWidget::keyPressEvent(event);
+		}
 }
 

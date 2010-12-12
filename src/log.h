@@ -16,8 +16,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-/* $Id: log.h 16 2010-06-26 22:35:55Z dmills $ */
-
 #ifndef LOG_INCL
 #define LOG_INCL
 
