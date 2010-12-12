@@ -26,9 +26,9 @@ LaserHead::LaserHead(Engine* e)
     frame_index = 0;
     resampler.setInputPPS(targetPPS);
     resampler.setOutputPPS(30000);
-		killed = false;
-		connect (&sources,SIGNAL(selectionChanged(uint,bool)),this,SLOT(selectionChangedData(uint,bool)));
-		connect (&sources,SIGNAL(dumpCurrentSelection()),this,SLOT(dump()));
+    killed = false;
+    connect (&sources,SIGNAL(selectionChanged(uint,bool)),this,SLOT(selectionChangedData(uint,bool)));
+    connect (&sources,SIGNAL(dumpCurrentSelection()),this,SLOT(dump()));
 }
 
 LaserHead::~LaserHead()
@@ -116,7 +116,7 @@ void LaserHead::dataRequested()
 
 void LaserHead::dump()
 {
-	loadFrameSource(FrameSourcePtr(),true);
+    loadFrameSource(FrameSourcePtr(),true);
 }
 
 bool LaserHead::loadFrameSource(FrameSourcePtr f, bool immediate)
@@ -124,11 +124,11 @@ bool LaserHead::loadFrameSource(FrameSourcePtr f, bool immediate)
     if (fs) {
         fs->deletePlayback(pb);
     }
-    if (!killed){
-			fs = f;
-		} else {
-			fs = FrameSourcePtr();
-		}
+    if (!killed) {
+        fs = f;
+    } else {
+        fs = FrameSourcePtr();
+    }
     if (fs) {
         pb = fs->createPlayback();
     }
@@ -162,32 +162,32 @@ void LaserHead::select(unsigned int pos, bool active)
 void LaserHead::setSelectionMode(const PlaybackList::SelectionModes mode)
 {
     sources.setSelectionMode(mode);
-		emit selectionModeChanged (mode);
+    emit selectionModeChanged (mode);
 }
 
 void LaserHead::setStepMode(const PlaybackList::StepModes mode)
 {
     sources.setStepMode(mode);
-		emit stepModeChanged(mode);
+    emit stepModeChanged(mode);
 }
 
 bool LaserHead::isSelected(const int pos)
 {
-		return sources.isSelected (pos);
+    return sources.isSelected (pos);
 }
 
 void LaserHead::selectionChangedData (unsigned int sel, bool active)
 {
-		emit selectionChanged (sel,active);
+    emit selectionChanged (sel,active);
 }
 
 void LaserHead::kill()
 {
-	sources.clear();
-	killed = true;
+    killed = true;
+		loadFrameSource(FrameSourcePtr(),true);
 }
 
 void LaserHead::restart()
 {
-	killed = false;
+    killed = false;
 }

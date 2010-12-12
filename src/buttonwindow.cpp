@@ -57,6 +57,7 @@ ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
     connect (stepMode,SIGNAL(currentIndexChanged(int)),this,SLOT(stepModeData(int)));
     // And the SCRAM button
     toolbar->addAction(blankLasersAct);
+    toolbar->addAction(startAct);
 
     addToolBar(toolbar);
     QFrame *frame = new QFrame(this);
@@ -91,7 +92,6 @@ ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
     fileMenu = menuBar()->addMenu(tr("&File"));
     editMenu= menuBar()->addMenu(tr("&Edit"));
     viewMenu = menuBar()->addMenu(tr("&View"));
-    headsMenu= menuBar()->addMenu(tr("&Laser heads"));
     setupMenu= menuBar()->addMenu(tr("&Setup"));
     helpMenu= menuBar()->addMenu(tr("&Help"));
 
@@ -103,7 +103,6 @@ ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
     fileMenu->addSeparator();
     fileMenu->addAction(exitAct);
 
-    headsMenu->addAction(startAct);
     statusBar();
     show();
     unsaved = false;
@@ -352,25 +351,34 @@ void ButtonWindow::makeActions()
     blankLasersAct->setStatusTip(tr("Shutdown all laser output"));
     blankLasersAct->setIcon(QIcon(":icons/process-stop.svg"));
     connect (blankLasersAct,SIGNAL(triggered()), this,SLOT(userKill()));
+    // Laser restart switch
+    startAct = new QAction (tr("Restart heads"),this);
+    startAct->setStatusTip(tr("Restart the laserheads after an emergency shutdown"));
+    startAct->setIcon(QIcon(":icons/dialog-apply.svg"));
+    connect (startAct,SIGNAL(triggered()),this,SLOT(userRestart()));
+
     // Import multiple
     importAct = new QAction (tr("Import files"),this);
     importAct->setStatusTip(tr("Import multiple files"));
     importAct->setIcon(QIcon(":/icons/document-open.svg"));
     connect(importAct, SIGNAL(triggered()),this, SLOT(importFiles()));
-    // Restart heads after an emergebcy shutdown
-    startAct = new QAction (tr("Restart heads"),this);
-    startAct->setStatusTip(tr("Restart the laserheads after an emergency shutdown"));
-    connect (startAct,SIGNAL(triggered()),&(*engine),SLOT(restart()));
+
 
     exitAct = new QAction (tr("Quit"),this);
     exitAct->setStatusTip(tr("Exit the application"));
     connect(exitAct, SIGNAL(triggered()),qApp, SLOT(quit()));
 }
 
+void ButtonWindow::userRestart()
+{
+    engine->restart();
+    statusBar()->showMessage(tr("Laser output started"),2000);
+}
+
 void ButtonWindow::userKill()
 {
-	engine->kill();
-	statusBar()->showMessage(tr("Laser output killed by user, use the laserhead menu to restart"),10000);
+    engine->kill();
+    statusBar()->showMessage(tr("Laser output killed by user"),10000);
 }
 
 

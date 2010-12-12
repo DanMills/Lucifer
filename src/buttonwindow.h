@@ -71,13 +71,14 @@ private slots:
     void setFullScreen();
     void clearFullScreen();
     void importFiles ();
-		void userKill();
+    void userKill();
+		void userRestart();
     void sourcesSizeChanged (size_t);
-		void status(QString text, int time);
-		void selectionModeData (int);
-		void stepModeData (int);
+    void status(QString text, int time);
+    void selectionModeData (int);
+    void stepModeData (int);
 protected:
-		void keyPressEvent(QKeyEvent *event);
+    void keyPressEvent(QKeyEvent *event);
 private:
     ButtonWindow();
     std::vector<ButtonGrid *> grids;
@@ -86,7 +87,6 @@ private:
     QMenu *viewMenu;
     QMenu *setupMenu;
     QMenu *helpMenu;
-		QMenu *headsMenu;
 
     QAction * openAct;
     QAction * saveAct;
@@ -96,10 +96,11 @@ private:
     QAction * blankLasersAct;
     QAction * exitAct;
     QAction * importAct;
-		QAction * startAct;
+    QAction * startAct;
+
     QTabWidget * tabs;
 
-		QComboBox * selectionMode;
+    QComboBox * selectionMode;
     QComboBox * stepMode;
 
     bool unsaved;
