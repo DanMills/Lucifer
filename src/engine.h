@@ -53,8 +53,9 @@ class Engine : public QObject
 public:
     Engine(QObject *parent = NULL);
     ~Engine();
-    bool addFrameSource (FrameSourcePtr fs, long int pos);
-    FrameSourcePtr getFrameSource (const size_t pos);
+    bool addFrameSource (SourceImplPtr fs, long int pos);
+    SourceImplPtr getFrameSource (const size_t pos);
+		PlaybackPtr getPlayback(const size_t pos);
     LaserHeadPtr getHead(const size_t pos);
     bool startHead(const size_t pos);
     size_t getSourcesSize() const;
@@ -73,7 +74,7 @@ public:
 
 signals:
     /// Emitted whenever a framesource is replaced in the main sources vector
-    void frameSourceChanged (unsigned long int pos, FrameSourcePtr newSource);
+    void frameSourceChanged (unsigned long int pos);
     /// Emitted when the sise of the sources vector changes
     void sourcesSizeChanged (size_t);
     /// Show file has completed loading
@@ -110,7 +111,7 @@ private:
     /// Lock held while reading or writing the sources vector as this is prone to reallocation
     /// and I am not sure if that is atomic.
     QReadWriteLock source_lock;
-    std::vector <FrameSourcePtr> sources;
+    std::vector <SourceImplPtr> sources;
     /// The laser projection heads
     HeadThread *heads[MAX_HEADS];
     /// File IO threads and associated locks

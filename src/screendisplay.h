@@ -35,25 +35,16 @@ class ScreenDisplay : public DisplayFrame
 public:
     ScreenDisplay (EnginePtr engine_, int id_, QWidget * parent = 0);
     ~ScreenDisplay ();
-    FrameSourcePtr data();
-		//bool selected();
+    //SourceImplPtr data();
 public slots:
     void advance ();
     void animate (bool run, unsigned int fps);
     void loadData();
 		void editData();
-		void source (FrameSourcePtr fs);
-		//void setSelected (bool sel);
-		//void resetSelected (bool sel);
+		void source (PlaybackPtr pb_);
 	signals:
     void modified(); //emitted when the underlying data is replaced
-		/// Emitted when a frame source is drag and dropped onto this displayframe
-		/// Should be hooked to eventually call engine.addFrameSource with
-		///apropriate parameters.
-		//void addFrameSource (FrameSourcePtr p);
     void clicked (int pos); // emitted when playback is activated or deactivated by pressing the button
-		//void importClicked();
-		//void dropped(const QMimeData * data);
 
 protected:
 		void dragEnterEvent(QDragEnterEvent *event);
@@ -64,8 +55,7 @@ protected:
 		void mouseMoveEvent(QMouseEvent *e);
 		void mouseReleaseEvent (QMouseEvent *e);
 private:
-    Playback playback_;
-    FrameSourcePtr fs_;
+    PlaybackPtr pb;
     QTimer *timer;
     QMenu popup;
     //bool on;

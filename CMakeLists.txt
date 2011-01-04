@@ -8,7 +8,8 @@ INCLUDE( ${QT_USE_FILE} )
 include_directories(${QT_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
 
 set(lucifer_SRCS src/framesequencer.cpp
-	src/framesource.cpp src/staticframe.cpp src/main.cpp
+  src/staticframe.cpp src/main.cpp
+  src/framesource_impl.cpp
 	src/loadilda.cpp src/screendisplay.cpp
 	src/buttongrid.cpp src/buttonwindow.cpp
   src/frame.cpp src/point.cpp src/driver.cpp
@@ -33,7 +34,8 @@ set(lucifer_MOC_HDRS src/screendisplay.h src/buttongrid.h src/buttonwindow.h
 	src/outputview.h
 	src/engine.h src/playbacklist.h
 	src/engine_impl.h
-	src/qtiocompressor.h)
+	src/qtiocompressor.h
+	src/framesource_impl.h)
 
 SET(lucifer_RCS
 	src/lucifer.qrc

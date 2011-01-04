@@ -34,9 +34,6 @@ LaserHead::LaserHead(Engine* e)
 
 LaserHead::~LaserHead()
 {
-    if (fs) {
-        fs->deletePlayback(pb);
-    }
 }
 
 void LaserHead::HWPpsChanged(unsigned int newPPS)
@@ -81,21 +78,21 @@ void LaserHead::dataRequested()
                 pointBuf.clear();
                 frame_index = 0;
                 FramePtr fp;
-                if (fs) {
-                    fp = fs->data(pb);
+                if (pb) {
+                    fp = pb->nextFrame();
                 }
                 if (!fp) {
-                    FrameSourcePtr p;
+                    PlaybackPtr p;
                     int s;
                     s = sources.getNextFramesource();
                     if (s > -1) {
                         assert (engine);
-                        p = engine->getFrameSource(s);
+                        p = engine->getPlayback(s);
                     }
                     loadFrameSource(p,false);
                     emit endOfSource();
-                    if (fs) {
-                        fp = fs->data(pb);
+                    if (pb) {
+                        fp = pb->nextFrame();
                     }
                 }
                 emit newFrame(fp);
@@ -107,7 +104,7 @@ void LaserHead::dataRequested()
                     }
                     pointBuf = resampler.run(p);
                 }
-                if (!fs) {
+                if (!pb) {
                     break;
                 }
             }
@@ -117,21 +114,15 @@ void LaserHead::dataRequested()
 
 void LaserHead::dump()
 {
-    loadFrameSource(FrameSourcePtr(),true);
+    loadFrameSource(PlaybackPtr(),true);
 }
 
-bool LaserHead::loadFrameSource(FrameSourcePtr f, bool immediate)
+bool LaserHead::loadFrameSource(PlaybackPtr f, bool immediate)
 {
-    if (fs) {
-        fs->deletePlayback(pb);
-    }
     if (!killed) {
-        fs = f;
+        pb = f;
     } else {
-        fs = FrameSourcePtr();
-    }
-    if (fs) {
-        pb = fs->createPlayback();
+        pb = PlaybackPtr();
     }
     if (immediate) {
         frame_index = 0;
@@ -195,7 +186,7 @@ void LaserHead::beat()
 void LaserHead::kill()
 {
     killed = true;
-    loadFrameSource(FrameSourcePtr(),true);
+    loadFrameSource(PlaybackPtr(),true);
 }
 
 void LaserHead::restart()

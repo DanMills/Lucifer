@@ -82,8 +82,8 @@ ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
     ButtonGrid *g = new ButtonGrid(engine, 8,8,0,this);
     grids.push_back (g);
     // This connection ensures that the grids have a consistent view of what is loaded into the engine
-    connect (&(*engine),SIGNAL(frameSourceChanged(unsigned long int, FrameSourcePtr)),
-             g,SLOT(frameSourceChanged(unsigned long int,FrameSourcePtr)));
+    connect (&(*engine),SIGNAL(frameSourceChanged(unsigned long int)),
+             g,SLOT(frameSourceChanged(unsigned long int)));
     // This ensures that the number of grids is sufficient for the number of frames loaded into the engine
     connect (&(*engine),SIGNAL(sourcesSizeChanged(size_t)),this,SLOT(sourcesSizeChanged(size_t)));
     tabs->addTab(grids[0],QString("&")+QString().number(1));
@@ -165,8 +165,8 @@ void ButtonWindow::sourcesSizeChanged(size_t s)
         ButtonGrid *g = new ButtonGrid(engine, 8,8,64 * grids.size(),this);
         grids.push_back (g);
         // This connection ensures that the grids have a consistent view of what is loaded into the engine
-        connect (&(*engine),SIGNAL(frameSourceChanged(unsigned long int, FrameSourcePtr)),
-                 g,SLOT(frameSourceChanged(unsigned long int,FrameSourcePtr)));
+        connect (&(*engine),SIGNAL(frameSourceChanged(unsigned long int)),
+                 g,SLOT(frameSourceChanged(unsigned long int)));
         tabs->addTab(g,QString("&")+QString().number(grids.size()));
     }
 }

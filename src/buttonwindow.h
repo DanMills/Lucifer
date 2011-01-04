@@ -25,32 +25,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // The source selector window
 #include "engine.h"
 
-class Selection
-{
-public:
-    Selection (const unsigned int g, const unsigned int x, const unsigned int y)
-    {
-        g_= g;
-        x_ = x;
-        y_ = y;
-    }
-    ~Selection() {};
-    unsigned int grid() {
-        return g_;
-    };
-    unsigned int getX() {
-        return x_;
-    };
-    unsigned int getY() {
-        return y_;
-    };
-private:
-    unsigned int g_;
-    unsigned int x_;
-    unsigned int y_;
-};
-
-
 class ButtonWindow : public QMainWindow
 {
     Q_OBJECT

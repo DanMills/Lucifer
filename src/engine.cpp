@@ -106,7 +106,7 @@ Engine::~Engine()
     slog()->infoStream() << "Laser show engine deleted : " << this;
 }
 
-bool Engine::addFrameSource(FrameSourcePtr fs,long int pos)
+bool Engine::addFrameSource(SourceImplPtr fs,long int pos)
 {
     slog()->debugStream() << "Adding framesource " << fs << " to engine " << this <<" at index " << pos;
     bool resized= false;
@@ -130,20 +130,26 @@ bool Engine::addFrameSource(FrameSourcePtr fs,long int pos)
     sources[pos] = fs;
     locker.unlock();
     if (resized) {
-        emit sourcesSizeChanged (pos+1);
+        emit sourcesSizeChanged (sources.size());
     }
-    emit frameSourceChanged (pos, fs);
+    emit frameSourceChanged (pos);
     return true;
 }
 
-FrameSourcePtr Engine::getFrameSource(const size_t pos)
+SourceImplPtr Engine::getFrameSource(const size_t pos)
 {
-    FrameSourcePtr ret;
+    SourceImplPtr ret;
     QReadLocker locker(&source_lock);
     if (pos < sources.size()) {
         ret = sources[pos];
     }
     return ret;
+}
+
+PlaybackPtr Engine::getPlayback(const size_t pos)
+{
+    PlaybackPtr pb = boost::make_shared<Playback>(getFrameSource(pos));
+    return pb;
 }
 
 size_t Engine::getSourcesSize() const
@@ -165,9 +171,9 @@ LaserHeadPtr Engine::getHead(const size_t pos)
 bool Engine::copy(unsigned int dest, unsigned int source)
 {
     slog()->infoStream() << "Copying frameSource from index " << source << " to " << dest;
-    FrameSourcePtr s = getFrameSource(source);
+    SourceImplPtr s = getFrameSource(source);
     if (s) {
-        FrameSourcePtr d = s->clone();
+        SourceImplPtr d = s->clone();
         addFrameSource(d,dest);
         return true;
     }
@@ -198,7 +204,7 @@ bool Engine::mimeHandler(const QMimeData* data, int pos)
         return true;
     } else if (data->hasFormat("Text/x-FrameSource")) {
         std::string s((char *) data->data("x-Text/FrameSource").constData());
-        FrameSourcePtr f = FrameSource::fromString(s);
+        SourceImplPtr f = FrameSource_impl::fromString(s);
         if (f) {
             slog()->infoStream() << "Dropped framesource into position  "<< pos;
             addFrameSource(f,pos);
@@ -264,20 +270,18 @@ void Engine::kill()
 
 void Engine::restart()
 {
-	slog()->critStream() << "Laser output restarted!";
-	for (unsigned int i=0; i < MAX_HEADS; i++) {
-		LaserHeadPtr h = getHead(i);
-		if (h) {
-			h->restart();
-			DriverPtr d = h->getDriver();
-			if (d) {
-				d->ILDAShutter(true);
-			}
-		}
-	}
+    slog()->critStream() << "Laser output restarted!";
+    for (unsigned int i=0; i < MAX_HEADS; i++) {
+        LaserHeadPtr h = getHead(i);
+        if (h) {
+            h->restart();
+            DriverPtr d = h->getDriver();
+            if (d) {
+                d->ILDAShutter(true);
+            }
+        }
+    }
 }
-
-
 
 void Engine::Saved()
 {
@@ -348,14 +352,14 @@ bool Engine::loadShow(QString filename, const bool clear)
         }
         if (clear) {
             for (unsigned int i=0; i < sources.size(); i++) {
-                FrameSourcePtr p;
-                FrameSourcePtr op;
+                SourceImplPtr p;
+                SourceImplPtr op;
                 op = getFrameSource(i);
                 source_lock.lockForWrite();
                 sources[i] = p;
                 source_lock.unlock();
                 if (op != p) {
-                    emit frameSourceChanged (i, p);
+                    emit frameSourceChanged (i);
                 }
             }
             // Clear the vector, the loader will add capacity as needed.
@@ -392,7 +396,7 @@ void ShowSaver::run()
     w->writeStartElement("Lucifer");
     w->writeAttribute("Version","1.1.0");
     for (unsigned int i=0; i < e->getSourcesSize(); i++) {
-        FrameSourcePtr p = e->getFrameSource(i);
+        SourceImplPtr p = e->getFrameSource(i);
         if (p) {
             w->writeStartElement("Sequence");
             w->writeAttribute("Position",QString().number(i));
@@ -446,7 +450,7 @@ void ShowLoader::run()
                 slog()->infoStream()<<"Loading sequence at : " << index;
                 r->readNextStartElement();
                 assert (r->tokenType() == QXmlStreamReader::StartElement);
-                FrameSourcePtr fs = FrameSource::loadFrames (r);
+                SourceImplPtr fs = FrameSource_impl::loadFrames (r);
                 e->addFrameSource(fs,index);
             } else {
                 r->readNextStartElement();
@@ -506,7 +510,7 @@ void ShowImporter::run()
     for (int i=0; i < name.size(); i++) {
         Ildaloader loader;
         unsigned int err=0;
-        FrameSourcePtr fs = loader.load(name[i],err, false);
+        SourceImplPtr fs = loader.load(name[i],err, false);
         if (fs) {
             e->addFrameSource(fs,idx);
         } else {
@@ -544,6 +548,6 @@ void Engine::selectionChangedData(unsigned int pos, bool active)
 
 void Engine::manualNext()
 {
-	emit manualTrigger();
+    emit manualTrigger();
 }
 

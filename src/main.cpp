@@ -62,7 +62,7 @@ int main (int argc, char **argv)
     bool noReload = false;
     std::string loglevel("INFO");
     qRegisterMetaType<unsigned long int>("unsigned long int");
-    qRegisterMetaType<FrameSourcePtr>("FrameSourcePtr");
+    qRegisterMetaType<SourceImplPtr>("SourceImplPtr");
 		qRegisterMetaType<size_t>("size_t");
 		qRegisterMetaType<FramePtr>("FramePtr");
     int c;
@@ -118,7 +118,7 @@ int main (int argc, char **argv)
     }
     if (listPlugs) {
         std::cerr << "Frame generators\n";
-        std::vector<std::string> list = FrameSource::enemerateFrameGenTypes();
+        std::vector<std::string> list = FrameSource_impl::enemerateFrameGenTypes();
         for (unsigned int i=0; i < list.size(); i++) {
             std::cerr <<"\t" << list[i] << std::endl;
         }

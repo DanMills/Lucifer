@@ -49,7 +49,7 @@ Ildaloader::~Ildaloader ()
 {
 }
 
-FrameSourcePtr Ildaloader::load (QString filename, unsigned int &error, bool pangolin)
+SourceImplPtr Ildaloader::load (QString filename, unsigned int &error, bool pangolin)
 {
 		slog()->infoStream() << "Loading ILDA file : " << filename.toStdString();
 		slog()->infoStream() << "Using pangolin palette : " << ((pangolin) ? "True" : "False");
@@ -58,7 +58,7 @@ FrameSourcePtr Ildaloader::load (QString filename, unsigned int &error, bool pan
     if (!infile.open(QIODevice::ReadOnly)) {
         error = 1;
 				slog()->infoStream() <<"Unable to open '" << filename.toStdString() <<"' for reading";
-        return FrameSourcePtr();
+        return SourceImplPtr();
     }
     palette_.clear ();
     palette_.reserve (256);

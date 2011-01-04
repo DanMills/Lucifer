@@ -17,6 +17,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include <QtGui>
+#include <boost/make_shared.hpp>
 #include "editparams.h"
 #include <assert.h>
 #include "framesequencer.h"
@@ -43,10 +44,10 @@ bool ShowTreeWidget::dropMimeData ( QTreeWidgetItem * p, int index, const QMimeD
 		if ((parent->data->numPossibleChildren() == 1) && (parent->data->numChildren() ==1)){
 			slog()->infoStream() << "Parent allows maximum of 1 child so we need to add a sequencer";
 			// We must add a sequencer to allow more child nodes.
-			FrameSourcePtr sequence = boost::make_shared<FrameSequencer>();
+			SourceImplPtr sequence = boost::make_shared<FrameSequencer>();
 			// Splice the child as the new child of the sequencer
 			ShowTreeWidgetItem *child = (ShowTreeWidgetItem*) parent->takeChild(0);
-			FrameSourcePtr t = child->data;
+			SourceImplPtr t = child->data;
 			child->data->deleteChild(0);
 			sequence->addChild(t);
 			parent->data->deleteChild(0);
@@ -63,13 +64,13 @@ bool ShowTreeWidget::dropMimeData ( QTreeWidgetItem * p, int index, const QMimeD
 			//parent = sequence;
 			// Parent is now the sequencer and can have multiple children.
 		}
-    if ((parent->data->numPossibleChildren() == FrameSource::MANY) ||
-            ((parent->data->numPossibleChildren() == FrameSource::TWO) && (parent->data->numChildren() <= 1)) ||
-            ((parent->data->numPossibleChildren() == FrameSource::ONE) && (parent->data->numChildren() == 0))) {
+    if ((parent->data->numPossibleChildren() == FrameSource_impl::MANY) ||
+            ((parent->data->numPossibleChildren() == FrameSource_impl::TWO) && (parent->data->numChildren() <= 1)) ||
+            ((parent->data->numPossibleChildren() == FrameSource_impl::ONE) && (parent->data->numChildren() == 0))) {
         slog()->infoStream()<<"Drop is acceptable";
         // We can accept this drop
         std::string d((char *) data->data("Text/FrameSource").constData());
-        FrameSourcePtr f = FrameSource::fromString(d);
+        SourceImplPtr f = FrameSource_impl::fromString(d);
         if (f) {
             ShowTreeWidgetItem *n = new ShowTreeWidgetItem;
             n->populateTree (f);
@@ -93,7 +94,7 @@ QMimeData * ShowTreeWidget::mimeData (const QList<QTreeWidgetItem *>  items ) co
 {
     slog()->infoStream()<<"Started dragging from editor";
     QMimeData *mimeData = new QMimeData;
-    ShowTreeWidgetItem *it = (ShowTreeWidgetItem*)items.first();
+		ShowTreeWidgetItem *it = (ShowTreeWidgetItem*)items.first();
     std::string text = it->data->toString();
     // now setup the mime type to hold this data
     QByteArray arr (text.c_str(),text.size());
@@ -101,10 +102,10 @@ QMimeData * ShowTreeWidget::mimeData (const QList<QTreeWidgetItem *>  items ) co
     return mimeData;
 }
 
-void ShowTreeWidgetItem::populateTree(FrameSourcePtr f)
+void ShowTreeWidgetItem::populateTree(SourceImplPtr f)
 {
     assert (f);
-    setText(0,f->name.c_str());
+    setText(0,QString().fromStdString(f->getName()));
     data = f;
     ShowTreeWidgetItem *op = NULL;
     for (unsigned int i = 0; i < f->numChildren(); i ++) {
@@ -128,7 +129,7 @@ ParameterEditor::ParameterEditor(QWidget* parent) :
     connect (tree,SIGNAL(itemSelectionChanged()),this,SLOT(selectionChangedData()));
     root = NULL;
     available = new QListWidget (this);
-		std::vector<std::string> fn = FrameSource::enemerateFrameGenTypes();
+		std::vector<std::string> fn = FrameSource_impl::enemerateFrameGenTypes();
 		for (unsigned int i=0; i < fn.size(); i++){
 			new QListWidgetItem(tr(fn[i].c_str()), available);
 		}
@@ -136,7 +137,7 @@ ParameterEditor::ParameterEditor(QWidget* parent) :
     hbox->addWidget(tree);
     hbox->addWidget (controls);
     hbox->addWidget(available);
-		load (FrameSourcePtr());
+		load (SourceImplPtr());
     setLayout(hbox);
     show ();
 }
@@ -147,18 +148,16 @@ ParameterEditor::~ParameterEditor()
     delete root;
 }
 
-void ParameterEditor::load(FrameSourcePtr f)
+void ParameterEditor::load(SourceImplPtr f)
 {
 		if (!f) return;
-		// The big win here is that it means that the serialisation code is well tested
-		std::string s = f->toString();
-		fs = FrameSource::fromString(s);
+		fs = f->clone();
     if (root) delete root;
     root = NULL;
     tree->clear();
     //pixmapLabel->setPixmap(fs->icon()->pixmap(pixmapLabel->size()));
     if (fs) {
-        setWindowTitle(QString(fs->name.c_str()));
+        setWindowTitle(QString().fromStdString(fs->getName()));
     } else {
         setWindowTitle("Editor");
     }
@@ -178,7 +177,7 @@ void ParameterEditor::load(FrameSourcePtr f)
 }
 
 // Recursive build of a treewidget data structure
-ShowTreeWidgetItem * ParameterEditor::populateTree(ShowTreeWidgetItem *p, FrameSourcePtr f)
+ShowTreeWidgetItem * ParameterEditor::populateTree(ShowTreeWidgetItem *p, SourceImplPtr f)
 {
     assert (f);
     if (!p) {
@@ -192,7 +191,7 @@ void ParameterEditor::itemClickedData (QTreeWidgetItem *item, int)
 {
     ShowTreeWidgetItem *tw = static_cast<ShowTreeWidgetItem*>(item);
     assert (tw);
-    FrameSourcePtr f = tw->data;
+    SourceImplPtr f = tw->data;
 		if (f){
 			fs = f;
 			controls->hide();
@@ -212,10 +211,3 @@ void ParameterEditor::selectionChangedData()
         itemClickedData(selected[0],0);
     }
 }
-
-
-
-
-
-
-

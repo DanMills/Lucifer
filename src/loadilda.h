@@ -33,7 +33,7 @@ class Ildaloader
 public:
     Ildaloader ();
     ~Ildaloader ();
-    FrameSourcePtr load (const QString filename, unsigned int &error, bool pangolin_ct = false);
+    SourceImplPtr load (QString filename, unsigned int& error, bool pangolin = false);
 
 private:
 

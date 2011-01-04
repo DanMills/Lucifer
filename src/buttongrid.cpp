@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "buttongrid.h"
 #include "framesource.h"
 #include "screendisplay.h"
+#include <boost/make_shared.hpp>
 
 ButtonGrid::ButtonGrid (EnginePtr engine_, unsigned int num_x, unsigned int num_y, unsigned int offset, QWidget* parent):
         QWidget(parent)
@@ -38,6 +39,7 @@ ButtonGrid::ButtonGrid (EnginePtr engine_, unsigned int num_x, unsigned int num_
         for (unsigned int y = 0; y < num_y_; y++) {
             ScreenDisplay *s = new ScreenDisplay (engine,offset + y*num_x_ + x,this);
             layout->addWidget(s, x,y);
+						frameSourceChanged(offset + x + (y * num_x_));
         }
     }
 }
@@ -52,10 +54,6 @@ ButtonGrid::~ButtonGrid ()
     }
 }
 
-//Marshals modified signals from the ScreenDisplays
-void ButtonGrid::mod () {
-    emit modified();
-}
 void ButtonGrid::dimensions(int &x, int &y)
 {
     x = num_x_;
@@ -68,7 +66,7 @@ ScreenDisplay * ButtonGrid::at (unsigned int x, unsigned int y)
     return (ScreenDisplay *) layout->itemAtPosition(x,y)->widget();
 }
 
-void ButtonGrid::frameSourceChanged(long unsigned int pos, FrameSourcePtr newSource)
+void ButtonGrid::frameSourceChanged(long unsigned int pos)
 {
     if ((pos >= offset_) && ((pos - offset_) <(num_x_ * num_y_))) {
         // it is one of ours
@@ -77,7 +75,8 @@ void ButtonGrid::frameSourceChanged(long unsigned int pos, FrameSourcePtr newSou
         unsigned int y = pos / num_x_;
         ScreenDisplay *s = at (x,y);
         if (s) {
-            s->source(newSource);
+						PlaybackPtr pb = engine->getPlayback(pos+offset_);
+            s->source(pb);
         }
     }
 }

@@ -27,7 +27,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "staticframe.h"
 #include <netinet/in.h>
 
-static FrameSourcePtr makeStaticFrame()
+#define NAME "Static_frame"
+
+static SourceImplPtr makeStaticFrame()
 {
     return boost::make_shared<StaticFrame>();
 }
@@ -36,30 +38,23 @@ class StaticFrameGen
 {
 public:
     StaticFrameGen () {
-        FrameSource::registerFrameGen ("Static_frame",makeStaticFrame);
+        FrameSource_impl::registerFrameGen (NAME,makeStaticFrame);
     }
 };
 static StaticFrameGen sfg;
 
-StaticFrame::StaticFrame () : FrameSource(MAKES_FRAMES,NONE)
+StaticFrame::StaticFrame () : FrameSource_impl(MAKES_FRAMES,NONE,NAME)
 {
-    name  = "Static_frame";
-    description = "A single frame";
+    setDescription("A single frame");
     slog()->debugStream() << "Created new static frame " << this;
     data_ = boost::make_shared<Frame>();
     repeats = 1;
     dewell = 100;
     useDewell = false;
-		// default geometry = no rotation, no spinning, scale 1:1;
-		//startAngleX = startAngleY = startAngleZ = 0.0;
-		//incrementX = incrementY = incrememtZ = 0;
-		//centerX = centerY = centreZ = 0;
-		//scaleX = scaleY = scaleZ = 1.0;
 }
 
 StaticFrame::~StaticFrame ()
 {
-    slog()->debugStream() << "Deleted static frame " << this;
 }
 
 void StaticFrame::reserve (size_t points)
@@ -180,9 +175,11 @@ void StaticFrame::load(QXmlStreamReader* e)
     }
 }
 
-FramePtr StaticFrame::data(Playback p)
+FramePtr StaticFrame::nextFrame(PlaybackImplPtr pb)
 {
-    StaticFramePlayback *sp = dynamic_cast<StaticFramePlayback*>(getPlayback(p));
+		assert (pb);
+    StaticFramePlaybackPtr sp = boost::shared_dynamic_cast<StaticFramePlayback>(pb);
+		assert (sp);
     if (useDewell) {
         // Dewell timer active
         if (sp->dewellStart.elapsed() > (int)dewell) {
@@ -195,9 +192,9 @@ FramePtr StaticFrame::data(Playback p)
         }
     }
     if (sp->active) {
-			FramePtr p = boost::make_shared<Frame>();
-			*p = *data_;
-			return p;
+        FramePtr p = boost::make_shared<Frame>();
+        *p = *data_;
+        return p;
     } else {
         sp->active = true;
         sp->repeatsDone = 0;
@@ -210,37 +207,41 @@ size_t StaticFrame::frames ()
     return 1;
 }
 
-size_t StaticFrame::pos (Playback p)
+size_t StaticFrame::pos (PlaybackImplPtr pb)
 {
-    StaticFramePlayback *sp = dynamic_cast<StaticFramePlayback*>(getPlayback(p));
+		assert (pb);
+		StaticFramePlaybackPtr sp = boost::shared_dynamic_cast<StaticFramePlayback>(pb);
+		assert (sp);
     return (sp->active) ? 1 : 0;
 }
 
-void StaticFrame::reset (Playback p)
+void StaticFrame::reset (PlaybackImplPtr pb)
 {
-    StaticFramePlayback *sp = dynamic_cast<StaticFramePlayback*>(getPlayback(p));
+		assert (pb);
+		StaticFramePlaybackPtr sp = boost::shared_dynamic_cast<StaticFramePlayback>(pb);
+    assert (sp);
     sp->active = true;
     sp->repeatsDone = 0;
     sp->dewellStart.start();
 }
 
-void StaticFrame::copyDataTo(FrameSourcePtr p) const
+void StaticFrame::copyDataTo(SourceImplPtr p) const
 {
-	assert (p);
-	StaticFrame * sf = dynamic_cast<StaticFrame*> (p.get());
-	sf->useDewell = useDewell;
-	sf->dewell = dewell;
-	sf->repeats = repeats;
-	sf->data_->clear();
-	sf->data_->reserve(data_->getPointCount());
-	for (size_t i =0; i < data_->getPointCount(); i++){
-		sf->data_->addPoint(data_->getPoint(i));
-	}
+    assert (p);
+    StaticFramePtr sf = boost::dynamic_pointer_cast<StaticFrame>(p);
+    sf->useDewell = useDewell;
+    sf->dewell = dewell;
+    sf->repeats = repeats;
+    sf->data_->clear();
+    sf->data_->reserve(data_->getPointCount());
+    for (size_t i =0; i < data_->getPointCount(); i++) {
+        sf->data_->addPoint(data_->getPoint(i));
+    }
 }
 
-PlaybackDataPtr StaticFrame::createPlaybackData ()
+PlaybackImplPtr StaticFrame::newPlayback ()
 {
-    return PlaybackDataPtr(new StaticFramePlayback);
+    return boost::make_shared<StaticFramePlayback>();
 }
 
 // GUI controls from here on down

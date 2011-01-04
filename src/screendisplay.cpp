@@ -33,8 +33,6 @@ ScreenDisplay::ScreenDisplay (EnginePtr engine_, int id_, QWidget * parent) : Di
 {
     id = id_;
     engine = engine_;
-    playback_ = -1;
-    //on = false;
     timer = new QTimer (this);
     connect(timer, SIGNAL(timeout()),this, SLOT (advance()));
     popup.addAction (tr("Import"),this,SLOT(loadData()));
@@ -45,15 +43,16 @@ ScreenDisplay::ScreenDisplay (EnginePtr engine_, int id_, QWidget * parent) : Di
     setIndicatorWidth(1);
     dragging = false;
     setAcceptDrops(true);
-		connect (this,SIGNAL(clicked(int)),&(*engine),SLOT(clicked(int)));
+    connect (this,SIGNAL(clicked(int)),&(*engine),SLOT(clicked(int)));
+    pb = PlaybackPtr();
 
 };
 
 void ScreenDisplay::animate (bool run, unsigned int fps)
 {
-    if (fs_) {
+    if (pb) {
         if (run) {
-            fs_->reset (playback_);
+            pb->reset ();
             timer->start (1000.0/fps);
         } else {
             timer->stop();
@@ -94,7 +93,7 @@ void ScreenDisplay::loadData()
 void ScreenDisplay::editData()
 {
     ParameterEditor *pe = new ParameterEditor(this);
-    pe->load (fs_);
+    pe->load (pb->getSource());
     pe->show();
 }
 
@@ -123,25 +122,6 @@ void ScreenDisplay::dropEvent(QDropEvent *event)
         }
     }
 };
-
-//void ScreenDisplay::setSelected(bool sel)
-//{
-//    bool e = (sel != on);
-//    resetSelected(sel);
-//    if (e) {
-//        emit stateChanged (on);
-//    }
-//}
-
-//void ScreenDisplay::resetSelected(bool sel)
-//{
-//    bool e = (on != sel);
-//    on = sel;
-//    if (e) {
-//        setIndicatorColour(QColor( on ? Qt::red : Qt::black));
-//    }
-//}
-
 
 void ScreenDisplay::mouseReleaseEvent (QMouseEvent *e)
 {
@@ -190,7 +170,7 @@ void ScreenDisplay::leaveEvent (QEvent *e)
 
 void ScreenDisplay::mouseMoveEvent(QMouseEvent *event)
 {
-    if (!fs_) {
+    if (!pb) {
         return;
     }
     if (!(event->buttons() & Qt::LeftButton))
@@ -214,43 +194,28 @@ void ScreenDisplay::mouseMoveEvent(QMouseEvent *event)
 
 ScreenDisplay::~ScreenDisplay ()
 {
-    // Delete the old playback source handle if one existed
-    // Note that we dont own the Framesource, just the playback
-    // within that framesource
-    if (fs_) {
-        fs_->deletePlayback (playback_);
-        fs_ = FrameSourcePtr();
-    }
 }
 
-FrameSourcePtr ScreenDisplay::data()
+void ScreenDisplay::source (PlaybackPtr pb_)
 {
-    return fs_;
-}
-
-void ScreenDisplay::source (FrameSourcePtr fs)
-{
-    // Delete the old playback source handle if one existed
-    if (fs_) {
-        fs_->deletePlayback (playback_);
-    }
-    fs_ = fs;
+    pb = pb_;
     emit modified();
-    if (!fs) {
-        return;
-    }
-    playback_ = fs_->createPlayback ();
-    setFrame(fs_->data (playback_));
+    pb->reset();
+    setFrame(pb->nextFrame());
 }
 
 void ScreenDisplay::advance ()
 {
-    FramePtr pts = fs_->data (playback_);
-    if (!pts) {
-        // End of sequence so reset
-        fs_->reset (playback_);
-        pts = fs_->data (playback_);
-        // Todo - emit some kind of start of sequence signal
-    }
-    setFrame (pts);
+		if (pb){
+			FramePtr pts = pb->nextFrame();
+			if (!pts) {
+					// End of sequence so reset
+					pb->reset();
+					pts = pb->nextFrame();
+					// Todo - emit some kind of start of sequence signal
+			}
+			setFrame (pts);
+		} else {
+		setFrame(FramePtr());
+		}
 }

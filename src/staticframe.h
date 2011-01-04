@@ -29,7 +29,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "framesource.h"
 #include "displayframe.h"
 
-class StaticFramePlayback : public PlaybackData
+class StaticFramePlayback : public Playback_impl
 {
 public:
     StaticFramePlayback () {
@@ -44,27 +44,30 @@ public:
 		float angleZ;
 };
 
+typedef boost::shared_ptr<StaticFramePlayback> StaticFramePlaybackPtr;
+
 /// A single static frame leaf node.
-class StaticFrame : public FrameSource
+class StaticFrame : public FrameSource_impl
 {
 public:
     StaticFrame ();
     ~StaticFrame();
-    PlaybackDataPtr createPlaybackData ();
-    FramePtr data(Playback p);
+    FramePtr nextFrame(PlaybackImplPtr pb);
     void reserve (size_t points);
     void add_data (const Point &p);
     size_t frames ();
-		void copyDataTo (FrameSourcePtr p) const;
 
-    size_t pos(Playback p);
-    void reset(Playback p);
+    size_t pos(PlaybackImplPtr p);
+    void reset(PlaybackImplPtr p);
 
 		void save (QXmlStreamWriter* w);
 		void load (QXmlStreamReader *e);
 
     FrameGui * controls (QWidget *parent);
 private:
+		PlaybackImplPtr newPlayback();
+		void copyDataTo (SourceImplPtr p) const;
+
     FramePtr data_;
     unsigned int repeats;
     unsigned int  dewell;

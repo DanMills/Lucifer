@@ -83,8 +83,7 @@ private:
     int currentSelection;
     unsigned int targetPPS;
     DriverPtr driver;
-    FrameSourcePtr fs;
-    Playback pb;
+    PlaybackPtr pb;
     std::vector<PointF> pointBuf;
     size_t frame_index;
     Resample resampler;
@@ -98,7 +97,7 @@ private slots:
     void selectionChangedData (unsigned int sel, bool active);
     void dump();
     /// Load a new framesource into the scan head
-    bool loadFrameSource (FrameSourcePtr f, bool immediate = false);
+    bool loadFrameSource (PlaybackPtr p, bool immediate = false);
     void manual();
     void beat();
 };

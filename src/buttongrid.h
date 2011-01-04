@@ -60,13 +60,9 @@ signals:
     void modified ();
 		//void clicked (unsigned int x, unsigned int y, unsigned int offset, bool down);
 public slots:
-		/// Emits clicked if state changed
-		//void setState (unsigned int x, unsigned int y, bool selected);
-		/// does not emit clicked
-		//void clear(int except_x = -1, int except_y=-1);
 		/// This gets called by the engine whenever a framesource has been replaced by a new one
 		/// Used to update the displayed grid
-		void frameSourceChanged(unsigned long int pos, FrameSourcePtr newSource);
+		void frameSourceChanged(unsigned long int pos);
 		/// called when the screen display menu item import is selected
 
 private:
@@ -77,7 +73,7 @@ private:
 		unsigned int offset_;
 		EnginePtr engine;
 private slots:
-    void mod ();
+    //void mod ();
 		void selectionChangedData(unsigned int pos, QColor col);
 		//void stateChanged (int);
 };

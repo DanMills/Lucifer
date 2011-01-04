@@ -17,18 +17,19 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include <vector>
-#include <map>
 #include <assert.h>
-#include <iostream>
-#include <stdio.h>
+#include "framesource_impl.h"
+#include <boost/make_shared.hpp>
 
 #include "point.h"
-#include "framesource.h"
 #include "framesequencer.h"
 #include "displayframe.h"
 #include "log.h"
 
-static FrameSourcePtr makeFrameSequencer()
+#define NAME "Frame_sequence"
+
+
+static SourceImplPtr makeFrameSequencer()
 {
     return boost::make_shared<FrameSequencer>();
 }
@@ -37,16 +38,15 @@ class FrameSequencerGen
 {
 public:
     FrameSequencerGen () {
-        FrameSource::registerFrameGen ("Frame_sequence",makeFrameSequencer);
+        FrameSource_impl::registerFrameGen (NAME,makeFrameSequencer);
     }
 };
 
 static FrameSequencerGen fsr;
 
-FrameSequencer::FrameSequencer () : FrameSource(NOTHING,MANY)
+FrameSequencer::FrameSequencer () : FrameSource_impl (NOTHING,MANY,NAME)
 {
-    name  = "Frame_sequence";
-    description = "A step sequencer for other frame sources";
+    setDescription("A step sequencer for other frame sources");
     slog()->debugStream() << "Created new frame sequencer " << this;
 }
 
@@ -54,9 +54,9 @@ FrameSequencer::~FrameSequencer()
 {
 }
 
-PlaybackDataPtr FrameSequencer::createPlaybackData ()
+PlaybackImplPtr FrameSequencer::newPlayback()
 {
-    return PlaybackDataPtr(new FrameSequencerPlayback);
+    return boost::make_shared<FrameSequencerPlayback>();
 }
 
 void FrameSequencer::save (QXmlStreamWriter* w)
@@ -71,49 +71,43 @@ void FrameSequencer::load(QXmlStreamReader* e)
 //TODO Load the Repeats and mode data
 }
 
-void FrameSequencer::copyDataTo(FrameSourcePtr p) const
+void FrameSequencer::copyDataTo(SourceImplPtr p) const
 {
 // TODO once we have some instance data it will need copying here
 }
 
-
-FrameSequencerPlayback * FrameSequencer::playback(Playback p)
+void FrameSequencer::reset (PlaybackImplPtr p)
 {
-    FrameSequencerPlayback *pt = (FrameSequencerPlayback*) getPlayback(p);
-    return pt;
-}
-
-void FrameSequencer::reset (Playback p)
-{
+    assert (p);
+    FrameSequencerPlaybackPtr pb = boost::dynamic_pointer_cast<FrameSequencerPlayback>(p);
+    assert (pb);
     slog()->debugStream() << this << " FrameSequencer reset";
-    // call the reset method of all the children downtree
-    for (unsigned int i=0; i < numChildren(); i++) {
-        child(i)->reset(p);
-    }
-    // we will need to reset our own state for this playback here
-    playback(p)->pos = 0;
+    pb->pos = 0;
 };
 
-FramePtr FrameSequencer::data(Playback p)
+FramePtr FrameSequencer::nextFrame(PlaybackImplPtr p)
 {
-
+    assert (p);
+    FrameSequencerPlaybackPtr pb = boost::dynamic_pointer_cast<FrameSequencerPlayback>(p);
+    assert (pb);
     FramePtr ps;
-    if (playback(p)->pos >= numChildren()) {
+    if (pb->pos >= numChildren()) {
         // Run out of data
-        reset (p);
+        reset (pb);
         return ps;
     }
-    ps = child(playback(p)->pos)->data(p);
+    ps = child(pb->pos)->nextFrame(pb->child(pb->pos));
     // if the child is still returning data then just pass the pointer up
     if (ps) {
         return ps;
     }
     // else move on to the next step in the sequence (or until we reach the end)
-    while (playback(p)->pos <numChildren() -1) {
+    while (pb->pos <numChildren() -1) {
         // we send the reset signal just before trying to pull data so that dewell
         // times work right
-        child(++playback(p)->pos)->reset (p);
-        ps = child(playback(p)->pos)->data(p);
+        ++pb->pos;
+        child(pb->pos)->reset (pb->child(pb->pos));
+        ps = child(pb->pos)->nextFrame(pb->child(pb->pos));
         if (ps) {
             return ps;
         }
@@ -121,9 +115,12 @@ FramePtr FrameSequencer::data(Playback p)
     return ps;
 }
 
-size_t FrameSequencer::pos (Playback p)
+size_t FrameSequencer::pos (PlaybackImplPtr p)
 {
-    return playback(p)->pos;
+    assert (p);
+    FrameSequencerPlaybackPtr pb = boost::dynamic_pointer_cast<FrameSequencerPlayback>(p);
+    assert (pb);
+    return pb->pos;
 }
 
 size_t FrameSequencer::frames ()
@@ -136,6 +133,7 @@ size_t FrameSequencer::frames ()
 }
 
 
+#if 1
 // GUI controls from here on down
 
 FrameSequencerGui * FrameSequencer::controls (QWidget *parent)
@@ -208,3 +206,4 @@ FrameSequencerGui::FrameSequencerGui(QWidget* parent): FrameGui(parent)
     setLayout(grid);
     slog()->debugStream() << "Created Framesequencer GUI "<< this;
 }
+#endif

@@ -62,8 +62,8 @@ public:
     ~ShowTreeWidgetItem () {
         data.reset();
     }
-    void populateTree(FrameSourcePtr f);
-    FrameSourcePtr data;
+    void populateTree(SourceImplPtr f);
+    SourceImplPtr data;
 
 };
 
@@ -74,7 +74,7 @@ public:
     ParameterEditor (QWidget *parent);
     ~ParameterEditor ();
 public slots:
-    void load (FrameSourcePtr f);
+    void load (SourceImplPtr f);
 signals:
     void modified ();
 
@@ -86,8 +86,8 @@ private:
     ShowTreeWidget * tree;
     QListWidget * available;
     ShowTreeWidgetItem *root;
-    FrameSourcePtr fs;
-    ShowTreeWidgetItem * populateTree(ShowTreeWidgetItem *p, FrameSourcePtr f);
+    SourceImplPtr fs;
+    ShowTreeWidgetItem * populateTree(ShowTreeWidgetItem *p, SourceImplPtr f);
 private slots:
     void itemClickedData (QTreeWidgetItem *item, int column);
     void selectionChangedData();

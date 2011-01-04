@@ -19,11 +19,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef FRAMESEQUENCER_INC
 #define FRAMESEQUENCER_INC
 
-#include <iostream>
-#include <vector>
-#include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
-#include "framesource.h"
+#include "framesource_impl.h"
 
 /// GUI for the frame sequencer controls in the editor.
 class FrameSequencerGui : public FrameGui
@@ -36,7 +32,7 @@ public:
 
 
 /// Frame sequencer playback specific data.
-class FrameSequencerPlayback : public PlaybackData
+class FrameSequencerPlayback : public Playback_impl
 {
 public:
     FrameSequencerPlayback () {
@@ -51,32 +47,27 @@ typedef boost::shared_ptr<FrameSequencerPlayback> FrameSequencerPlaybackPtr;
 /// It can be set to various step sequence modes and basically hangs on the
 /// selected child until it returns a null frame then moves on to the next.
 
-class FrameSequencer : public FrameSource
+class FrameSequencer : public FrameSource_impl
 {
 public:
     FrameSequencer ();
     ~FrameSequencer();
-    FramePtr data (Playback p);
-    PlaybackDataPtr createPlaybackData ();
+    FramePtr nextFrame (PlaybackImplPtr p);
+    PlaybackImplPtr newPlayback ();
 
-		void copyDataTo (FrameSourcePtr p) const;
+		void copyDataTo (SourceImplPtr p) const;
 
     size_t frames ();
-    size_t pos(Playback p);
-    void reset(Playback p);
+    size_t pos(PlaybackImplPtr p);
+    void reset(PlaybackImplPtr p);
 
 		void save (QXmlStreamWriter *w);
     void load (QXmlStreamReader *e);
 
     FrameSequencerGui * controls (QWidget *parent);
-private:
-    FrameSequencerPlayback * playback(Playback p);
 };
 
 typedef boost::shared_ptr<FrameSequencer> FrameSequencerPtr;
 typedef boost::shared_ptr<const FrameSequencer> ConstFrameSequencerPtr;
-
-
-
 
 #endif
