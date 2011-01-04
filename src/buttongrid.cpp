@@ -34,12 +34,13 @@ ButtonGrid::ButtonGrid (EnginePtr engine_, unsigned int num_x, unsigned int num_
     layout = new QGridLayout (this);
     layout->setHorizontalSpacing(5);
     layout->setVerticalSpacing(5);
-		connect (&*engine,SIGNAL(setIndicator(uint,QColor)),this,SLOT(selectionChangedData(uint,QColor)));
+    connect (&*engine,SIGNAL(setIndicator(uint,QColor)),this,SLOT(selectionChangedData(uint,QColor)));
     for (unsigned int x = 0; x < num_x_; x++) {
         for (unsigned int y = 0; y < num_y_; y++) {
             ScreenDisplay *s = new ScreenDisplay (engine,offset + y*num_x_ + x,this);
             layout->addWidget(s, x,y);
-						frameSourceChanged(offset + x + (y * num_x_));
+            frameSourceChanged(offset + x + (y * num_x_));
+            connect (s,SIGNAL(message(QString,int)),this,SLOT(message(QString,int)));
         }
     }
 }
@@ -75,23 +76,29 @@ void ButtonGrid::frameSourceChanged(long unsigned int pos)
         unsigned int y = pos / num_x_;
         ScreenDisplay *s = at (x,y);
         if (s) {
-						PlaybackPtr pb = engine->getPlayback(pos+offset_);
+            PlaybackPtr pb = engine->getPlayback(pos+offset_);
             s->source(pb);
         }
     }
 }
 
+void ButtonGrid::message(QString text,int time)
+{
+    emit sendMessage (text,time);
+}
+
+
 void ButtonGrid::selectionChangedData(unsigned int pos, QColor col)
 {
-	if ((pos >= offset_) && ((pos - offset_) <(num_x_ * num_y_))) {
-		// it is one of ours
-		pos -= offset_;
-		unsigned int x = pos % num_x_;
-		unsigned int y = pos / num_x_;
-		ScreenDisplay *s = at (x,y);
-		if (s) {
-			s->setIndicatorColour(col);
-		}
-	}
+    if ((pos >= offset_) && ((pos - offset_) <(num_x_ * num_y_))) {
+        // it is one of ours
+        pos -= offset_;
+        unsigned int x = pos % num_x_;
+        unsigned int y = pos / num_x_;
+        ScreenDisplay *s = at (x,y);
+        if (s) {
+            s->setIndicatorColour(col);
+        }
+    }
 }
 

@@ -59,11 +59,13 @@ signals:
     /// Emitted when one of the buttons is modified.
     void modified ();
 		//void clicked (unsigned int x, unsigned int y, unsigned int offset, bool down);
+		void sendMessage (QString text,int time);
 public slots:
 		/// This gets called by the engine whenever a framesource has been replaced by a new one
 		/// Used to update the displayed grid
 		void frameSourceChanged(unsigned long int pos);
 		/// called when the screen display menu item import is selected
+		void message (QString text, int time);
 
 private:
     QGridLayout * layout;

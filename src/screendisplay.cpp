@@ -150,6 +150,13 @@ void ScreenDisplay::enterEvent (QEvent *e)
     // We run the preview animation when mouse is hovered over the picture
     if (e->type() == QEvent::Enter) {
         animate (true,15);
+				if (pb){
+					SourceImplPtr p = pb->getSource();
+					if (p){
+						emit message (QString().fromStdString(pb->getSource()->getDescription()) +
+							" (" + QString().number(p->frames())+")",10000);
+					}
+				}
         e->accept();
         dragging =false;
     } else {

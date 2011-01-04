@@ -51,20 +51,20 @@ Ildaloader::~Ildaloader ()
 
 SourceImplPtr Ildaloader::load (QString filename, unsigned int &error, bool pangolin)
 {
-		slog()->infoStream() << "Loading ILDA file : " << filename.toStdString();
-		slog()->infoStream() << "Using pangolin palette : " << ((pangolin) ? "True" : "False");
+    slog()->infoStream() << "Loading ILDA file : " << filename.toStdString();
+    slog()->infoStream() << "Using pangolin palette : " << ((pangolin) ? "True" : "False");
     error = 0;
     QFile infile (filename);
     if (!infile.open(QIODevice::ReadOnly)) {
         error = 1;
-				slog()->infoStream() <<"Unable to open '" << filename.toStdString() <<"' for reading";
+        slog()->infoStream() <<"Unable to open '" << filename.toStdString() <<"' for reading";
         return SourceImplPtr();
     }
     palette_.clear ();
     palette_.reserve (256);
     colour.clear();
     trueColour = false;
-		// Load default colour palette
+    // Load default colour palette
     unsigned int i = 0;
     const short * pal = (pangolin) ? pangolin_palette : ilda_palette;
     while (pal[3*i] != -1) {
@@ -89,7 +89,7 @@ SourceImplPtr Ildaloader::load (QString filename, unsigned int &error, bool pang
         if (memcmp ("ILDA",buf,4)) {
             // Not an ILDA section?
             error = 2;
-						slog()->errorStream() << "Section name not ILDA";
+            slog()->errorStream() << "Section name not ILDA";
             break;
         }
         quint32 format;
@@ -119,24 +119,24 @@ SourceImplPtr Ildaloader::load (QString filename, unsigned int &error, bool pang
         case 3:
             // True Color
             slog()->infoStream() << "Type 3 (True colour table) section";
-						slog()->errorStream() <<"Type 3 is not a ratified ILDA standard and worse Laserboy uses something called type 3 that DOES NOT match the draft ILDA standard that briefly existed";
+            slog()->errorStream() <<"Type 3 is not a ratified ILDA standard and worse Laserboy uses something called type 3 that DOES NOT match the draft ILDA standard that briefly existed";
             eof = readTrueColorSection(stream);
             break;
 
         case 4:
-						slog()->infoStream() << "Type 4 (True colour 3D) section";
+            slog()->infoStream() << "Type 4 (True colour 3D) section";
             fr = readFormat5(stream, true);
             eof = (fr == NULL);
             break;
 
         case 5:
-						slog()->infoStream() << "Type 5 (True colour 2D) section";
+            slog()->infoStream() << "Type 5 (True colour 2D) section";
             fr = readFormat5(stream, false);
             eof = (fr == NULL);
             break;
 
         default:
-						slog()->errorStream() << "Type " << format << " Unknown section skipping";
+            slog()->errorStream() << "Type " << format << " Unknown section skipping";
             qint32 dataLength;
             qint32 numberOfPoints;
 
@@ -156,6 +156,8 @@ SourceImplPtr Ildaloader::load (QString filename, unsigned int &error, bool pang
                 } else {
                     // Second frame in file, we need a sequencer
                     sequence = boost::make_shared<FrameSequencer>();
+                    sequence->setDescription(std::string("ILDA File import from : ") +
+											filename.toStdString());
                     sequence->addChild (frame);
                     sequence->addChild (fr);
                 }
@@ -187,15 +189,15 @@ void Ildaloader::readHeader(QDataStream & stream, std::string & name,
     stream.skipRawData(6);
     name = name_;
     company = companyName_;
-		slog()->infoStream() << "Name : " << name << " by : " << company;
-		slog()->debugStream() << "Count : " << pointcount;
+    slog()->infoStream() << "Name : " << name << " by : " << company;
+    slog()->debugStream() << "Count : " << pointcount;
 }
 
 StaticFramePtr Ildaloader::readFrameSection(QDataStream & stream, bool is3DFrame)
 {
     std::string name, companyName;
     quint16 points;
-		StaticFramePtr frame;
+    StaticFramePtr frame;
 
     readHeader(stream, name, companyName, points);
     if (points == 0) {
@@ -203,6 +205,8 @@ StaticFramePtr Ildaloader::readFrameSection(QDataStream & stream, bool is3DFrame
         return frame;
     }
     frame = boost::make_shared<StaticFrame>();
+    frame->setDescription(std::string("ILDA: ") + name + std::string(" By ") + companyName );
+    frame->reserve(points);
     for (unsigned int i=0; i<points; ++i) {
         Point p;
         qint16 x;
@@ -222,13 +226,13 @@ StaticFramePtr Ildaloader::readFrameSection(QDataStream & stream, bool is3DFrame
         stream >> state >> col;
         p.blanked = ((state & 64) == 64);
         if (!trueColour) {
-					p.r = palette_[col].red();
-					p.g = palette_[col].green();
-					p.b = palette_[col].blue();
+            p.r = palette_[col].red();
+            p.g = palette_[col].green();
+            p.b = palette_[col].blue();
         } else {
-          p.r = colour[i].red();
-					p.g = colour[i].green();
-					p.b = colour[i].blue();
+            p.r = colour[i].red();
+            p.g = colour[i].green();
+            p.b = colour[i].blue();
         }
         frame->add_data (p);
     }
@@ -247,7 +251,7 @@ bool Ildaloader::readTrueColorSection(QDataStream& stream)
         // Something odd, an ILDA frame can have no more then 65535 points!
         // Fall back on indexed colour mode
         stream.skipRawData(datalen-4);
-				slog()->errorStream() << "ILDA Load - found truecolour section with invalid length!";
+        slog()->errorStream() << "ILDA Load - found truecolour section with invalid length!";
         return false;
     }
     if (points ==0) {
@@ -276,11 +280,12 @@ StaticFramePtr Ildaloader::readFormat5(QDataStream & stream, bool is3DFrame)
         return StaticFramePtr();
     }
     StaticFramePtr frame = boost::make_shared<StaticFrame>();
-		frame->reserve(points);
-		for (unsigned int i = 0; i < points; ++i) {
+    frame->setDescription(std::string("ILDA: ") + name + std::string(" By ") + companyName );
+    frame->reserve(points);
+    for (unsigned int i = 0; i < points; ++i) {
         Point p;
         quint8 r, g, b, state;
-				qint16 x,y;
+        qint16 x,y;
         stream >> x >> y;
         p.setX(x/32768.0);
         p.setY(y/32768.0);
@@ -294,8 +299,8 @@ StaticFramePtr Ildaloader::readFormat5(QDataStream & stream, bool is3DFrame)
         stream >> state >> b >> g >> r;
         p.blanked = ((state & 64) == 64);
         p.r = r;
-				p.g = g;
-				p.b = b;
+        p.g = g;
+        p.b = b;
         frame->add_data (p);
     }
     return frame;
@@ -311,10 +316,10 @@ bool Ildaloader::readColorTable(QDataStream & stream)
 
     stream.readRawData(name_, 8);
     stream.readRawData(companyName_, 8);
-		slog()->infoStream() << "Palette name : " << std::string (name_);
+    slog()->infoStream() << "Palette name : " << std::string (name_);
     stream >> colours;
     stream.skipRawData(2);
-		slog()->infoStream() << "Colours : " << colours;
+    slog()->infoStream() << "Colours : " << colours;
     // skip 4 bytes
     stream.skipRawData(4);
     palette_.clear ();

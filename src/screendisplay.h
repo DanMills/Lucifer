@@ -45,6 +45,7 @@ public slots:
 	signals:
     void modified(); //emitted when the underlying data is replaced
     void clicked (int pos); // emitted when playback is activated or deactivated by pressing the button
+		void message (QString text, int time);
 
 protected:
 		void dragEnterEvent(QDragEnterEvent *event);
