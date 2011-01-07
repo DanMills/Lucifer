@@ -31,7 +31,22 @@ ButtonGrid::ButtonGrid (EnginePtr engine_, unsigned int num_x, unsigned int num_
     offset_=offset;
     engine = engine_;
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    layout = new QGridLayout (this);
+    QVBoxLayout *l = new QVBoxLayout(this);
+    layout = new QGridLayout ();
+    statusbar = new QStatusBar(this);
+    statusbar->setSizeGripEnabled(false);
+    l->addLayout(layout);
+    l->addWidget(statusbar);
+    ppsLabel = new QLabel();
+    framesLabel = new QLabel();
+    statusbar->addPermanentWidget(new QLabel("PPS"));
+    statusbar->addPermanentWidget(ppsLabel);
+    statusbar->addPermanentWidget(new QLabel("Frames"));
+    statusbar->addPermanentWidget(framesLabel);
+
+    ppsLabel->setNum(00000);
+    framesLabel->setNum(0000);
+
     layout->setHorizontalSpacing(5);
     layout->setVerticalSpacing(5);
     connect (&*engine,SIGNAL(setIndicator(uint,QColor)),this,SLOT(selectionChangedData(uint,QColor)));
@@ -84,7 +99,7 @@ void ButtonGrid::frameSourceChanged(long unsigned int pos)
 
 void ButtonGrid::message(QString text,int time)
 {
-    emit sendMessage (text,time);
+    statusbar->showMessage(text,time);
 }
 
 

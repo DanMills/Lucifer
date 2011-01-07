@@ -125,7 +125,7 @@ void ScreenDisplay::dropEvent(QDropEvent *event)
 
 void ScreenDisplay::mouseReleaseEvent (QMouseEvent *e)
 {
-    if (e->button() == Qt::LeftButton && !dragging) {
+    if (e->button() == Qt::LeftButton && !dragging && pb->getSource()) {
         //Button clicked
         emit clicked(id);
         dragging = false;
@@ -150,13 +150,13 @@ void ScreenDisplay::enterEvent (QEvent *e)
     // We run the preview animation when mouse is hovered over the picture
     if (e->type() == QEvent::Enter) {
         animate (true,15);
-				if (pb){
-					SourceImplPtr p = pb->getSource();
-					if (p){
-						emit message (QString().fromStdString(pb->getSource()->getDescription()) +
-							" (" + QString().number(p->frames())+")",10000);
-					}
-				}
+        if (pb) {
+            SourceImplPtr p = pb->getSource();
+            if (p) {
+                emit message (QString().fromStdString(pb->getSource()->getDescription()) +
+                              " (" + QString().number(p->frames())+")",10000);
+            }
+        }
         e->accept();
         dragging =false;
     } else {
@@ -213,16 +213,16 @@ void ScreenDisplay::source (PlaybackPtr pb_)
 
 void ScreenDisplay::advance ()
 {
-		if (pb){
-			FramePtr pts = pb->nextFrame();
-			if (!pts) {
-					// End of sequence so reset
-					pb->reset();
-					pts = pb->nextFrame();
-					// Todo - emit some kind of start of sequence signal
-			}
-			setFrame (pts);
-		} else {
-		setFrame(FramePtr());
-		}
+    if (pb) {
+        FramePtr pts = pb->nextFrame();
+        if (!pts) {
+            // End of sequence so reset
+            pb->reset();
+            pts = pb->nextFrame();
+            // Todo - emit some kind of start of sequence signal
+        }
+        setFrame (pts);
+    } else {
+        setFrame(FramePtr());
+    }
 }

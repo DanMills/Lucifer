@@ -58,8 +58,6 @@ public:
 signals:
     /// Emitted when one of the buttons is modified.
     void modified ();
-		//void clicked (unsigned int x, unsigned int y, unsigned int offset, bool down);
-		void sendMessage (QString text,int time);
 public slots:
 		/// This gets called by the engine whenever a framesource has been replaced by a new one
 		/// Used to update the displayed grid
@@ -70,6 +68,9 @@ public slots:
 private:
     QGridLayout * layout;
 		QSignalMapper * mapper;
+		QStatusBar *statusbar;
+		QLabel * ppsLabel;
+		QLabel * framesLabel;
     unsigned int num_x_;
     unsigned int num_y_;
 		unsigned int offset_;

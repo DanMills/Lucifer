@@ -88,6 +88,7 @@ void LaserHead::dataRequested()
                     if (s > -1) {
                         assert (engine);
                         p = engine->getPlayback(s);
+												p->reset();
                     }
                     loadFrameSource(p,false);
                     emit endOfSource();

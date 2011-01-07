@@ -32,6 +32,9 @@ public:
 
     Point() : v(4) {
         v[3] = 1.0f;
+        v[0] = v[1] = v[2] = 0.0f;
+        r = g = b = 0.0f;
+        blanked = true;
     };
     Point(const Point& p): v(4)
     {
@@ -124,11 +127,16 @@ public:
     {
         if (((x()-rhs.x()) < epsilon) && ((x()-rhs.x()) > -epsilon) &&
                 ((y()-rhs.y()) < epsilon) && ((y()-rhs.y()) > -epsilon) &&
-                ((z()-rhs.z()) < epsilon) && ((z()-rhs.z()) > -epsilon)) {
+                ((z()-rhs.z()) < epsilon) && ((z()-rhs.z()) > -epsilon) &&
+                (blanked == rhs.blanked)) {
             return true;
         }
         return false;
     }
+    inline bool operator != (const Point &rhs) const
+    {
+			return !(rhs == *this);
+		}
     inline Point operator*(const float scale) const
     {
         Point res = *this;
