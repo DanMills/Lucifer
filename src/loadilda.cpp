@@ -208,31 +208,31 @@ StaticFramePtr Ildaloader::readFrameSection(QDataStream & stream, bool is3DFrame
     frame->setDescription(std::string("ILDA: ") + name + std::string(" By ") + companyName );
     frame->reserve(points);
     for (unsigned int i=0; i<points; ++i) {
-        Point p;
+        ILDAPoint p;
         qint16 x;
         qint16 y;
         stream >> x >> y;
-        p.setX(x/32768.0);
-        p.setY(y/32768.0);
+        p.setX(x);
+        p.setY(y);
         if (is3DFrame) {
             qint16 z;
             stream >> z;
-            p.setZ(z/32768.0);
+            p.setZ(z);
         } else {
-            p.setZ(0.0f);
+            p.setZ(0);
         }
         quint8 state = 0;
         quint8 col;
         stream >> state >> col;
-        p.blanked = ((state & 64) == 64);
+        p.setBlanked((state & 64) == 64);
         if (!trueColour) {
-            p.r = palette_[col].red();
-            p.g = palette_[col].green();
-            p.b = palette_[col].blue();
+            p.setR(palette_[col].red());
+            p.setG(palette_[col].green());
+            p.setB(palette_[col].blue());
         } else {
-            p.r = colour[i].red();
-            p.g = colour[i].green();
-            p.b = colour[i].blue();
+            p.setR(colour[i].red());
+            p.setG(colour[i].green());
+            p.setB(colour[i].blue());
         }
         frame->add_data (p);
     }
@@ -283,24 +283,24 @@ StaticFramePtr Ildaloader::readFormat5(QDataStream & stream, bool is3DFrame)
     frame->setDescription(std::string("ILDA: ") + name + std::string(" By ") + companyName );
     frame->reserve(points);
     for (unsigned int i = 0; i < points; ++i) {
-        Point p;
+        ILDAPoint p;
         quint8 r, g, b, state;
         qint16 x,y;
         stream >> x >> y;
-        p.setX(x/32768.0);
-        p.setY(y/32768.0);
+        p.setX(x);
+        p.setY(y);
         if (is3DFrame) {
             qint16 z;
             stream >> z;
-            p.setZ(z/32768.0);
+            p.setZ(z);
         } else {
-            p.setZ(0.0f);
+            p.setZ(0);
         }
         stream >> state >> b >> g >> r;
-        p.blanked = ((state & 64) == 64);
-        p.r = r;
-        p.g = g;
-        p.b = b;
+        p.setBlanked((state & 64) == 64);
+        p.setR(r);
+        p.setG(g);
+        p.setB(b);
         frame->add_data (p);
     }
     return frame;

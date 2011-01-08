@@ -20,6 +20,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 std::ostream&  operator << (std::ostream&  s, const Point & p)
 {
-	s<< "[" << p.x() << "," <<p.y() << "," << p.z()<<"," << p.w() << "]";
+	s<< "[" << p.x() << "," <<p.y() << "," << p.z()<<","  << "]";
 	return s;
 }

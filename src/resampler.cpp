@@ -75,9 +75,11 @@ std::vector<PointF> Resample::run(std::vector<Point>& input)
             Point &p = input[i + RESAMPLE_SZ * block_num];
             input_buffer[5*i] = p.x();
             input_buffer[5*i+1] = p.y();
-            input_buffer[5*i+2] = p.r/255.0f;
-            input_buffer[5*i+3] = p.g/255.0f;
-            input_buffer[5*i+4] = p.b/255.0f;
+            qreal r,g,b;
+            p.getRgbF(&r,&g,&b);
+            input_buffer[5*i+2] = r;
+            input_buffer[5*i+3] = g;
+            input_buffer[5*i+4] = b;
             if (p.blanked) {
                 input_buffer[5*i+2] =
                     input_buffer[5*i+3] =

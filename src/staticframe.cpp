@@ -47,7 +47,6 @@ StaticFrame::StaticFrame () : FrameSource_impl(MAKES_FRAMES,NONE,NAME)
 {
     setDescription("A single frame");
     slog()->debugStream() << "Created new static frame " << this;
-    data_ = boost::make_shared<Frame>();
     repeats = 1;
     dewell = 100;
     useDewell = false;
@@ -59,67 +58,38 @@ StaticFrame::~StaticFrame ()
 
 void StaticFrame::reserve (size_t points)
 {
-    data_->reserve (points);
+    data.reserve (points);
 }
 
-void StaticFrame::add_data (const Point &p)
+void StaticFrame::add_data (const ILDAPoint& p)
 {
-    data_->addPoint(p);
+    data.push_back(p);
 }
-
-// This technically breaks strict aliasing.
-// but almost every compiler lets you do it.
-unsigned int StaticFrame::ftoi (float f)
-{
-    union {
-        float f;
-        unsigned int i;
-    } u;
-    assert (sizeof(u.f) == sizeof (u.i));
-    u.f = f;
-    unsigned int i = u.i;
-    i = htonl (i);
-    return i;
-}
-
-float StaticFrame::itof(unsigned int i)
-{
-    union {
-        float f;
-        unsigned int i;
-    } u;
-    assert (sizeof(u.f) == sizeof (u.i));
-    u.i = ntohl(i);
-    return u.f;
-}
-
 
 void StaticFrame::save (QXmlStreamWriter* w)
 {
     assert (w);
     slog()->debugStream()<< "Saving static frame : " << this;
-    w->writeAttribute("Points",QString().number(data_->getPointCount()));
+    w->writeAttribute("Points",QString().number(data.size()));
     w->writeAttribute("Use_Dewell", useDewell ? "True" : "False");
     w->writeAttribute("Dewell",QString().number(dewell));
     w->writeAttribute("Repeats",QString().number(repeats));
     QByteArray b;
-    // 16 bytes per point
-    b.reserve(16 * data_->getPointCount());
-    assert (sizeof (unsigned int) == 4);
-    assert (sizeof (float) == 4);
-    for (unsigned int i = 0; i < data_->getPointCount(); i++) {
-        Point p = data_->getPoint(i);
-        unsigned int v;
-        v = ftoi (p.x());
-        b.append((char*)&v,4);
-        v = ftoi(p.y());
-        b.append((char*)&v,4);
-        v = ftoi(p.z());
-        b.append((char*)&v,4);
-        b.append(p.r);
-        b.append(p.g);
-        b.append(p.b);
-        b.append(p.blanked);
+    // 10 bytes per point
+    b.reserve(10 * data.size());
+    for (unsigned int i = 0; i < data.size(); i++) {
+        const ILDAPoint p = data[i];
+        unsigned short u;
+        u=htons(p.x());
+        b.append((char *)&u,2);
+        u=htons(p.y());
+        b.append((char *)&u,2);
+        u=htons(p.z());
+        b.append((char *)&u,2);
+        b.append(p.r());
+        b.append(p.g());
+        b.append(p.b());
+        b.append(p.blanked() ? 1 : 0);
     }
     // XML is icky for binary data so we convert to base 64
     // This is still better then saving each point as its own element.
@@ -144,31 +114,31 @@ void StaticFrame::load(QXmlStreamReader* e)
     slog()->debugStream() << "Dewell : " << dewell;
     slog()->debugStream() << "Repeats : " << repeats;
     slog()->debugStream() << "Use Dewell : " << (useDewell ? "True" : "False");
-    data_->clear();
-    data_->reserve(pointcount);
+    data.clear();
+    data.reserve(pointcount);
     slog()->debugStream() << "Points : " << pointcount;
     e->readNextStartElement();
     if (e->name() == "PointList") {
         slog()->debugStream()<<"Found a PointList";
         e->readNext();
         QByteArray ba;
-        ba.reserve(16 * pointcount);
+        ba.reserve(10 * pointcount);
         ba = QByteArray::fromBase64(e->text().toString().toUtf8());
         const char *b = ba.constData();
         // ba now contains the raw binary frame
-        // 16 bytes per point
+        // 10 bytes per point
         slog()->debugStream()<<"ByteArray contains : " << ba.size() << " Bytes";
-        for (int i=0; i < ba.size()/16; i++) {
-            Point p;
-            const int a = 16 * i;
-            p.setX(itof (*(unsigned int*)(b+a)));
-            p.setY(itof (*(unsigned int*)(b+a+4)));
-            p.setZ(itof (*(unsigned int*)(b+a+8)));
-            p.r = b[a+12];
-            p.g = b[a+13];
-            p.b = b[a+14];
-            p.blanked = b[a+15];
-            data_->addPoint(p);
+        for (int i=0; i < ba.size()/10; i++) {
+            ILDAPoint p;
+            const int a = 10 * i;
+            p.setX(ntohs (*(unsigned short*)(b+a)));
+            p.setY(ntohs (*(unsigned short*)(b+a+2)));
+            p.setZ(ntohs (*(unsigned short*)(b+a+4)));
+            p.setR(b[a+6]);
+            p.setG(b[a+7]);
+            p.setB(b[a+8]);
+            p.setBlanked(b[a+9]);
+            data.push_back(p);
         }
     } else {
         slog()->errorStream()<<"Failed to find valid point data";
@@ -177,9 +147,9 @@ void StaticFrame::load(QXmlStreamReader* e)
 
 FramePtr StaticFrame::nextFrame(PlaybackImplPtr pb)
 {
-		assert (pb);
+    assert (pb);
     StaticFramePlaybackPtr sp = boost::shared_dynamic_cast<StaticFramePlayback>(pb);
-		assert (sp);
+    assert (sp);
     if (useDewell) {
         // Dewell timer active
         if (sp->dewellStart.elapsed() > (int)dewell) {
@@ -193,7 +163,9 @@ FramePtr StaticFrame::nextFrame(PlaybackImplPtr pb)
     }
     if (sp->active) {
         FramePtr p = boost::make_shared<Frame>();
-        *p = *data_;
+        for (unsigned int i=0; i < data.size(); ++i) {
+            p->addPoint(data[i].point());
+        }
         return p;
     } else {
         sp->active = true;
@@ -209,16 +181,16 @@ size_t StaticFrame::frames ()
 
 size_t StaticFrame::pos (PlaybackImplPtr pb)
 {
-		assert (pb);
-		StaticFramePlaybackPtr sp = boost::shared_dynamic_cast<StaticFramePlayback>(pb);
-		assert (sp);
+    assert (pb);
+    StaticFramePlaybackPtr sp = boost::shared_dynamic_cast<StaticFramePlayback>(pb);
+    assert (sp);
     return (sp->active) ? 1 : 0;
 }
 
 void StaticFrame::reset (PlaybackImplPtr pb)
 {
-		assert (pb);
-		StaticFramePlaybackPtr sp = boost::shared_dynamic_cast<StaticFramePlayback>(pb);
+    assert (pb);
+    StaticFramePlaybackPtr sp = boost::shared_dynamic_cast<StaticFramePlayback>(pb);
     assert (sp);
     sp->active = true;
     sp->repeatsDone = 0;
@@ -229,13 +201,14 @@ void StaticFrame::copyDataTo(SourceImplPtr p) const
 {
     assert (p);
     StaticFramePtr sf = boost::dynamic_pointer_cast<StaticFrame>(p);
+    assert (sf);
     sf->useDewell = useDewell;
     sf->dewell = dewell;
     sf->repeats = repeats;
-    sf->data_->clear();
-    sf->data_->reserve(data_->getPointCount());
-    for (size_t i =0; i < data_->getPointCount(); i++) {
-        sf->data_->addPoint(data_->getPoint(i));
+    sf->data.clear();
+    sf->data.reserve(data.size());
+    for (size_t i =0; i < data.size(); i++) {
+        sf->data.push_back(data[i]);
     }
 }
 
@@ -278,12 +251,13 @@ void StaticFrameGui::set (StaticFrame * p)
 {
     fp = p;
     assert (fp);
-    display->setFrame(fp->data_);
+
+    //display->setFrame(fp->nextFrame());
     dewellSwitch->setChecked(fp->useDewell);
     repeatSwitch->setChecked(!fp->useDewell);
     dewellEntry->setDisabled(!fp->useDewell);
     repeatEntry->setDisabled(fp->useDewell);
-    pointsDisplay->setNum((int)fp->data_->getPointCount());
+    pointsDisplay->setNum((int)fp->data.size());
     dewellEntry->setValue(fp->dewell);
     repeatEntry->setValue (fp->repeats);
 

@@ -279,7 +279,7 @@ QPainter & Frame::render (QPainter &p,
         QColor col;
         Point po = f.getPoint(0);
         if (!po.blanked) {
-            pen.setColor (QColor(po.r,po.g,po.b));
+            pen.setColor (QColor(po));
             p.setPen (pen);
             p.drawPoint(((1.0 + po.x())* width/2.0) + start_x,((1.0-po.y())*height/2.0) + start_y);
         }
@@ -287,7 +287,7 @@ QPainter & Frame::render (QPainter &p,
             Point tp = f.getPoint(i);
             Point np = f.getPoint(i+1);
             if (!np.blanked) {
-                pen.setColor (QColor(tp.r,tp.g,tp.b));
+                pen.setColor (QColor(tp));
                 p.setPen (pen);
                 p.drawLine (((1.0 + tp.x())*width/2.0) + start_x,((1.0-tp.y())*height/2.0) + start_y,
                             ((1.0 + np.x())*width/2.0) + start_x,((1.0-np.y())*height/2.0) + start_y);
@@ -305,7 +305,7 @@ void Frame::simplify ()
     ///TODO - Bypass this if the matrix is allready an identity
     for (unsigned int i=0; i < getPointCount(); ++i) {
         /// Each 3d point gets multiplied by the geometry matrix to give the output point.
-        points_[i]*=mat;
+        //points_[i]*=mat;
 				//float s = 1.0f/points_[i].w();
 				points_[i].setX(points_[i].x() * 2.0/(2.0 - points_[i].z()));
 				points_[i].setY(points_[i].y() * 2.0/(2.0 - points_[i].z()));
