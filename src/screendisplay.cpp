@@ -153,7 +153,7 @@ void ScreenDisplay::enterEvent (QEvent *e)
         if (pb) {
             SourceImplPtr p = pb->getSource();
             if (p) {
-                emit message (QString().fromStdString(pb->getSource()->getDescription()) +
+                emit message (QString().fromStdString(p->getDescription()) +
                               " (" + QString().number(p->frames())+")",10000);
             }
         }
