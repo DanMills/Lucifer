@@ -314,6 +314,7 @@ bool Engine::saveShow(QString filename)
         }
         savef.setFileName (filename);
         saveCompressor = new QtIOCompressor (&savef,6,10 * 1024 * 1024);
+	//saveCompressor->setStreamFormat(QtIOCompressor::GzipFormat);
         if (!saveCompressor->open(QIODevice::WriteOnly)) {
             delete saveCompressor;
             save_mutex.unlock();
@@ -395,6 +396,7 @@ void ShowSaver::run()
     w->writeStartDocument();
     w->writeStartElement("Lucifer");
     w->writeAttribute("Version","1.1.0");
+    w->writeAttribute("Date",QDateTime::currentDateTime().toString());
     for (unsigned int i=0; i < e->getSourcesSize(); i++) {
         SourceImplPtr p = e->getFrameSource(i);
         if (p) {
