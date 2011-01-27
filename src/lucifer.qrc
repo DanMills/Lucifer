@@ -21,5 +21,7 @@
 <file>icons/process-stop.svg</file>
 <file>icons/view-fullscreen.svg</file>
 <file>icons/view-restore.svg</file>
+<file>icons/rotate.svg</file>
+
 </qresource>
 </RCC>

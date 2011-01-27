@@ -328,6 +328,19 @@ FrameGui * StaticFrame::controls (QWidget *parent)
 
 const QIcon * StaticFrameGui::icon()
 {
-    return new QIcon();
+    QPixmap p(48,48);
+    if (fp){
+        FramePtr f = fp->frame();
+        if (f){
+	    QPainter q(&p);
+	    q.setBackground (Qt::black);
+    	    q.setRenderHint(QPainter::HighQualityAntialiasing);
+            q.setBrush(QBrush(Qt::black));
+            q.drawRect(0,0,48,48);
+            f->render (q,0,0,48,48);
+        }
+    }
+    QIcon * i = new QIcon(p);
+    return i;
 }
 

@@ -61,10 +61,10 @@ public:
     }
     PlaybackImplPtr getPlayback()
     {
-			return pb;
-		}
+	return pb;
+    }
 private:
-		Playback();
+    Playback();
     SourceImplPtr frame;
     PlaybackImplPtr pb;
 };

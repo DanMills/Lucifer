@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ShowTreeWidget::ShowTreeWidget(QWidget *parent) : QTreeWidget(parent)
 {
     // Set up the drag and drop handling
-    setColumnCount(1);
+    setColumnCount(2);
     setSelectionMode(QAbstractItemView::SingleSelection);
     setDragEnabled(true);
     viewport()->setAcceptDrops(true);
@@ -106,6 +106,13 @@ void ShowTreeWidgetItem::populateTree(SourceImplPtr f)
 {
     assert (f);
     setText(0,QString().fromStdString(f->getName()));
+    FrameGui * c = f->controls(NULL);
+    if (c){
+	const QIcon * i = c->icon();
+	setIcon(1,*i);
+	delete i;
+	delete c;
+    }
     data = f;
     ShowTreeWidgetItem *op = NULL;
     for (unsigned int i = 0; i < f->numChildren(); i ++) {

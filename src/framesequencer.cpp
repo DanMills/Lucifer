@@ -144,7 +144,7 @@ FrameSequencerGui * FrameSequencer::controls (QWidget *parent)
 
 const QIcon * FrameSequencerGui::icon()
 {
-    static const QIcon * ic = new QIcon();
+    static const QIcon * ic = new QIcon(":/icons/rotate.svg");
     return ic;
 }
 
