@@ -142,7 +142,7 @@ public:
 private:
     PlaybackImplPtr newPlayback();
     void copyDataTo (SourceImplPtr p) const;
-
+    FramePtr frame() const;
     std::vector <ILDAPoint> data;
     unsigned int repeats;
     unsigned int  dewell;

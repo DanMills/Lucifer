@@ -162,16 +162,21 @@ FramePtr StaticFrame::nextFrame(PlaybackImplPtr pb)
         }
     }
     if (sp->active) {
-        FramePtr p = boost::make_shared<Frame>();
-        for (unsigned int i=0; i < data.size(); ++i) {
-            p->addPoint(data[i].point());
-        }
-        return p;
+        return frame();
     } else {
         sp->active = true;
         sp->repeatsDone = 0;
     }
     return FramePtr();
+}
+
+FramePtr StaticFrame::frame() const
+{
+    FramePtr p = boost::make_shared<Frame>();
+    for (unsigned int i=0; i < data.size(); ++i) {
+        p->addPoint(data[i].point());
+    }
+    return p;
 }
 
 size_t StaticFrame::frames ()
@@ -251,8 +256,8 @@ void StaticFrameGui::set (StaticFrame * p)
 {
     fp = p;
     assert (fp);
-
-    //display->setFrame(fp->nextFrame());
+   
+    display->setFrame(fp->frame());
     dewellSwitch->setChecked(fp->useDewell);
     repeatSwitch->setChecked(!fp->useDewell);
     dewellEntry->setDisabled(!fp->useDewell);

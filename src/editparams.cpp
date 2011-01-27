@@ -150,8 +150,8 @@ ParameterEditor::~ParameterEditor()
 
 void ParameterEditor::load(SourceImplPtr f)
 {
-		if (!f) return;
-		fs = f->clone();
+    if (!f) return;
+    fs = f->clone();
     if (root) delete root;
     root = NULL;
     tree->clear();
@@ -165,7 +165,7 @@ void ParameterEditor::load(SourceImplPtr f)
 		//if (fs){
 		//r->addChild(fs);
 		//}
-    //root = populateTree (root,r);
+    root = populateTree (root,fs);
     tree->addTopLevelItem(root);
     hbox->removeWidget(controls);
     controls->deleteLater();
