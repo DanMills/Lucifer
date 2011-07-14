@@ -41,6 +41,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "buttonwindow.h"
 #include "log.h"
 #include "engine.h"
+#include "midi.h"
+#include "alsamidi.h"
+#include "motormix.h"
 
 static const std::string usage(" \
 lucifer [-option] [-option]... [filename.lsf] [filename.ild(a)]\n\
@@ -63,8 +66,8 @@ int main (int argc, char **argv)
     std::string loglevel("INFO");
     qRegisterMetaType<unsigned long int>("unsigned long int");
     qRegisterMetaType<SourceImplPtr>("SourceImplPtr");
-		qRegisterMetaType<size_t>("size_t");
-		qRegisterMetaType<FramePtr>("FramePtr");
+    qRegisterMetaType<size_t>("size_t");
+    qRegisterMetaType<FramePtr>("FramePtr");
     int c;
     opterr = 0;
     // FIXME GNU SPECIFIC
@@ -142,6 +145,20 @@ int main (int argc, char **argv)
     QCoreApplication::setOrganizationDomain("exponent.myzen.co.uk");
     QCoreApplication::setApplicationName("Lucifer");
     slog()->info("Starting Galvanic Lucifer");
+
+    AlsaMidi midi;
+    midi.open("hw:1,0,0");
+    MIDIParser midiparser;
+    MotorMix surface;
+    surface.connectController(&midiparser.channels[0]);    
+    midiparser.setQIODevice(&midi);
+ 
+    for (unsigned int i=8; i < surface.numberOfControls(); i++)
+      surface.setControl(i,i%3);
+    
+    surface.displayWrite(0,0,"  GALVANIC LUCIFER - THE LIGHTBRINGER  ");
+    
+    
     EnginePtr e = boost::make_shared<Engine>();
     ButtonWindow grid (e);
     for (unsigned int i=0; i < filenames.size(); i++) {

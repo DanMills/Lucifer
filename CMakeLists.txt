@@ -1,44 +1,52 @@
 PROJECT(lucifer)
 cmake_minimum_required(VERSION 2.6)
 find_package(Qt4 REQUIRED)
-ADD_DEFINITIONS( -Wall )
+ADD_DEFINITIONS( -Wall -Wextra)
 ADD_DEFINITIONS( -W -O3 -g -ffast-math)
 INCLUDE( ${QT_USE_FILE} )
 
-include_directories(${QT_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR})
-
+include_directories(${QT_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR} /usr/local/jdksmidi2.2-dev/include)
+LINK_DIRECTORIES( ${LINK_DIRECTORIES} /usr/local/jdksmidi-2.2-dev/lib )
 set(lucifer_SRCS src/framesequencer.cpp
   src/staticframe.cpp src/main.cpp
   src/framesource_impl.cpp
-	src/loadilda.cpp src/screendisplay.cpp
-	src/buttongrid.cpp src/buttonwindow.cpp
+  src/loadilda.cpp src/screendisplay.cpp
+  src/buttongrid.cpp src/buttonwindow.cpp
   src/frame.cpp src/point.cpp src/driver.cpp
-	src/displayframe.cpp src/editparams.cpp
-	src/log.cpp src/colour.cpp
-	src/resampler.cpp
-	src/driver_portaudio_ilda.cpp src/head.cpp
-	src/driver_dummy_ilda.cpp
-	src/outputview.cpp
-	src/engine.cpp src/playbacklist.cpp
-	src/qtiocompressor.cpp)
+  src/displayframe.cpp src/editparams.cpp
+  src/log.cpp src/colour.cpp
+  src/resampler.cpp
+  src/driver_portaudio_ilda.cpp src/head.cpp
+  src/driver_dummy_ilda.cpp
+  src/outputview.cpp
+  src/engine.cpp src/playbacklist.cpp
+  src/qtiocompressor.cpp
+  src/midi.cpp
+  src/controlsurface.cpp
+  src/motormix.cpp
+  src/alsamidi.cpp)
 
 set(lucifer_HDRS src/framesequencer.h src/loadilda.h
-	src/framesource.h src/point.h
-	src/screendisplay.h src/frame.h src/log.h src/colour.h
-	src/resampler.h)
+  src/framesource.h src/point.h
+  src/screendisplay.h src/frame.h src/log.h src/colour.h
+  src/resampler.h)
 
 set(lucifer_MOC_HDRS src/screendisplay.h src/buttongrid.h src/buttonwindow.h
-	src/displayframe.h src/editparams.h src/staticframe.h src/head.h src/driver.h
-	src/driver_dummy_ilda.h
-	src/driver_portaudio_ilda.h
-	src/outputview.h
-	src/engine.h src/playbacklist.h
-	src/engine_impl.h
-	src/qtiocompressor.h
-	src/framesource_impl.h)
+  src/displayframe.h src/editparams.h src/staticframe.h src/head.h src/driver.h
+  src/driver_dummy_ilda.h
+  src/driver_portaudio_ilda.h
+  src/outputview.h
+  src/engine.h src/playbacklist.h
+  src/engine_impl.h
+  src/qtiocompressor.h
+  src/framesource_impl.h
+  src/midi.h
+  src/controlsurface.h
+  src/motormix.h
+  src/alsamidi.h)
 
 SET(lucifer_RCS
-	src/lucifer.qrc
+  src/lucifer.qrc
 )
 
 
@@ -46,5 +54,5 @@ QT4_ADD_RESOURCES(lucifer_RC_SRCS ${lucifer_RCS} )
 QT4_WRAP_CPP( lucifer_MOC_SRCS ${lucifer_MOC_HDRS} )
 add_executable(lucifer ${lucifer_SRCS} ${lucifer_HDRS} ${lucifer_MOC_SRCS} ${lucifer_RC_SRCS})
 target_link_libraries(lucifer -lrt -lasound -ljack -lpthread  ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY} z
-	log4cpp portaudio zita-resampler
+	log4cpp portaudio zita-resampler jdksmidi
 )
