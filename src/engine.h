@@ -31,7 +31,7 @@ typedef boost::shared_ptr<Engine> EnginePtr;
 #include "head.h"
 
 /// Maximum number of laser heads supported on a single PC
-#define MAX_HEADS (8)
+#define MAX_HEADS (4)
 
 /// things from engine_impl.h
 class ShowSaver;
@@ -55,7 +55,7 @@ public:
     ~Engine();
     bool addFrameSource (SourceImplPtr fs, long int pos);
     SourceImplPtr getFrameSource (const size_t pos);
-		PlaybackPtr getPlayback(const size_t pos);
+    PlaybackPtr getPlayback(const size_t pos);
     LaserHeadPtr getHead(const size_t pos);
     bool startHead(const size_t pos);
     size_t getSourcesSize() const;
@@ -86,22 +86,27 @@ signals:
     /// Status message
     void message (QString text, int time);
     void setIndicator (unsigned int pos, QColor col);
-		void manualTrigger();
+    void manualTrigger();
+    /// head Selection changed
+    void headSelectionChanged (int);
 
 public slots:
     /// Kill all laser output, open the interlocks and scram the pile,
     /// Called by the emergency stop signal (Also WDT timeouts and such).
     void kill ();
-		/// Undo a kill
-		void restart();
+    /// Undo a kill
+    void restart();
     /// Deal with drag and drop events.
     bool mimeHandler (const QMimeData * data, int pos);
     /// A frame select button has been clicked
     void clicked(const int pos);
     /// force a deselect
     void deselect (const int pos);
-		/// Called to manually go to next framesource in manual mode
-		void manualNext();
+    /// Called to manually go to next framesource in manual mode
+    void manualNext();
+    /// called to change the head selections will effect
+    void selectHead (int head);
+
 private slots:
     void Saved();
     void Loaded();
@@ -125,6 +130,7 @@ private:
     QtIOCompressor * loadCompressor;
     QMutex import_mutex;
     ShowImporter *importer;
+    int selected_head;
 };
 
 #endif

@@ -59,6 +59,7 @@ Engine::Engine(QObject* parent) : QObject(parent)
     saver = NULL;
     loader = NULL;
     importer = NULL;
+    selected_head = 0;
     slog()->infoStream() << "New laser show engine created : " << this;
     emit message (tr("Starting show engine"),5000);
     for (unsigned int i=0; i < MAX_HEADS; i++) {
@@ -523,7 +524,7 @@ void ShowImporter::run()
 
 void Engine::clicked(const int pos)
 {
-    LaserHeadPtr h = getHead(0);
+    LaserHeadPtr h = getHead(selected_head);
     if (h) {
         h->select(pos,!(h->isSelected(pos)));
     }
@@ -552,4 +553,17 @@ void Engine::manualNext()
 {
     emit manualTrigger();
 }
+
+void Engine::selectHead(int head)
+{
+  if (head < MAX_HEADS){
+    selected_head = head;
+    emit headSelectionChanged (head);
+  }
+  LaserHeadPtr h = getHead(selected_head);
+  for (unsigned int i=0; i <getSourcesSize(); i++){
+    selectionChangedData(i,h->isSelected(i));
+  }
+}
+
 
