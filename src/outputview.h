@@ -24,17 +24,28 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 class OutputView : public DisplayFrame
 {
-	Q_OBJECT
-	public:
-		OutputView (QWidget *parent);
-		~OutputView ();
-	public slots:
-		void updateDisplay (FramePtr f);
-		//private slots:
-		//    void setup ();
-		//    void clicked ();
-	private:
-		FramePtr of;
+    Q_OBJECT
+public:
+    OutputView (bool independent_window, QWidget *parent = NULL);
+    ~OutputView ();
+    void setTitle (QString title);
+public slots:
+    void updateDisplay (FramePtr f);
+signals:
+    void displayUpdated (FramePtr f);
+    void leftClicked();
+    void rightClicked();
+private slots:
+    //    void setup ();
+    void leftClickedData ();
+    void rightClickedData ();
+
+protected:
+    void mouseReleaseEvent (QMouseEvent *e);
+private:
+    FramePtr of;
+    bool independent;
+    QString name;
 };
 
 #endif

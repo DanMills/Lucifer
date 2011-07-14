@@ -18,14 +18,29 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 #include "outputview.h"
+#include "log.h"
 
-OutputView::OutputView(QWidget* parent): DisplayFrame(parent)
+OutputView::OutputView(bool independent_window, QWidget* parent): DisplayFrame(parent), independent(independent_window)
 {
+    setIndicatorColour(QColor(Qt::black));
+    setBorderColour(QColor(Qt::black));
+    setBorderWidth(4);
+    setIndicatorWidth(1);
+    connect (this,SIGNAL(rightClicked()),this,SLOT(rightClickedData()));
 }
 
 OutputView::~OutputView()
 {
 }
+
+void OutputView::setTitle(QString title)
+{
+    name = title;
+    setWindowTitle(name);
+    setWindowIconText(name);
+}
+
+
 
 void OutputView::updateDisplay(FramePtr f)
 {
@@ -33,4 +48,37 @@ void OutputView::updateDisplay(FramePtr f)
         of = f;
         setFrame(f);
     }
+    emit displayUpdated (f);
 }
+
+void OutputView::leftClickedData()
+{
+
+}
+
+
+void OutputView::rightClickedData()
+{
+    slog()->debugStream() <<"OutputView::clickedData()";
+    if (!independent) {
+        OutputView * w = new OutputView (true);
+        slog() -> infoStream() <<"Creating new output view window : " << w;
+        w->setTitle(name);
+        w->resize(450,450); // TODO some proper geometry save/restore type stuff with QSettings
+        connect (this,SIGNAL(displayUpdated(FramePtr)),w,SLOT(updateDisplay(FramePtr)));
+        w->show();
+    }
+}
+
+
+void OutputView::mouseReleaseEvent (QMouseEvent *e)
+{
+    if (e->button() == Qt::LeftButton) {
+        //Button clicked
+        emit leftClicked();
+    } else if (e->button() == Qt::RightButton) {
+        emit rightClicked();
+    }
+}
+
+
