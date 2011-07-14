@@ -25,6 +25,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // The source selector window
 #include "engine.h"
 
+#include "outputview.h"
+
 class ButtonWindow : public QMainWindow
 {
     Q_OBJECT
@@ -46,11 +48,12 @@ private slots:
     void clearFullScreen();
     void importFiles ();
     void userKill();
-		void userRestart();
+    void userRestart();
     void sourcesSizeChanged (size_t);
     void status(QString text, int time);
     void selectionModeData (int);
     void stepModeData (int);
+    void headSelectionChanged (int);
 protected:
     void keyPressEvent(QKeyEvent *event);
 private:
@@ -82,6 +85,8 @@ private:
     QString pathName;
 
     EnginePtr engine;
+
+    OutputView *outputs[MAX_HEADS];
 
     bool saveAs();
     void setCurrentFile(const QString &fn);

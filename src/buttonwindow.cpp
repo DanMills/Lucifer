@@ -70,15 +70,26 @@ ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
     vlayout->addWidget(headframe);
     vlayout->addWidget(tabs);
     headframe->setFixedHeight(128);
+    headframe->setFixedWidth(138 * MAX_HEADS);
+    headframe->setFrameStyle(QFrame::Box | QFrame::Raised);
     QHBoxLayout *hlayout = new QHBoxLayout ();
     headframe->setLayout(hlayout);
     // Heads
+    QSignalMapper *map = new QSignalMapper(this);
+    connect (map,SIGNAL(mapped(int)),&(*engine),SLOT(selectHead(int)));
+    connect (&(*engine),SIGNAL(headSelectionChanged(int)),this,SLOT(headSelectionChanged(int)));
     for (unsigned int i=0; i < MAX_HEADS; i++) {
-        OutputView *ov = new OutputView (this);
+        OutputView *ov = new OutputView (false,this);
+        ov->setFixedWidth(128);
+        ov->setTitle(QString().sprintf("Head %d",i+1));
+        ov->setBorderWidth(5);
+        ov->setIndicatorWidth(5);
+        outputs[i] = ov;
         hlayout->addWidget(ov);
         connect ((&(*engine->getHead(i))),SIGNAL(newFrame(FramePtr)),ov,SLOT(updateDisplay(FramePtr)));
+        map->setMapping(ov,i);
+        connect (ov,SIGNAL(leftClicked()),map,SLOT(map()));
     }
-
     ButtonGrid *g = new ButtonGrid(engine, 8,8,0,this);
     grids.push_back (g);
     // This connection ensures that the grids have a consistent view of what is loaded into the engine
@@ -108,6 +119,19 @@ ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
     unsaved = false;
     setCurrentFile(QString());
 }
+
+void ButtonWindow::headSelectionChanged(int head)
+{
+    slog()->debugStream() << "head selection change : " << head;
+    for (int i=0; i < MAX_HEADS; i++) {
+        if (i == head) {
+            outputs[i]->setBorderColour(Qt::red);
+        } else {
+            outputs[i]->setBorderColour(Qt::black);
+        }
+    }
+}
+
 
 // Load window position and size preferences
 void ButtonWindow::loadSettings()
@@ -384,16 +408,16 @@ void ButtonWindow::userKill()
 
 void ButtonWindow::keyPressEvent(QKeyEvent* event)
 {
-    switch (event->key()){
-			case Qt::Key_Escape :
+    switch (event->key()) {
+    case Qt::Key_Escape :
         userKill();
         return;
-				break;
-			case Qt::Key_F1 :
-				engine->manualNext();
-				break;
-			default:
-				QWidget::keyPressEvent(event);
-		}
+        break;
+    case Qt::Key_F1 :
+        engine->manualNext();
+        break;
+    default:
+        QWidget::keyPressEvent(event);
+    }
 }
 
