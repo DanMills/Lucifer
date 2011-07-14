@@ -40,31 +40,31 @@ public slots:
     void advance ();
     void animate (bool run, unsigned int fps);
     void loadData();
-		void editData();
-		void source (PlaybackPtr pb_);
-	signals:
+    void editData();
+    void source (PlaybackPtr pb_);
+signals:
     void modified(); //emitted when the underlying data is replaced
     void clicked (int pos); // emitted when playback is activated or deactivated by pressing the button
-		void message (QString text, int time);
+    void message (QString text, int time);
 
 protected:
-		void dragEnterEvent(QDragEnterEvent *event);
-		void dropEvent(QDropEvent *event);
+    void dragEnterEvent(QDragEnterEvent *event);
+    void dropEvent(QDropEvent *event);
     void enterEvent (QEvent *);
     void leaveEvent (QEvent *);
     void mousePressEvent (QMouseEvent * e);
-		void mouseMoveEvent(QMouseEvent *e);
-		void mouseReleaseEvent (QMouseEvent *e);
+    void mouseMoveEvent(QMouseEvent *e);
+    void mouseReleaseEvent (QMouseEvent *e);
 private:
     PlaybackPtr pb;
     QTimer *timer;
     QMenu popup;
     //bool on;
-		QPoint dragStartPosition;
-		QTime dragStartTime;
-		bool dragging;
-		int id;
-		EnginePtr engine;
+    QPoint dragStartPosition;
+    QTime dragStartTime;
+    bool dragging;
+    int id;
+    EnginePtr engine;
 };
 
 #endif

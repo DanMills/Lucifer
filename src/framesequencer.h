@@ -55,13 +55,13 @@ public:
     FramePtr nextFrame (PlaybackImplPtr p);
     PlaybackImplPtr newPlayback ();
 
-		void copyDataTo (SourceImplPtr p) const;
+    void copyDataTo (SourceImplPtr p) const;
 
     size_t frames ();
     size_t pos(PlaybackImplPtr p);
     void reset(PlaybackImplPtr p);
 
-		void save (QXmlStreamWriter *w);
+    void save (QXmlStreamWriter *w);
     void load (QXmlStreamReader *e);
 
     FrameSequencerGui * controls (QWidget *parent);

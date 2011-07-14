@@ -115,7 +115,7 @@ void FrameSource_impl::saveFrames(QXmlStreamWriter* w)
 {
     assert (w);
     w->writeStartElement(QString().fromStdString(name));
-		w->writeAttribute("Description",QString().fromStdString(description));
+    w->writeAttribute("Description",QString().fromStdString(description));
     save(w);
     w->writeStartElement("Children");
     w->writeAttribute("Number", QString().number(numChildren()));
@@ -146,7 +146,7 @@ SourceImplPtr FrameSource_impl::loadFrames(QXmlStreamReader* e)
         return fs;
     }
     if (fs) {
-				fs->setDescription(e->attributes().value("Description").toString().toStdString());
+        fs->setDescription(e->attributes().value("Description").toString().toStdString());
         // load the configuration data for this node
         fs->load (e);
         e->readNextStartElement();
@@ -241,7 +241,7 @@ PlaybackImplPtr FrameSource_impl::createPlayback()
 
 std::string FrameSource_impl::getDescription()
 {
-	return description;
+    return description;
 }
 
 SourceImplPtr FrameSource_impl::fromString(const std::string s)
