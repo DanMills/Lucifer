@@ -49,7 +49,7 @@ bool FrameSource_impl::addChild(SourceImplPtr child, int pos)
             slog()->debugStream() << "Appended child node to " << this << " at position " << children.size()-1;
             return true;
         }
-        if (pos > children.size()) {
+        if ((unsigned)pos > children.size()) {
             slog ()->errorStream() << "Framesource_impl::Attempt to insert a child node past the end of the list";
             return false;
         }
@@ -276,11 +276,11 @@ bool Playback_impl::addChild(PlaybackImplPtr child, int pos)
         children.push_back(child);
         return true;
     }
-    if (pos < children.size()) {
+    if ((unsigned)pos < children.size()) {
         children.insert(children.begin()+pos,child);
         return true;
     }
-    if (children.size() == pos) {
+    if (children.size() == (unsigned) pos) {
         children.push_back(child);
         return true;
     }

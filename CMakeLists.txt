@@ -28,18 +28,20 @@ set(lucifer_SRCS src/framesequencer.cpp
 
 set(lucifer_HDRS src/framesequencer.h src/loadilda.h
   src/framesource.h src/point.h
+  src/framesource_impl.h
   src/screendisplay.h src/frame.h src/log.h src/colour.h
-  src/resampler.h)
+  src/resampler.h
+  src/driver_portaudio_ilda.h
+
+)
 
 set(lucifer_MOC_HDRS src/screendisplay.h src/buttongrid.h src/buttonwindow.h
   src/displayframe.h src/editparams.h src/staticframe.h src/head.h src/driver.h
   src/driver_dummy_ilda.h
-  src/driver_portaudio_ilda.h
   src/outputview.h
   src/engine.h src/playbacklist.h
   src/engine_impl.h
   src/qtiocompressor.h
-  src/framesource_impl.h
   src/midi.h
   src/controlsurface.h
   src/motormix.h

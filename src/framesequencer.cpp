@@ -66,12 +66,12 @@ void FrameSequencer::save (QXmlStreamWriter* w)
     w->writeAttribute("Mode", "Sequential");
 }
 
-void FrameSequencer::load(QXmlStreamReader* e)
+void FrameSequencer::load(QXmlStreamReader*)
 {
 //TODO Load the Repeats and mode data
 }
 
-void FrameSequencer::copyDataTo(SourceImplPtr p) const
+void FrameSequencer::copyDataTo(SourceImplPtr) const
 {
 // TODO once we have some instance data it will need copying here
 }

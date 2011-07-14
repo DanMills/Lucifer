@@ -34,7 +34,7 @@ ShowTreeWidget::ShowTreeWidget(QWidget *parent) : QTreeWidget(parent)
     setDragDropMode(QAbstractItemView::DragDrop);
 }
 
-bool ShowTreeWidget::dropMimeData ( QTreeWidgetItem * p, int index, const QMimeData * data, Qt::DropAction action)
+bool ShowTreeWidget::dropMimeData ( QTreeWidgetItem * p, int index, const QMimeData * data, Qt::DropAction)
 {
     ShowTreeWidgetItem *parent = (ShowTreeWidgetItem *) p;
 		if (!parent) { // drop onto the root

@@ -105,7 +105,7 @@ size_t Driver::ILDABufferFillStatus()
     return 0;
 }
 
-size_t Driver::ILDANewPoints(std::vector< PointF >& pts, size_t offset)
+size_t Driver::ILDANewPoints(std::vector< PointF >&, size_t)
 {
     assert (false);
     return 0;
