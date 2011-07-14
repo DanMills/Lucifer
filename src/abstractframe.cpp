@@ -34,7 +34,7 @@ class AbstractFrameGen
 {
 public:
     AbstractFrameGen () {
-        FrameSource::registerFrameGen ("Abstract_frame",makeAbstractFrame);
+        FrameSource_impl::registerFrameGen ("Abstract_frame",makeAbstractFrame);
     }
 };
 static AbstractFrameGen sfg;
