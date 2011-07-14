@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 class Dummy_ILDA : public Driver
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
     Dummy_ILDA();
     ~Dummy_ILDA();
@@ -39,11 +39,11 @@ public:
     size_t ILDANewPoints (std::vector<PointF> &pts, size_t offset);
     unsigned int ILDAHwPointsPerSecond();
 private:
-		bool connected_;
-		QTimer *timer_;
-		size_t buffer_fill_;
-	private slots:
-		void timeout();
+    bool connected_;
+    QTimer *timer_;
+    size_t buffer_fill_;
+private slots:
+    void timeout();
 };
 
 #endif
