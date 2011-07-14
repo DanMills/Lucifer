@@ -26,7 +26,23 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <QtGui>
 #include "frame.h"
 
-class DisplayFrame : public QWidget
+
+class QFixedAspectWidget : public QWidget
+{
+  Q_OBJECT
+public:
+    QFixedAspectWidget(QWidget* parent = 0, Qt::WindowFlags f = 0) : QWidget(parent,f)
+    {
+      //setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+      QSizePolicy p = sizePolicy();
+      p.setHeightForWidth(true);
+      setSizePolicy(p);
+    };
+    
+    virtual int heightForWidth(int w) const;
+};
+
+class DisplayFrame : public QFixedAspectWidget
 {
     Q_OBJECT
 public:

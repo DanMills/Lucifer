@@ -21,10 +21,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "frame.h"
 #include "displayframe.h"
 
-
-DisplayFrame::DisplayFrame(QWidget* parent): QWidget(parent)
+int QFixedAspectWidget::heightForWidth(int w) const
 {
-    setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+    return w;
+}
+
+DisplayFrame::DisplayFrame(QWidget* parent): QFixedAspectWidget(parent)
+{
     setMinimumSize(50,50);
     bw = 0;
     iw = 0;
