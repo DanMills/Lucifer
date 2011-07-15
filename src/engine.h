@@ -39,6 +39,21 @@ class ShowLoader;
 class ShowImporter;
 class HeadThread;
 
+/// A little shim that starts the show engine in its own thread so the GUI event loop 
+/// cannot block the engine from serving up new frame sources to the heads.
+class EngineStarter : public QThread
+{
+    Q_OBJECT
+public:
+    EngineStarter(QObject *parent = NULL);
+    virtual ~EngineStarter();
+    void run();
+    EnginePtr engine();
+private:
+  EnginePtr e;
+};
+
+
 /// This object holds all the basic frame sources (master copies of the reference counted
 /// ptrs) in sources, so deleting one will probably eventually result in that framesource
 /// tree going away once nothing else is using it, it also holds the laser heads and deals

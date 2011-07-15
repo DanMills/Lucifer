@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #if __unix
 #include <unistd.h>
 #include <pthread.h>
+#include <sys/types.h>
 #endif
 
 HeadThread::HeadThread(Engine * e)
@@ -40,6 +41,7 @@ void HeadThread::run()
     /// TODO - Come up with a way to put things into windows soft RT scheduling class
 #if __unix
     pthread_t tid = pthread_self();
+    slog()->infoStream() << "Started laserhead thread ";
     struct sched_param sp;
     sp.sched_priority = 20;
     int err;
@@ -53,6 +55,55 @@ void HeadThread::run()
     head = boost::make_shared<LaserHead>(engine);
     exec();
 }
+
+EngineStarter::EngineStarter(QObject *parent): QThread(parent)
+{
+}
+
+EngineStarter::~EngineStarter()
+{
+    quit();
+    while (!isFinished()) {
+        usleep (10000);
+    }
+    e = EnginePtr();
+}
+
+void EngineStarter::run()
+{
+    slog()->debugStream() << "Starting laser engine thread " << std::hex << currentThreadId();
+    /// TODO - Come up with a way to put things into windows soft RT scheduling class
+#if __unix
+    pthread_t tid = pthread_self();
+    slog()->infoStream() << "Started show engine";
+    struct sched_param sp;
+    sp.sched_priority = 30;
+    int err;
+    err = pthread_setschedparam(tid,SCHED_FIFO,&sp);
+    if (err) {
+        slog()->errorStream() <<"Failed to set RT scheduling for laser engine control thread :" << strerror(err);
+    } else {
+        slog()->infoStream() <<"Set posix RT scheduling for engine thread";
+    }
+#endif
+    e = boost::make_shared<Engine>();
+    exec();
+}
+
+EnginePtr EngineStarter::engine()
+{
+    int i=0;
+    do { // wait for the laser engine to come up
+        if (e) {
+            return e;
+        }
+        usleep (10000);
+        i++;
+    } while (i <500);
+    slog()->critStream () << " Unable to start laser engine thread!";
+    return e;
+}
+
 
 Engine::Engine(QObject* parent) : QObject(parent)
 {
@@ -315,7 +366,7 @@ bool Engine::saveShow(QString filename)
         }
         savef.setFileName (filename);
         saveCompressor = new QtIOCompressor (&savef,6,10 * 1024 * 1024);
-	//saveCompressor->setStreamFormat(QtIOCompressor::GzipFormat);
+        //saveCompressor->setStreamFormat(QtIOCompressor::GzipFormat);
         if (!saveCompressor->open(QIODevice::WriteOnly)) {
             delete saveCompressor;
             save_mutex.unlock();
@@ -556,14 +607,14 @@ void Engine::manualNext()
 
 void Engine::selectHead(int head)
 {
-  if (head < MAX_HEADS){
-    selected_head = head;
-    emit headSelectionChanged (head);
-  }
-  LaserHeadPtr h = getHead(selected_head);
-  for (unsigned int i=0; i <getSourcesSize(); i++){
-    selectionChangedData(i,h->isSelected(i));
-  }
+    if (head < MAX_HEADS) {
+        selected_head = head;
+        emit headSelectionChanged (head);
+    }
+    LaserHeadPtr h = getHead(selected_head);
+    for (unsigned int i=0; i <getSourcesSize(); i++) {
+        selectionChangedData(i,h->isSelected(i));
+    }
 }
 
 

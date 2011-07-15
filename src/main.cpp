@@ -158,8 +158,11 @@ int main (int argc, char **argv)
     
     surface.displayWrite(0,0,"  GALVANIC LUCIFER - THE LIGHTBRINGER  ");
     
+    EngineStarter s;
+    s.start();
+    EnginePtr e = s.engine();
+    if (!e) exit (-1);
     
-    EnginePtr e = boost::make_shared<Engine>();
     ButtonWindow grid (e);
     for (unsigned int i=0; i < filenames.size(); i++) {
         std::string fn = filenames[i];
