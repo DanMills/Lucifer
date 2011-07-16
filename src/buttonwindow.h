@@ -44,6 +44,8 @@ private slots:
     bool saveFile ();
     bool saveAsFile();
     void modified(); // A child has been modified, need to re-save?
+    void saved (); // File saved. 
+    void loaded(); // File loaded.
     void setFullScreen();
     void clearFullScreen();
     void importFiles ();

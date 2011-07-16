@@ -43,7 +43,9 @@ ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
     toolbar->addSeparator();
 
     connect (&(*engine),SIGNAL(message(QString,int)),this,SLOT(status(QString,int)));
-
+    connect (&(*engine),SIGNAL(showLoaded()),this,SLOT(loaded()));
+    connect (&(*engine),SIGNAL(showSaved()),this,SLOT(saved()));
+    
     selectionMode = new QComboBox (toolbar);
     selectionMode->addItems(engine->getHead(0)->enumerateSelectionModes());
     selectionMode->setToolTip(tr("Frame selection mode"));
@@ -131,7 +133,6 @@ void ButtonWindow::headSelectionChanged(int head)
         }
     }
 }
-
 
 // Load window position and size preferences
 void ButtonWindow::loadSettings()
@@ -304,6 +305,19 @@ void ButtonWindow::setCurrentFile(const QString &fn)
         shownName = QFileInfo(fileName).fileName();
     }
     setWindowTitle(tr("%1[*] - %2").arg(shownName).arg(tr("Lucifer - frame selector")));
+}
+
+void ButtonWindow::saved()
+{
+  unsaved = false;
+  setWindowModified(false);
+}
+
+void ButtonWindow::loaded()
+{
+  unsaved = false;
+  setWindowModified(false);
+  
 }
 
 void ButtonWindow::modified()
