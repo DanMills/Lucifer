@@ -5,6 +5,7 @@
 #include <alsa/asoundlib.h>
 #include <deque>
 #include <qsocketnotifier.h>
+#include <vector>
 
 class AlsaMidi : public QIODevice
 {
@@ -17,6 +18,7 @@ public:
   qint64 readData (char *data, qint64 maxsize);
   qint64 writeData(const char *data, qint64 maxsize);
   bool isSequential () const;
+  std::vector<std::pair<QString,QString> > enumeratePorts() const;
 private:
   snd_rawmidi_t *input;
   snd_rawmidi_t *output;
