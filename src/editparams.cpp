@@ -104,12 +104,12 @@ QMimeData * ShowTreeWidget::mimeData (const QList<QTreeWidgetItem *>  items ) co
 
 void ShowTreeWidgetItem::populateTree(SourceImplPtr f)
 {
-    assert (f);
+    assert (f);    
     setText(0,QString().fromStdString(f->getName()));
     FrameGui * c = f->controls(NULL);
     if (c){
 	const QIcon * i = c->icon();
-	setIcon(1,*i);
+	setIcon(0,*i);
 	delete i;
 	delete c;
     }
@@ -126,25 +126,26 @@ ParameterEditor::ParameterEditor(QWidget* parent) :
         QDialog (parent)
 {
     setAutoFillBackground(true);
-    setGeometry(0,0,300,600);
+    setGeometry(0,0,600,600);
     pixmapLabel = new QLabel(this);
     setWindowTitle("Editor");
     controls = new QWidget (this);
     tree = new ShowTreeWidget (this);
+    tree->setIconSize(QSize(48,48));
     tree->setHeaderLabel("Source");
     connect (tree,SIGNAL(itemClicked(QTreeWidgetItem *, int)),this,SLOT(itemClickedData(QTreeWidgetItem *, int)));
     connect (tree,SIGNAL(itemSelectionChanged()),this,SLOT(selectionChangedData()));
     root = NULL;
     available = new QListWidget (this);
-		std::vector<std::string> fn = FrameSource_impl::enemerateFrameGenTypes();
-		for (unsigned int i=0; i < fn.size(); i++){
-			new QListWidgetItem(tr(fn[i].c_str()), available);
-		}
+    std::vector<std::string> fn = FrameSource_impl::enemerateFrameGenTypes();
+    for (unsigned int i=0; i < fn.size(); i++){
+	QListWidgetItem *it = new QListWidgetItem(tr(fn[i].c_str()), available);     
+    }
     hbox = new QHBoxLayout(this);
     hbox->addWidget(tree);
     hbox->addWidget (controls);
     hbox->addWidget(available);
-		load (SourceImplPtr());
+    load (SourceImplPtr());
     setLayout(hbox);
     show ();
 }
@@ -158,7 +159,7 @@ ParameterEditor::~ParameterEditor()
 void ParameterEditor::load(SourceImplPtr f)
 {
     if (!f) return;
-    fs = f->clone();
+    fs = f;//->clone();
     if (root) delete root;
     root = NULL;
     tree->clear();
@@ -189,6 +190,7 @@ ShowTreeWidgetItem * ParameterEditor::populateTree(ShowTreeWidgetItem *p, Source
     assert (f);
     if (!p) {
         p = new ShowTreeWidgetItem;
+	setStyleSheet("QTreeWidget::item{ height: 50px;}");
     }
     p->populateTree(f);
     return p;

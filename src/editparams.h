@@ -72,6 +72,9 @@ class ParameterEditor : public QDialog
 public:
     ParameterEditor (QWidget *parent);
     ~ParameterEditor ();
+protected:
+    virtual void closeEvent (QCloseEvent *event);
+
 public slots:
     void load (SourceImplPtr f);
 signals:

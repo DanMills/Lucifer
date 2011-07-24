@@ -42,6 +42,7 @@ private slots:
 
 protected:
     void mouseReleaseEvent (QMouseEvent *e);
+    virtual void closeEvent (QCloseEvent *event);
 private:
     FramePtr of;
     bool independent;

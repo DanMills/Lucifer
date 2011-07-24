@@ -27,6 +27,13 @@ OutputView::OutputView(bool independent_window, QWidget* parent): DisplayFrame(p
     setBorderWidth(4);
     setIndicatorWidth(1);
     connect (this,SIGNAL(rightClicked()),this,SLOT(rightClickedData()));
+    if (independent_window) { 
+	// make this object auto delete on close
+        setAttribute(Qt::WA_DeleteOnClose,true);
+	// We dont want compositors to try to make this semi transparent
+	//setAttribute(Qt::WA_PaintOnScreen,true);
+      
+    }
 }
 
 OutputView::~OutputView()
@@ -38,6 +45,15 @@ void OutputView::setTitle(QString title)
     name = title;
     setWindowTitle(name);
     setWindowIconText(name);
+    // now we know the name, restore the geometry
+    if (independent) {
+        QSettings settings;
+        settings.beginGroup(title);
+        if (settings.contains("Geometry")) {
+            restoreGeometry(settings.value("Geometry").toByteArray());
+        }
+        settings.endGroup();
+    }
 }
 
 
@@ -64,12 +80,10 @@ void OutputView::rightClickedData()
         OutputView * w = new OutputView (true);
         slog() -> infoStream() <<"Creating new output view window : " << w;
         w->setTitle(name);
-        w->resize(450,450); // TODO some proper geometry save/restore type stuff with QSettings
         connect (this,SIGNAL(displayUpdated(FramePtr)),w,SLOT(updateDisplay(FramePtr)));
         w->show();
     }
 }
-
 
 void OutputView::mouseReleaseEvent (QMouseEvent *e)
 {
@@ -79,6 +93,15 @@ void OutputView::mouseReleaseEvent (QMouseEvent *e)
     } else if (e->button() == Qt::RightButton) {
         emit rightClicked();
     }
+}
+
+void OutputView::closeEvent(QCloseEvent* event)
+{
+    QSettings settings;
+    settings.beginGroup(name);
+    settings.setValue("Geometry",saveGeometry());
+    settings.endGroup();
+    QWidget::closeEvent(event);
 }
 
 
