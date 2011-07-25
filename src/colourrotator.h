@@ -21,13 +21,77 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "framesource_impl.h"
 
+class ColourRotator;
+
+typedef boost::shared_ptr<ColourRotator> ColourRotatorPtr;
+typedef boost::shared_ptr<const ColourRotatorPtr> ConstColourRotatorPtr;
+
+/// Slightly specialised version of a QColourDialog
+class ColourRotatorDialog : public QColorDialog
+{
+ Q_OBJECT
+public:
+    ColourRotatorDialog(QWidget* parent = 0);
+    virtual ~ColourRotatorDialog();
+    void setTitle (QString title);
+protected:
+  virtual void closeEvent (QCloseEvent *event);
+};
+
+
+
 /// GUI for the frame sequencer controls in the editor.
 class ColourRotatorGui : public FrameGui
 {
+  Q_OBJECT
 public:
-    ColourRotatorGui(QWidget* parent);
+    ColourRotatorGui(ColourRotator *rotator_, QWidget* parent);
     virtual ~ColourRotatorGui();
     const QIcon * icon();
+private:
+    QDial *pulserHarmonic;
+    QPushButton *pulserColourButton;
+    QSpinBox * pulserHue;
+    QSpinBox * pulserSat;
+    QSpinBox * pulserBright;
+    QDial *pulserPhaseIncr;
+    QDial *rotatorHarmonic;
+    QDial *rotatorPhaseIncr;
+    QCheckBox *hueMod;
+    QCheckBox *brightMod;
+    QCheckBox *satMod;
+    QCheckBox *overrideSwitch;
+    QPushButton *overrideColourButton;
+    QSpinBox *overrideHue;
+    QSpinBox *overrideSat;
+    QSpinBox *overrideBright;
+ 
+    ColourRotatorDialog *overrideColourSelector;
+    ColourRotatorDialog *pulseColourSelector;
+    
+    
+    ColourRotator * rotator;
+    
+private slots:
+  void pulserHarmonicData (int);
+  void pulserPhaseIncData(int);
+  void pulserHueData(int);
+  void pulserSatData(int);
+  void pulserBrightData(int);
+  void pulserColourButtonData(bool);
+  
+  void rotatorHarmonicData(int);
+  void rotatorPhaseIncrData (int);
+  void rotatorHueModData(bool);  
+  void rotatorSatModData(bool);  
+  void rotatorBrightModData(bool);  
+  
+  void overrideSwitchData(bool);
+  void overrideColourButtonData(bool);
+  
+  void overrideColourChangedData (QColor col);
+  void pulserColourChangedData (QColor col);
+  
 };
 
 
@@ -36,7 +100,8 @@ class ColourRotatorPlayback : public Playback_impl
 {
 public:
     ColourRotatorPlayback();
-    float start_phase;
+    float pulser_start_phase;
+    float rotator_start_phase;
 };
 
 typedef boost::shared_ptr<ColourRotatorPlayback> ColourRotatorPlaybackPtr;
@@ -59,7 +124,30 @@ public:
     void save (QXmlStreamWriter *w);
     void load (QXmlStreamReader *e);
 
-    ColourRotatorGui * controls (QWidget *parent);
+    FrameGui* controls (QWidget* parent);
+private:
+    // colour pulser
+    QColor pulse_colour;
+    float pulse_dutycycle;
+    int pulse_harmonic;
+    float pulse_phase_advance;
+    //HSV rotator 
+    bool rotate_h;
+    bool rotate_s;
+    bool rotate_v;
+    int rotate_harmonic;
+    float rotate_phase_advance;
+    // Colour override
+    bool colour_override;
+    QColor override_colour;
+    
+    void colourPulse (FramePtr frame, ColourRotatorPlaybackPtr pb);
+    void HSVRotator (FramePtr frame, ColourRotatorPlaybackPtr pb);
+    void colourOverride (FramePtr frame, ColourRotatorPlaybackPtr pb);
+    
+    float phase_cycle_increment;
+    float harmonic;
+    friend class ColourRotatorGui;
 };
 
 typedef boost::shared_ptr<ColourRotator> ColourRotatorPtr;
