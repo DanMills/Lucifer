@@ -37,33 +37,33 @@ ShowTreeWidget::ShowTreeWidget(QWidget *parent) : QTreeWidget(parent)
 bool ShowTreeWidget::dropMimeData ( QTreeWidgetItem * p, int index, const QMimeData * data, Qt::DropAction)
 {
     ShowTreeWidgetItem *parent = (ShowTreeWidgetItem *) p;
-		if (!parent) { // drop onto the root
-			return false;
-		}
-		slog()->infoStream()<<"Dropping onto editor";
-		if ((parent->data->numPossibleChildren() == 1) && (parent->data->numChildren() ==1)){
-			slog()->infoStream() << "Parent allows maximum of 1 child so we need to add a sequencer";
-			// We must add a sequencer to allow more child nodes.
-			SourceImplPtr sequence = boost::make_shared<FrameSequencer>();
-			// Splice the child as the new child of the sequencer
-			ShowTreeWidgetItem *child = (ShowTreeWidgetItem*) parent->takeChild(0);
-			SourceImplPtr t = child->data;
-			child->data->deleteChild(0);
-			sequence->addChild(t);
-			parent->data->deleteChild(0);
-			// Hopefully sequence is the only thing containing a reference to the old framesource now
-			parent->populateTree(sequence);
-			//sequence->addChild(child);
-			// and the sequencer becomes the new child.
-			//parent->data->deleteChild(0);
-			//parent->removeChild(0);
-			//sequence->data->addChild(child->data());
-			//parent->populateTree(sequence);
-			//parent->addChild(child);
-			//parent->data =
-			//parent = sequence;
-			// Parent is now the sequencer and can have multiple children.
-		}
+    if (!parent) { // drop onto the root
+        return false;
+    }
+    slog()->infoStream()<<"Dropping onto editor";
+    if ((parent->data->numPossibleChildren() == 1) && (parent->data->numChildren() ==1)) {
+        slog()->infoStream() << "Parent allows maximum of 1 child so we need to add a sequencer";
+        // We must add a sequencer to allow more child nodes.
+        SourceImplPtr sequence = boost::make_shared<FrameSequencer>();
+        // Splice the child as the new child of the sequencer
+        ShowTreeWidgetItem *child = (ShowTreeWidgetItem*) parent->takeChild(0);
+        SourceImplPtr t = child->data;
+        child->data->deleteChild(0);
+        sequence->addChild(t);
+        parent->data->deleteChild(0);
+        // Hopefully sequence is the only thing containing a reference to the old framesource now
+        parent->populateTree(sequence);
+        //sequence->addChild(child);
+        // and the sequencer becomes the new child.
+        //parent->data->deleteChild(0);
+        //parent->removeChild(0);
+        //sequence->data->addChild(child->data());
+        //parent->populateTree(sequence);
+        //parent->addChild(child);
+        //parent->data =
+        //parent = sequence;
+        // Parent is now the sequencer and can have multiple children.
+    }
     if ((parent->data->numPossibleChildren() == FrameSource_impl::MANY) ||
             ((parent->data->numPossibleChildren() == FrameSource_impl::TWO) && (parent->data->numChildren() <= 1)) ||
             ((parent->data->numPossibleChildren() == FrameSource_impl::ONE) && (parent->data->numChildren() == 0))) {
@@ -94,7 +94,7 @@ QMimeData * ShowTreeWidget::mimeData (const QList<QTreeWidgetItem *>  items ) co
 {
     slog()->infoStream()<<"Started dragging from editor";
     QMimeData *mimeData = new QMimeData;
-		ShowTreeWidgetItem *it = (ShowTreeWidgetItem*)items.first();
+    ShowTreeWidgetItem *it = (ShowTreeWidgetItem*)items.first();
     std::string text = it->data->toString();
     // now setup the mime type to hold this data
     QByteArray arr (text.c_str(),text.size());
@@ -104,14 +104,14 @@ QMimeData * ShowTreeWidget::mimeData (const QList<QTreeWidgetItem *>  items ) co
 
 void ShowTreeWidgetItem::populateTree(SourceImplPtr f)
 {
-    assert (f);    
+    assert (f);
     setText(0,QString().fromStdString(f->getName()));
     FrameGui * c = f->controls(NULL);
-    if (c){
-	const QIcon * i = c->icon();
-	setIcon(0,*i);
-	delete i;
-	delete c;
+    if (c) {
+        const QIcon * i = c->icon();
+        setIcon(0,*i);
+        delete i;
+        delete c;
     }
     data = f;
     ShowTreeWidgetItem *op = NULL;
@@ -125,8 +125,16 @@ void ShowTreeWidgetItem::populateTree(SourceImplPtr f)
 ParameterEditor::ParameterEditor(QWidget* parent) :
         QDialog (parent)
 {
+    setAttribute(Qt::WA_DeleteOnClose,true);
+    QSettings settings;
+    settings.beginGroup("Editor");
+    if (settings.contains("Geometry")) {
+        restoreGeometry(settings.value("Geometry").toByteArray());
+    } else {
+        setGeometry(0,0,600,600);;
+    }
+    settings.endGroup();
     setAutoFillBackground(true);
-    setGeometry(0,0,600,600);
     pixmapLabel = new QLabel(this);
     setWindowTitle("Editor");
     controls = new QWidget (this);
@@ -138,8 +146,8 @@ ParameterEditor::ParameterEditor(QWidget* parent) :
     root = NULL;
     available = new QListWidget (this);
     std::vector<std::string> fn = FrameSource_impl::enemerateFrameGenTypes();
-    for (unsigned int i=0; i < fn.size(); i++){
-	QListWidgetItem *it = new QListWidgetItem(tr(fn[i].c_str()), available);     
+    for (unsigned int i=0; i < fn.size(); i++) {
+        QListWidgetItem *it = new QListWidgetItem(tr(fn[i].c_str()), available);
     }
     hbox = new QHBoxLayout(this);
     hbox->addWidget(tree);
@@ -156,6 +164,15 @@ ParameterEditor::~ParameterEditor()
     delete root;
 }
 
+void ParameterEditor::closeEvent(QCloseEvent* event)
+{
+    QSettings settings;
+    settings.beginGroup("Editor");
+    settings.setValue("Geometry",saveGeometry());
+    settings.endGroup();
+    QDialog::closeEvent(event);
+}
+
 void ParameterEditor::load(SourceImplPtr f)
 {
     if (!f) return;
@@ -170,16 +187,16 @@ void ParameterEditor::load(SourceImplPtr f)
         setWindowTitle("Editor");
     }
     //FrameRootPtr r = boost::make_shared<FrameRoot>();
-		//if (fs){
-		//r->addChild(fs);
-		//}
+    //if (fs){
+    //r->addChild(fs);
+    //}
     root = populateTree (root,fs);
     tree->addTopLevelItem(root);
     hbox->removeWidget(controls);
     controls->deleteLater();
-		if (fs){
-			controls = fs->controls(this);
-		}
+    if (fs) {
+        controls = fs->controls(this);
+    }
     hbox->addWidget(controls);
     update();
 }
@@ -190,7 +207,7 @@ ShowTreeWidgetItem * ParameterEditor::populateTree(ShowTreeWidgetItem *p, Source
     assert (f);
     if (!p) {
         p = new ShowTreeWidgetItem;
-	setStyleSheet("QTreeWidget::item{ height: 50px;}");
+        setStyleSheet("QTreeWidget::item{ height: 50px;}");
     }
     p->populateTree(f);
     return p;
@@ -201,16 +218,16 @@ void ParameterEditor::itemClickedData (QTreeWidgetItem *item, int)
     ShowTreeWidgetItem *tw = static_cast<ShowTreeWidgetItem*>(item);
     assert (tw);
     SourceImplPtr f = tw->data;
-		if (f){
-			fs = f;
-			controls->hide();
-			hbox->removeWidget(controls);
-			controls->deleteLater();
-			controls = fs->controls(this);
-			hbox->addWidget(controls);
-			controls->show();
-			update();
-		}
+    if (f) {
+        fs = f;
+        controls->hide();
+        hbox->removeWidget(controls);
+        controls->deleteLater();
+        controls = fs->controls(this);
+        hbox->addWidget(controls);
+        controls->show();
+        update();
+    }
 }
 
 void ParameterEditor::selectionChangedData()
