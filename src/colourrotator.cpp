@@ -291,6 +291,7 @@ ColourRotatorGui::ColourRotatorGui(ColourRotator * c, QWidget* parent): FrameGui
     setLayout(grid);
 
     rotator = c;
+    assert (rotator);
 
     QLabel *label = new QLabel(this);
     label->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
@@ -312,14 +313,16 @@ ColourRotatorGui::ColourRotatorGui(ColourRotator * c, QWidget* parent): FrameGui
     grid->addWidget(label, 1, 1);
 
     pulserHarmonic = new QDial(this);
-    pulserHarmonic->setMaximum(50);
+    pulserHarmonic->setMaximum(50000);
     pulserHarmonic->setNotchesVisible(true);
+    pulserHarmonic->setValue(1000 * rotator->pulse_harmonic);
     connect (pulserHarmonic,SIGNAL(valueChanged(int)),this,SLOT(pulserHarmonicData(int)));
     grid->addWidget(pulserHarmonic, 2, 0);
 
     pulserPhaseIncr = new QDial(this);
-    pulserPhaseIncr->setMinimum(-99);
-    pulserPhaseIncr->setMaximum(99);
+    pulserPhaseIncr->setMinimum(-9900);
+    pulserPhaseIncr->setMaximum(9900);
+    pulserPhaseIncr->setValue(1000 * rotator->pulse_phase_advance);
     pulserPhaseIncr->setNotchesVisible(this);
     connect (pulserPhaseIncr,SIGNAL(valueChanged(int)),this,SLOT(pulserPhaseIncData(int)));
 
@@ -351,31 +354,36 @@ ColourRotatorGui::ColourRotatorGui(ColourRotator * c, QWidget* parent): FrameGui
     grid->addWidget(label, 8, 1);
 
     rotatorHarmonic = new QDial(this);
-    rotatorHarmonic->setMaximum(20);
+    rotatorHarmonic->setMaximum(20000);
     rotatorHarmonic->setNotchesVisible(true);
+    rotatorHarmonic->setValue(1000 * rotator->rotate_harmonic);
     grid->addWidget(rotatorHarmonic, 9, 0);
     connect (rotatorHarmonic,SIGNAL(valueChanged(int)),this,SLOT(rotatorHarmonicData(int)));
 
 
     rotatorPhaseIncr = new QDial(this);
-    rotatorPhaseIncr->setMinimum(-25);
-    rotatorPhaseIncr->setMaximum(25);
+    rotatorPhaseIncr->setMinimum(-5000);
+    rotatorPhaseIncr->setMaximum(5000);
     rotatorPhaseIncr->setNotchesVisible(true);
+    rotatorPhaseIncr->setValue(1000 * rotator->rotate_phase_advance);
     connect (rotatorPhaseIncr,SIGNAL(valueChanged(int)),this,SLOT(rotatorPhaseIncrData(int)));
     grid->addWidget(rotatorPhaseIncr, 9, 1);
 
     hueMod = new QCheckBox(this);
     hueMod->setText(tr("Modulate hue"));
+    hueMod->setChecked(rotator->rotate_h);
     connect(hueMod,SIGNAL(clicked(bool)),this,SLOT(rotatorHueModData(bool)));
     grid->addWidget(hueMod, 10, 0, 1, 2);
 
     brightMod = new QCheckBox(this);
     brightMod->setText(tr("Modulate brightness"));
+    brightMod->setChecked(rotator->rotate_v);
     connect(brightMod,SIGNAL(clicked(bool)),this,SLOT(rotatorBrightModData(bool)));
     grid->addWidget(brightMod, 11, 0, 1, 2);
 
     satMod = new QCheckBox(this);
     satMod->setText(tr("Modulate saturation"));
+    satMod->setChecked(rotator->rotate_s);
     connect(satMod,SIGNAL(clicked(bool)),this,SLOT(rotatorSatModData(bool)));
     grid->addWidget(satMod, 12, 0, 1, 2);
 
@@ -389,6 +397,7 @@ ColourRotatorGui::ColourRotatorGui(ColourRotator * c, QWidget* parent): FrameGui
 
     overrideSwitch = new QCheckBox(this);
     overrideSwitch->setText(tr("Enable"));
+    overrideSwitch->setChecked(rotator->colour_override);
     grid->addWidget(overrideSwitch,14,0);
     connect (overrideSwitch,SIGNAL(clicked(bool)),this,SLOT(overrideSwitchData(bool)));
 
@@ -416,14 +425,14 @@ void ColourRotatorGui::pulserColourChangedData(QColor col)
 void ColourRotatorGui::pulserHarmonicData(int harmonic)
 {
     if (rotator) {
-        rotator->pulse_harmonic = harmonic;
+        rotator->pulse_harmonic = harmonic/1000.0;
     }
 }
 
 void ColourRotatorGui::pulserPhaseIncData(int adv)
 {
     if (rotator) {
-        rotator->pulse_phase_advance = adv/100.0;
+        rotator->pulse_phase_advance = adv/1000.0;
     }
 }
 
@@ -431,7 +440,7 @@ void ColourRotatorGui::pulserPhaseIncData(int adv)
 void ColourRotatorGui::rotatorHarmonicData(int har)
 {
     if (rotator) {
-        rotator->rotate_harmonic = har;
+        rotator->rotate_harmonic = har/1000.0;
 
     }
 }

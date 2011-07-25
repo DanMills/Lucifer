@@ -98,13 +98,13 @@ private:
     // colour pulser
     QColor pulse_colour;
     float pulse_dutycycle;
-    int pulse_harmonic;
+    float pulse_harmonic;
     float pulse_phase_advance;
     //HSV rotator 
     bool rotate_h;
     bool rotate_s;
     bool rotate_v;
-    int rotate_harmonic;
+    float rotate_harmonic;
     float rotate_phase_advance;
     // Colour override
     bool colour_override;
