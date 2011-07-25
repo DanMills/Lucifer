@@ -19,6 +19,8 @@ set(lucifer_SRCS framesequencer.cpp
   motormix.cpp
   alsamidi.cpp
   colourrotator.cpp
+  ioconfig.cpp
+  qtcolortriangle.cpp
 )
 
 set(lucifer_HDRS framesequencer.h loadilda.h
@@ -41,7 +43,10 @@ set(lucifer_MOC_HDRS screendisplay.h buttongrid.h buttonwindow.h
   controlsurface.h
   motormix.h
   alsamidi.h
-  colourrotator.h)
+  colourrotator.h
+  ioconfig.h
+  qtcolortriangle.h
+)
 
 SET(lucifer_RCS
   lucifer.qrc

@@ -20,27 +20,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define COLOURROTATOR_INC
 
 #include "framesource_impl.h"
+#include "qtcolortriangle.h"
 
 class ColourRotator;
 
 typedef boost::shared_ptr<ColourRotator> ColourRotatorPtr;
 typedef boost::shared_ptr<const ColourRotatorPtr> ConstColourRotatorPtr;
 
-/// Slightly specialised version of a QColourDialog
-class ColourRotatorDialog : public QColorDialog
-{
- Q_OBJECT
-public:
-    ColourRotatorDialog(QWidget* parent = 0);
-    virtual ~ColourRotatorDialog();
-    void setTitle (QString title);
-protected:
-  virtual void closeEvent (QCloseEvent *event);
-};
-
-
-
-/// GUI for the frame sequencer controls in the editor.
+/// GUI for the frame colour controls in the editor.
 class ColourRotatorGui : public FrameGui
 {
   Q_OBJECT
@@ -50,10 +37,6 @@ public:
     const QIcon * icon();
 private:
     QDial *pulserHarmonic;
-    QPushButton *pulserColourButton;
-    QSpinBox * pulserHue;
-    QSpinBox * pulserSat;
-    QSpinBox * pulserBright;
     QDial *pulserPhaseIncr;
     QDial *rotatorHarmonic;
     QDial *rotatorPhaseIncr;
@@ -61,25 +44,13 @@ private:
     QCheckBox *brightMod;
     QCheckBox *satMod;
     QCheckBox *overrideSwitch;
-    QPushButton *overrideColourButton;
-    QSpinBox *overrideHue;
-    QSpinBox *overrideSat;
-    QSpinBox *overrideBright;
- 
-    ColourRotatorDialog *overrideColourSelector;
-    ColourRotatorDialog *pulseColourSelector;
-    
-    
+    QtColorTriangle *overrideColourSelector;
+    QtColorTriangle *pulseColourSelector;
     ColourRotator * rotator;
     
 private slots:
   void pulserHarmonicData (int);
   void pulserPhaseIncData(int);
-  void pulserHueData(int);
-  void pulserSatData(int);
-  void pulserBrightData(int);
-  void pulserColourButtonData(bool);
-  
   void rotatorHarmonicData(int);
   void rotatorPhaseIncrData (int);
   void rotatorHueModData(bool);  
@@ -87,8 +58,6 @@ private slots:
   void rotatorBrightModData(bool);  
   
   void overrideSwitchData(bool);
-  void overrideColourButtonData(bool);
-  
   void overrideColourChangedData (QColor col);
   void pulserColourChangedData (QColor col);
   

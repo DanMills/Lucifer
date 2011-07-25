@@ -301,11 +301,13 @@ ColourRotatorGui::ColourRotatorGui(ColourRotator * c, QWidget* parent): FrameGui
 
     label = new QLabel(this);
     label->setText(tr("Number"));
+    label->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     label->setAlignment(Qt::AlignCenter);
     grid->addWidget(label, 1, 0);
 
     label = new QLabel(this);
     label->setText(tr("Speed"));
+    label->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     label->setAlignment(Qt::AlignCenter);
     grid->addWidget(label, 1, 1);
 
@@ -323,34 +325,10 @@ ColourRotatorGui::ColourRotatorGui(ColourRotator * c, QWidget* parent): FrameGui
 
     grid->addWidget(pulserPhaseIncr, 2, 1);
 
-    pulserColourButton = new QPushButton(this);
-    pulserColourButton->setText(tr("Select colour"));
-    connect (pulserColourButton,SIGNAL(clicked(bool)),this,SLOT(pulserColourButtonData(bool)));
-    grid->addWidget(pulserColourButton, 3, 0, 1, 2);
-
-    label = new QLabel(this);
-    label->setText(tr("Hue"));
-    pulserHue = new QSpinBox (this);
-    pulserHue->setMaximum(359);
-    grid->addWidget(pulserHue,4,1);
-    grid->addWidget(label,4,0);
-    connect (pulserHue,SIGNAL(valueChanged(int)),this,SLOT(pulserHueData(int)));
-
-    label = new QLabel(this);
-    label->setText(tr("Satuaration"));
-    pulserSat = new QSpinBox (this);
-    pulserSat->setMaximum(255);
-    grid->addWidget(pulserSat,5,1);
-    grid->addWidget(label,5,0);
-    connect (pulserSat,SIGNAL(valueChanged(int)),this,SLOT(pulserSatData(int)));
-
-    label = new QLabel(this);
-    label->setText(tr("Brightness"));
-    pulserBright = new QSpinBox (this);
-    pulserBright->setMaximum(255);
-    grid->addWidget(pulserBright,6,1);
-    grid->addWidget(label,6,0);
-    connect (pulserBright,SIGNAL(valueChanged(int)),this,SLOT(pulserBrightData(int)));
+    pulseColourSelector = new QtColorTriangle (this);
+    pulseColourSelector->setColor(rotator->pulse_colour);
+    connect (pulseColourSelector,SIGNAL(colorChanged(QColor)),this,SLOT(pulserColourChangedData(QColor)));
+    grid->addWidget(pulseColourSelector,3,0,1,2);
 
     label = new QLabel(this);
     label->setText(tr("Rotator"));
@@ -363,13 +341,13 @@ ColourRotatorGui::ColourRotatorGui(ColourRotator * c, QWidget* parent): FrameGui
     label = new QLabel(this);
     label->setText(tr("Cycles per frame"));
     label->setAlignment(Qt::AlignCenter);
-
+    label->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     grid->addWidget(label,8,0);
 
     label = new QLabel(this);
     label->setText(tr("Speed"));
     label->setAlignment(Qt::AlignCenter);
-
+    label->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     grid->addWidget(label, 8, 1);
 
     rotatorHarmonic = new QDial(this);
@@ -414,89 +392,25 @@ ColourRotatorGui::ColourRotatorGui(ColourRotator * c, QWidget* parent): FrameGui
     grid->addWidget(overrideSwitch,14,0);
     connect (overrideSwitch,SIGNAL(clicked(bool)),this,SLOT(overrideSwitchData(bool)));
 
-    overrideColourButton = new QPushButton(this);
-    overrideColourButton->setText(tr("Select colour"));
-    connect (overrideColourButton,SIGNAL(clicked(bool)),this,SLOT(overrideColourButtonData(bool)));
-    grid->addWidget(overrideColourButton,15,0,1,2);
+    overrideColourSelector = new QtColorTriangle (this);
+    overrideColourSelector->setColor(rotator->override_colour);
+    connect (overrideColourSelector,SIGNAL(colorChanged(QColor)),this,SLOT(overrideColourChangedData(QColor)));
+    grid->addWidget(overrideColourSelector,15,0,1,2);
 
-    label = new QLabel(this);
-    label->setText(tr("Hue"));
-    grid->addWidget(label,16,0);
-    overrideHue = new QSpinBox (this);
-    overrideHue->setMaximum(359);
-    grid->addWidget(overrideHue,16,1);
-
-    label = new QLabel(this);
-    label->setText(tr("Saturation"));
-    grid->addWidget(label,17,0);
-    overrideSat = new QSpinBox (this);
-    overrideSat->setMaximum(255);
-    grid->addWidget(overrideSat,17,1);
-
-    label = new QLabel(this);
-    label->setText(tr("Brightness"));
-    grid->addWidget(label,18,0);
-    overrideBright = new QSpinBox (this);
-    overrideBright->setMaximum(255);
-    grid->addWidget(overrideBright,18,1);
-    
-    int h,s,v;
-    rotator->override_colour.getHsv(&h,&s,&v);
-    overrideHue->setValue(h);
-    overrideSat->setValue(s);
-    overrideBright->setValue(v);
-    
-    overrideColourSelector = NULL;
-    pulseColourSelector = NULL;
-}
-
-void ColourRotatorGui::overrideColourButtonData(bool)
-{
-    overrideColourSelector = new ColourRotatorDialog (this);
-    overrideColourSelector->setTitle("Override Colour");
-    if (rotator) {
-        overrideColourSelector->setCurrentColor(rotator->override_colour);
-    }
-    connect(overrideColourSelector,SIGNAL(currentColorChanged(QColor)),this,SLOT(overrideColourChangedData(QColor)));
-    overrideColourSelector->show();
-    // Todo - hook some signals up
 }
 
 void ColourRotatorGui::overrideColourChangedData(QColor col)
 {
-    if (rotator){
-      rotator->override_colour =  col;
-      int h,s,v;
-      col.getHsv(&h,&s,&v);
-      overrideHue->setValue(h);
-      overrideSat->setValue(s);
-      overrideBright->setValue(v);
+    if (rotator) {
+        rotator->override_colour =  col;
     }
 }
 
 void ColourRotatorGui::pulserColourChangedData(QColor col)
 {
-    if (rotator){
-      rotator->pulse_colour =  col;
-      int h,s,v;
-      col.getHsv(&h,&s,&v);
-      pulserHue->setValue(h);
-      pulserSat->setValue(s);
-      pulserBright->setValue(v);
-    }
-}
-
-
-void ColourRotatorGui::pulserColourButtonData(bool)
-{
-    pulseColourSelector = new ColourRotatorDialog(this);
-    pulseColourSelector->setTitle("Pulse Colour");
     if (rotator) {
-        pulseColourSelector->setCurrentColor(rotator->pulse_colour);
+        rotator->pulse_colour =  col;
     }
-    connect (pulseColourSelector,SIGNAL(currentColorChanged(QColor)),this,SLOT(pulserColourChangedData(QColor)));
-    pulseColourSelector->show();
-    // todo hook the signals up
 }
 
 void ColourRotatorGui::pulserHarmonicData(int harmonic)
@@ -513,35 +427,6 @@ void ColourRotatorGui::pulserPhaseIncData(int adv)
     }
 }
 
-void ColourRotatorGui::pulserSatData(int sat)
-{
-    if (rotator) {
-        int h,s,v;
-        rotator->pulse_colour.getHsv(&h,&s,&v);
-        rotator->pulse_colour.setHsv(h,sat,v);
-        rotator->pulse_colour.toRgb();
-    }
-}
-
-void ColourRotatorGui::pulserHueData(int hue)
-{
-    if (rotator) {
-        int h,s,v;
-        rotator->pulse_colour.getHsv(&h,&s,&v);
-        rotator->pulse_colour.setHsv(hue,s,v);
-        rotator->pulse_colour.toRgb();
-    }
-}
-
-void ColourRotatorGui::pulserBrightData(int bright)
-{
-    if (rotator) {
-        int h,s,v;
-        rotator->pulse_colour.getHsv(&h,&s,&v);
-        rotator->pulse_colour.setHsv(h,s,bright);
-        rotator->pulse_colour.toRgb();
-    }
-}
 
 void ColourRotatorGui::rotatorHarmonicData(int har)
 {
@@ -558,33 +443,36 @@ void ColourRotatorGui::rotatorPhaseIncrData(int pha)
     }
 }
 
-void ColourRotatorGui::rotatorHueModData(bool f)
-{
-    if (rotator) {
-        rotator->rotate_h = f;
-    }
-}
-
-void ColourRotatorGui::rotatorBrightModData(bool f)
-{
-    if (rotator) {
-        rotator->rotate_v = f;
-    }
-}
-
-void ColourRotatorGui::rotatorSatModData(bool f)
-{
-    if (rotator) {
-        rotator->rotate_s = f;
-    }
-}
-
 void ColourRotatorGui::overrideSwitchData(bool f)
 {
     if (rotator) {
         rotator->colour_override = f;
     }
 }
+
+void ColourRotatorGui::rotatorBrightModData(bool f)
+{
+    if (rotator){
+	rotator->rotate_v = f;
+    }
+}
+
+
+void ColourRotatorGui::rotatorHueModData(bool f)
+{
+    if (rotator){
+	rotator->rotate_h = f;
+    }
+}
+
+
+void ColourRotatorGui::rotatorSatModData(bool f)
+{
+    if (rotator){
+	rotator->rotate_s = f;
+    }
+}
+
 
 const QIcon* ColourRotatorGui::icon()
 {
@@ -594,51 +482,3 @@ const QIcon* ColourRotatorGui::icon()
 ColourRotatorGui::~ColourRotatorGui()
 {
 }
-
-void ColourRotatorDialog::closeEvent(QCloseEvent* event)
-{
-    QSettings settings;
-    settings.beginGroup(windowTitle());
-    if (settings.contains("Geometry")) {
-        settings.setValue("Geometry",saveGeometry());
-    }
-    settings.endGroup();
-    settings.beginWriteArray("CustomColours");
-    for (int i=0; i < customCount(); i++) {
-        settings.setArrayIndex(i);
-        settings.setValue("Colour",QColor(customColor(i)));
-    }
-    settings.endArray();
-    QDialog::closeEvent(event);
-}
-
-ColourRotatorDialog::ColourRotatorDialog(QWidget* parent): QColorDialog(parent)
-{
-    setAttribute(Qt::WA_DeleteOnClose);
-    setOption(QColorDialog::NoButtons);
-
-}
-
-ColourRotatorDialog::~ColourRotatorDialog()
-{
-}
-
-void ColourRotatorDialog::setTitle(QString title)
-{
-    setWindowTitle(title);
-    QSettings settings;
-    settings.beginGroup(title);
-    if (settings.contains("Geometry")) {
-        restoreGeometry(settings.value("Geometry").toByteArray());
-    }
-    settings.endGroup();
-    int s = settings.beginReadArray("CustomColours");
-    for (int i=0; i < s; i++) {
-        settings.setArrayIndex(i);
-        QColor col = settings.value("Colour").value<QColor>();
-        setCustomColor(i,col.rgb());
-    }
-    settings.endArray();
-
-}
-
