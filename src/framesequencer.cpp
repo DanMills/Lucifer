@@ -49,6 +49,7 @@ FrameSequencer::FrameSequencer () : FrameSource_impl (NOTHING,MANY,NAME)
     setDescription("A step sequencer for other frame sources");
     slog()->debugStream() << "Created new frame sequencer " << this;
     mode = Sequential;
+    newMode = Sequential;
     repeats = 0;
 }
 
@@ -60,6 +61,7 @@ FrameSequencerPlayback::FrameSequencerPlayback()
 {
     pos = 0;
     repeats_done = 0;
+    index_tbl.clear();
 }
 
 
@@ -79,7 +81,7 @@ void FrameSequencer::load(QXmlStreamReader* r)
 {
     assert (r);
     repeats=r->attributes().value("Repeats").toString().toUInt();
-    mode = (enum MODE) r->attributes().value("Mode").toString().toUInt();
+    newMode = (enum MODE) r->attributes().value("Mode").toString().toUInt();
 
 }
 
@@ -108,8 +110,12 @@ FramePtr FrameSequencer::nextFrame(PlaybackImplPtr p)
     FrameSequencerPlaybackPtr pb = boost::dynamic_pointer_cast<FrameSequencerPlayback>(p);
     assert (pb);
     FramePtr ps;
+    if (mode != newMode){
+      mode = newMode;
+     reset_index(pb); 
+    }
     do {
-        if (pb->pos >= numChildren()-1) {
+        if (pb->pos >= pb->index_tbl.size()-1) {
             // Run out of data
             if (pb->repeats_done >= repeats) { // finished repeating
                 reset (pb);
@@ -117,24 +123,27 @@ FramePtr FrameSequencer::nextFrame(PlaybackImplPtr p)
             } else {
                 pb->repeats_done++;
                 pb->pos = 0;
+		reset_index(pb); // reset any random shuffle
                 // just reset child nodes
                 for (unsigned int i=0; i < numChildren(); i++) {
                     child(i)->reset(pb->child(i));
                 }
             }
         }
-        ps = child(pb->pos)->nextFrame(pb->child(pb->pos));
+        unsigned int pp = index (pb);
+        ps = child(pp)->nextFrame(pb->child(pp));
         // if the child is still returning data then just pass the pointer up
         if (ps) {
             return ps;
         }
         // else move on to the next step in the sequence (or until we reach the end)
-        while (pb->pos <numChildren() -1) {
+        while (pb->pos < pb->index_tbl.size() -1) {
             // we send the reset signal just before trying to pull data so that dewell
             // times work right
             ++pb->pos;
-            child(pb->pos)->reset (pb->child(pb->pos));
-            ps = child(pb->pos)->nextFrame(pb->child(pb->pos));
+	    pp = index (pb);
+            child(pp)->reset (pb->child(pp));
+            ps = child(pp)->nextFrame(pb->child(pp));
             if (ps) {
                 return ps;
             }
@@ -145,28 +154,47 @@ FramePtr FrameSequencer::nextFrame(PlaybackImplPtr p)
 void FrameSequencer::reset_index(FrameSequencerPlaybackPtr p)
 {
     // fill in the table of indexes for the appropriate mode
-    p->index_tbl.resize(numChildren() * (mode==Pingpong) ? 2 :1);
-    for (unsigned int i = 0; i < numChildren(); i++){
-	p->index_tbl[i] = i;
-	if (mode == Pingpong){
-	    p->index_tbl[p->index_tbl.size() -i] = i;
-	}
+    unsigned int sz = numChildren();
+    int incr = 1;
+    if (mode == FrameSequencer::Pingpong){
+      sz *= 2; 
+      sz -= 1;
+    }
+    p->index_tbl.resize(0);
+    //std::cout <<"Size : " << sz <<std::endl;
+    int k = 0;
+    for (unsigned int i = 0; i < sz; i++){
+      if (i >= numChildren() -1){
+	incr = -1;
+      }
+      p->index_tbl.push_back(k);
+      k+= incr;
+      assert (k >= -1);
     }
     if (mode == Random){
 	std::random_shuffle(p->index_tbl.begin(),p->index_tbl.end());
     }
+    //for (unsigned int i=0; i < p->index_tbl.size(); i++){
+	//std::cout << "Tbl " << i << " :: " << p->index_tbl[i] << std::endl;
+    //}
+    
 }
 
 unsigned int FrameSequencer::index(FrameSequencerPlaybackPtr pb)
 {
     // check that the index_tbl is the right size 
     // a new node could have been added under us
-    unsigned int ts = numChildren() * (mode == Pingpong) ? 2 : 1;
+    unsigned int ts = numChildren();
+    if (mode == FrameSequencer::Pingpong){
+	ts *=2;
+	ts -=1;
+    }
     if (ts != pb->index_tbl.size()){
       // something has changed
       reset_index (pb);
     }
     assert (pb->index_tbl.size() == ts);
+    assert (pb->index_tbl[pb->pos] < numChildren());
     return pb->index_tbl[pb->pos];
 }
 
@@ -255,7 +283,7 @@ FrameSequencerGui::FrameSequencerGui(FrameSequencer *fs ,QWidget* parent): Frame
     grid->addWidget (sequential,3,0,1,2);
     grid->addWidget (random,4,0,1,2);
     grid->addWidget (pingpong,5,0,1,2);
-    switch (frameseq->mode) {
+    switch (frameseq->newMode) {
     case FrameSequencer::Sequential :
         sequential->setChecked(true);
         break;
@@ -292,13 +320,13 @@ void FrameSequencerGui::modeChangedData(int mode)
 {
     switch (mode) {
     case 0:
-        frameseq->mode = FrameSequencer::Sequential;
+        frameseq->newMode = FrameSequencer::Sequential;
         break;
     case 1:
-        frameseq->mode = FrameSequencer::Random;
+        frameseq->newMode = FrameSequencer::Random;
         break;
     case 2:
-        frameseq->mode = FrameSequencer::Pingpong;
+        frameseq->newMode = FrameSequencer::Pingpong;
         break;
     }
 }

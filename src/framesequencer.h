@@ -21,13 +21,20 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "framesource_impl.h"
 
+class FrameSequencer;
+
 /// GUI for the frame sequencer controls in the editor.
 class FrameSequencerGui : public FrameGui
 {
+Q_OBJECT  
 public:
-    FrameSequencerGui (QWidget *parent);
-    ~FrameSequencerGui ();
+    FrameSequencerGui (FrameSequencer *fs, QWidget *parent);
+    virtual ~FrameSequencerGui ();
     const QIcon * icon();
+    FrameSequencer *frameseq;
+private slots:
+    void modeChangedData (int);
+    void repeatsChangedData (int);  
 };
 
 
@@ -35,10 +42,12 @@ public:
 class FrameSequencerPlayback : public Playback_impl
 {
 public:
-    FrameSequencerPlayback () {
-        pos = 0;
-    }
+    FrameSequencerPlayback ();
     unsigned int pos;
+    unsigned int repeats_done;
+    
+    std::vector <unsigned int> index_tbl;
+    
 };
 
 typedef boost::shared_ptr<FrameSequencerPlayback> FrameSequencerPlaybackPtr;
@@ -51,7 +60,7 @@ class FrameSequencer : public FrameSource_impl
 {
 public:
     FrameSequencer ();
-    ~FrameSequencer();
+    virtual ~FrameSequencer();
     FramePtr nextFrame (PlaybackImplPtr p);
     PlaybackImplPtr newPlayback ();
 
@@ -63,8 +72,19 @@ public:
 
     void save (QXmlStreamWriter *w);
     void load (QXmlStreamReader *e);
-
+    
     FrameSequencerGui * controls (QWidget *parent);
+private:
+    enum MODE {Sequential = 0, Random, Pingpong};
+    enum MODE mode;
+    enum MODE newMode;
+    unsigned int repeats;
+    
+    unsigned int index (FrameSequencerPlaybackPtr pb);
+    void reset_index (FrameSequencerPlaybackPtr); 
+    
+    
+    friend class FrameSequencerGui;
 };
 
 typedef boost::shared_ptr<FrameSequencer> FrameSequencerPtr;
