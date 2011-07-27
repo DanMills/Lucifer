@@ -137,10 +137,27 @@ ParameterEditor::ParameterEditor(QWidget* parent) :
     setAutoFillBackground(true);
     pixmapLabel = new QLabel(this);
     setWindowTitle("Editor");
-    controls = new QWidget (this);
+    // This gets replaced with the controls from the 'plugins'.
+    controlWidget = new QWidget (this);
+
+    QWidget *controls_pane = new QWidget (this);
+    controlLayout = new QGridLayout (this);
+    controlLayout->setColumnMinimumWidth(0,150);
+    controlLayout->setColumnMinimumWidth(1,150);
+    controls_pane->setLayout(controlLayout);
+    display = new DisplayFrame (this);
+    display->setFixedSize(300,300);
+    controlLayout->addWidget(display,0,0,1,2);
+    // todo connect the display up
+    //controls=new QWidget(this);
+    controlLayout->addWidget(controlWidget,2,0,1,2);
     tree = new ShowTreeWidget (this);
     tree->setIconSize(QSize(48,48));
-    tree->setHeaderLabel("Source");
+    QStringList headerlabels;
+    headerlabels.push_back(tr("Source"));
+    headerlabels.push_back(tr("Parameters"));
+    tree->setHeaderLabels(headerlabels);
+    tree->setColumnWidth (0,250);
     connect (tree,SIGNAL(itemClicked(QTreeWidgetItem *, int)),this,SLOT(itemClickedData(QTreeWidgetItem *, int)));
     connect (tree,SIGNAL(itemSelectionChanged()),this,SLOT(selectionChangedData()));
     root = NULL;
@@ -149,14 +166,48 @@ ParameterEditor::ParameterEditor(QWidget* parent) :
     for (unsigned int i=0; i < fn.size(); i++) {
         QListWidgetItem *it = new QListWidgetItem(tr(fn[i].c_str()), available);
     }
+    available->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Expanding);
+   
+    displayTimer = new QTimer (this);
+    connect (displayTimer,SIGNAL(timeout()),this,SLOT(updateDisplay()));
+    QPushButton *playbutton = new QPushButton (this);
+    playbutton->setText(tr("Run"));
+    playbutton->setSizePolicy(QSizePolicy::Preferred,QSizePolicy::Fixed);
+    connect (playbutton,SIGNAL(clicked(bool)),this,SLOT(playButtonData(bool)));
+    QPushButton * stopbutton = new QPushButton (this);
+    stopbutton->setText(tr("Stop/Reset"));
+    stopbutton->setSizePolicy(QSizePolicy::Preferred,QSizePolicy::Fixed);
+    connect (stopbutton,SIGNAL(clicked(bool)),this,SLOT(stopButtonData(bool)));
+    controlLayout->addWidget(playbutton,1,0);
+    controlLayout->addWidget(stopbutton,1,1);
+
     hbox = new QHBoxLayout(this);
     hbox->addWidget(tree);
-    hbox->addWidget (controls);
     hbox->addWidget(available);
+    hbox->addWidget (controls_pane);
+
     load (SourceImplPtr());
     setLayout(hbox);
-    show ();
+    
+    show();
 }
+
+void ParameterEditor::playButtonData(bool)
+{
+    displayTimer->start(50);
+}
+
+void ParameterEditor::stopButtonData(bool)
+{
+    if (!displayTimer->isActive()){
+	if (playback){
+	 playback->reset(); 
+	 updateDisplay();
+	}
+    }
+    displayTimer->stop();
+}
+
 
 ParameterEditor::~ParameterEditor()
 {
@@ -176,7 +227,7 @@ void ParameterEditor::closeEvent(QCloseEvent* event)
 void ParameterEditor::load(SourceImplPtr f)
 {
     if (!f) return;
-    fs = f;//->clone();
+    fs = f;//->clone(); // copy the source
     if (root) delete root;
     root = NULL;
     tree->clear();
@@ -192,13 +243,38 @@ void ParameterEditor::load(SourceImplPtr f)
     //}
     root = populateTree (root,fs);
     tree->addTopLevelItem(root);
-    hbox->removeWidget(controls);
-    controls->deleteLater();
-    if (fs) {
-        controls = fs->controls(this);
+    updateControls(fs);
+}
+
+void ParameterEditor::updateControls(SourceImplPtr p)
+{
+    controlWidget->hide();
+    controlLayout->removeWidget(controlWidget);
+    //hbox->removeWidget(controls);
+    controlWidget->deleteLater();
+    if (p) {
+        controlWidget = p->controls(this);
+        assert (controlWidget);
+        controlLayout->addWidget(controlWidget,2,0,1,2);
+	playback = boost::make_shared<Playback>(p);
+    } else {
+      playback =  PlaybackPtr();
     }
-    hbox->addWidget(controls);
+    updateDisplay();
+    controlWidget->show();
     update();
+}
+
+void ParameterEditor::updateDisplay()
+{
+    if (playback) {
+        FramePtr frame = playback->nextFrame();
+        if (!frame) {
+            playback->reset();
+            frame = playback->nextFrame();
+        }
+        display->setFrame(frame);
+    }
 }
 
 // Recursive build of a treewidget data structure
@@ -220,13 +296,7 @@ void ParameterEditor::itemClickedData (QTreeWidgetItem *item, int)
     SourceImplPtr f = tw->data;
     if (f) {
         fs = f;
-        controls->hide();
-        hbox->removeWidget(controls);
-        controls->deleteLater();
-        controls = fs->controls(this);
-        hbox->addWidget(controls);
-        controls->show();
-        update();
+        updateControls(fs);
     }
 }
 

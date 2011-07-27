@@ -82,17 +82,30 @@ signals:
 
 
 private:
+    DisplayFrame *display;
+    // Used to animate the display
+    PlaybackPtr playback;
+    QTimer *displayTimer;
+    
     QLabel *pixmapLabel;
-    QWidget * controls;
+    QGridLayout *controlLayout;
     QHBoxLayout * hbox;
     ShowTreeWidget * tree;
     QListWidget * available;
     ShowTreeWidgetItem *root;
     SourceImplPtr fs;
+    // This is the control pane loaded from 
+    // the frame we are looking at
+    QWidget *controlWidget;
+    
+    void updateControls (SourceImplPtr p);  
     ShowTreeWidgetItem * populateTree(ShowTreeWidgetItem *p, SourceImplPtr f);
 private slots:
     void itemClickedData (QTreeWidgetItem *item, int column);
     void selectionChangedData();
+    void updateDisplay ();
+    void playButtonData (bool);
+    void stopButtonData (bool);
 
 };
 
