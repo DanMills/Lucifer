@@ -249,9 +249,6 @@ FrameSequencerGui::FrameSequencerGui(FrameSequencer *fs ,QWidget* parent): Frame
     QGridLayout * grid;
     setTitle("Frame Sequencer");
     grid = new QGridLayout (this);
-    DisplayFrame *display = new DisplayFrame (this);
-    // Step mode switches
-    grid->addWidget(display,0,0,1,2);
     //label the number of child sources
     QLabel *childtext = new QLabel(this);
     childtext->setText(tr("Child sources"));
@@ -304,14 +301,7 @@ FrameSequencerGui::FrameSequencerGui(FrameSequencer *fs ,QWidget* parent): Frame
     connect (repeatsspin,SIGNAL(valueChanged(int)),this,SLOT(repeatsChangedData(int)));
     grid->addWidget(repeatstext,6,0);
     grid->addWidget(repeatsspin,6,1);
-    // Preview controls
-    QPushButton * playbutton = new QPushButton(this);
-    playbutton->setText(tr("Run"));
-    QPushButton * stopbutton = new QPushButton(this);
-    stopbutton->setText(tr("Reset"));
-    grid->addWidget(playbutton,7,0);
-    grid->addWidget(stopbutton,7,1);
-
+    
     setLayout(grid);
     slog()->debugStream() << "Created Framesequencer GUI "<< this;
 }

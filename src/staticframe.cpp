@@ -256,8 +256,7 @@ void StaticFrameGui::set (StaticFrame * p)
 {
     fp = p;
     assert (fp);
-   
-    display->setFrame(fp->frame());
+
     dewellSwitch->setChecked(fp->useDewell);
     repeatSwitch->setChecked(!fp->useDewell);
     dewellEntry->setDisabled(!fp->useDewell);
@@ -279,13 +278,13 @@ StaticFrameGui::StaticFrameGui(QWidget* parent): FrameGui(parent)
     group = new QButtonGroup (this);
     grid = new QGridLayout (this);
 
-    display = new DisplayFrame (this);
-    grid->addWidget(display,0,0,1,2);
-
     dewellSwitch = new QRadioButton (this);
     dewellSwitch->setText("Dewell (ms)");
+    dewellSwitch->setSizePolicy(QSizePolicy::Preferred,QSizePolicy::Fixed);
     repeatSwitch = new QRadioButton (this);
     repeatSwitch->setText("Repeat (frames)");
+    repeatSwitch->setSizePolicy(QSizePolicy::Preferred,QSizePolicy::Fixed);
+
     group->addButton(dewellSwitch,1);
     group->addButton(repeatSwitch,2);
 
@@ -293,7 +292,9 @@ StaticFrameGui::StaticFrameGui(QWidget* parent): FrameGui(parent)
     grid->addWidget(repeatSwitch,3,0,1,1);
 
     QLabel * pointsLabel = new QLabel ("Points",this);
+    pointsLabel->setSizePolicy(QSizePolicy::Preferred,QSizePolicy::Fixed);
     pointsDisplay = new QLabel ("0",this);
+    pointsDisplay->setSizePolicy(QSizePolicy::Preferred,QSizePolicy::Fixed);
     grid->addWidget(pointsLabel,1,0,1,1);
     grid->addWidget(pointsDisplay,1,1,1,1);
 
@@ -329,12 +330,12 @@ FrameGui * StaticFrame::controls (QWidget *parent)
 const QIcon * StaticFrameGui::icon()
 {
     QPixmap p(48,48);
-    if (fp){
+    if (fp) {
         FramePtr f = fp->frame();
-        if (f){
-	    QPainter q(&p);
-	    q.setBackground (Qt::black);
-    	    q.setRenderHint(QPainter::HighQualityAntialiasing);
+        if (f) {
+            QPainter q(&p);
+            q.setBackground (Qt::black);
+            q.setRenderHint(QPainter::HighQualityAntialiasing);
             q.setBrush(QBrush(Qt::black));
             q.drawRect(0,0,48,48);
             f->render (q,0,0,48,48);

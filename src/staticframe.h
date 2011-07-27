@@ -168,7 +168,6 @@ private slots:
     void repeatChangedData(int value);
 private:
     QLabel * pointsDisplay;
-    DisplayFrame * display;
     QGridLayout * grid;
     QButtonGroup * group;
     QSpinBox * dewellEntry;
