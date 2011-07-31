@@ -166,7 +166,7 @@ bool MotorMix::displayWrite(const unsigned int, const unsigned int position, con
   return false;
 }
 
-bool MotorMix::connectController(MIDIChannel * midi)
+bool MotorMix::connectMidi(MIDIChannel * midi)
 {    
   slog()->infoStream() << "Motormix driver on midi channel driver : "<< midi;
   channel = midi;

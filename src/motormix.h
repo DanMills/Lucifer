@@ -22,7 +22,7 @@ public:
   virtual bool setControl (unsigned int control, unsigned int val);
   virtual bool controlParameters (const unsigned int control, QString &name, int &min, int &max, int &steps, unsigned int &indicatorStates) const;
   // This handles connecting to the control surface and any required initialisation.
-  virtual bool connectController (MIDIChannel *midi);
+  virtual bool connectMidi (MIDIChannel *midi);
   
 private slots:
   void midiControlValueChanged (int number, int value);
