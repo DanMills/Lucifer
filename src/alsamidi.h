@@ -25,17 +25,33 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <qsocketnotifier.h>
 #include <vector>
 
+/// \brief A MIDI IO port for ALSA Rawmidi devices under Linux.
 class AlsaMidi : public QIODevice
 {
 Q_OBJECT
 public: 
   AlsaMidi (QObject * parent = NULL);
-  ~AlsaMidi ();
+  virtual ~AlsaMidi ();
+  /// \brief Opens a rawmidi device read|write.
+  /// @param[in] name is the device to open.
+  /// @return true on sucess, false on error.
   bool open (const char *name);
+  /// \brief Closes a rawmidi device.
   void close ();
+  /// \brief Read up to maxsize bytes from the internal buffer into the array pointed to by data.
+  /// \param[in] maxisze is the maximum size (in bytes) to return.
+  /// \param[out] data is a pointer to the buffer that will contain the data (at least maxsize in length.
+  /// \return the number of bytes read.
   qint64 readData (char *data, qint64 maxsize);
+  /// \brief Writes data to the midi transmit buffer.
+  /// \param[in] data is the data to write to the midi port.
+  /// \param[in] maxisize is the size of the data to write to the midi port.
+  /// \return the number of bytes written to the TX buffer.
+  /// \note This function writes to an internal transmit queue, and does not block.
   qint64 writeData(const char *data, qint64 maxsize);
   bool isSequential () const;
+  /// \brief This function enumerates all avallable rawmidi ports.
+  /// \return a vector of pairs where pair.first is the hardware name of the port (ex "hw:2:0:0"), and pair.second is the harware name aassigned by the driver (ex. "USB UNO MIDI 1").
   static std::vector<std::pair<QString,QString> > enumeratePorts();
 private:
   snd_rawmidi_t *input;
