@@ -20,41 +20,20 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "engine_impl.h"
 #include "log.h"
 #include "loadilda.h"
+// MIDI
+#include "midi.h"
+#include "alsamidi.h"
+#include "controlsurface.h"
+
+// Unix specific threads stuff (hard RT, things of that nature)
 #if __unix
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/types.h>
 #endif
-
-HeadThread::HeadThread(Engine * e)
-{
-    engine = e;
-}
-
-HeadThread::~HeadThread()
-{
-}
-
-void HeadThread::run()
-{
-    slog()->debugStream() << "Starting laserhead thread " << std::hex << currentThreadId();
-    /// TODO - Come up with a way to put things into windows soft RT scheduling class
-#if __unix
-    pthread_t tid = pthread_self();
-    slog()->infoStream() << "Started laserhead thread ";
-    struct sched_param sp;
-    sp.sched_priority = 20;
-    int err;
-    err = pthread_setschedparam(tid,SCHED_FIFO,&sp);
-    if (err) {
-        slog()->errorStream() <<"Failed to set RT scheduling for laserhead control thread :" << strerror(err);
-    } else {
-        slog()->infoStream() <<"Set posix RT scheduling for projection thread";
-    }
-#endif
-    head = boost::make_shared<LaserHead>(engine);
-    exec();
-}
+#include "motormix.h"
+#include "mime.h"
+#include <QtCore>
 
 EngineStarter::EngineStarter(QObject *parent): QThread(parent)
 {
@@ -113,13 +92,15 @@ Engine::Engine(QObject* parent) : QObject(parent)
     selected_head = 0;
     slog()->infoStream() << "New laser show engine created : " << this;
     emit message (tr("Starting show engine"),5000);
+    QSettings settings;
+    settings.beginGroup("Engine");
     for (unsigned int i=0; i < MAX_HEADS; i++) {
         emit message(tr("Starting projector head"),5000);
         heads[i]=new HeadThread (this);
         startHead(i);// Bring up the laser head thread
     }
     for (unsigned int i=0; i < MAX_HEADS; i++) {
-        while (!heads[i]->head) { // Wait for the head to come up
+        while (!heads[i]->head) { // Wait for the heads to come up
             usleep (10000);
         }
         connect (&(*heads[i]->head),SIGNAL(selectionChanged (uint, bool)),this,SLOT(selectionChangedData(uint,bool)));
@@ -127,7 +108,82 @@ Engine::Engine(QObject* parent) : QObject(parent)
         getHead(i)->getDriver()->enumerateHardware();
         getHead(i)->getDriver()->connect(0);
     }
+    settings.beginGroup("Midi");
+    setMIDICard(settings.value("Device",QString("")).toString());
+    for (unsigned int i=0; i < 15; i++) {
+        surfaces[i] = NULL;
+        setMIDIChannelDriver (i,settings.value(QString().sprintf("Controller %d",i+1),QString("")).toString());
+    }
+    settings.endGroup();
+    settings.endGroup();
     emit message (tr("Laser projection engine is up and running"),5000);
+}
+
+void Engine::setMIDICard(QString name)
+{
+    //Set the midi card name
+    // annoyingly ALSA does not react real well to pluggable USB midi devices (the device ID changes)
+    // So we try using the device name reoprted by the driver.
+    if (name.isNull()) {
+        return;
+    }
+    // First get the system list of midi ports
+    std::vector <std::pair<QString,QString> > ports;
+    ports = AlsaMidi::enumeratePorts();
+    slog()->debugStream() <<"MIDI PORTS: " << ports.size();
+    for (unsigned int i=0; i < ports.size(); i++) {
+        slog()->debugStream() << ports[i].first.toUtf8().constData() << " ::: " << ports[i].second.toUtf8().constData();
+    }
+    unsigned int i;
+    for (i = 0; i < ports.size(); i++) {
+        if (ports[i].second == name) {
+            break;
+        }
+    }
+    QString fn;
+    if (i < ports.size()) {
+        // Got a live one
+        midiPortName = name;
+        fn = ports[i].first;
+    } else {
+        midiPortName = "None";
+    }
+    slog()->infoStream() << "Setting midi device to id: " << fn.toUtf8().constData();
+    midiPort.open(fn.toUtf8().constData());
+    midiParser.setQIODevice(&midiPort);
+    QSettings settings;
+    settings.beginGroup("Engine");
+    settings.beginGroup("Midi");
+    settings.setValue("Device",name);
+    settings.endGroup();
+    settings.endGroup();
+}
+
+void Engine::setMIDIChannelDriver(unsigned int channel, QString driver)
+{
+    if (driver.isNull()) {
+        return;
+    }
+    if (channel > 15) {
+        slog()->errorStream()<<"MIDI, invalid channel";
+        return;
+    }
+    if (surfaces[channel]) {
+        delete surfaces[channel];
+        surfaces[channel] = NULL;
+    }
+    if (driver == QString ("MotorMix")) {
+        surfaces[channel] = new MotorMix ();
+    }
+    if (surfaces[channel]) {
+        surfaces[channel]->connectMidi (&midiParser.channels[channel]);
+    }
+    QSettings settings;
+    settings.beginGroup("Engine");
+    settings.beginGroup("Midi");
+    settings.setValue(QString().sprintf("Controller %d",channel+1),driver);
+    settings.endGroup();
+    settings.endGroup();
 }
 
 Engine::~Engine()
@@ -232,57 +288,41 @@ bool Engine::copy(unsigned int dest, unsigned int source)
     return false;
 }
 
-std::vector<std::string> Engine::mimeTypes(bool local) const
+QStringList Engine::mimeTypes() const
 {
-    std::vector <std::string> res;
-    if (local) { // copy with this application instance so an engine location ID is sufficient
-        res.push_back(std::string("Text/x-index"));
-    }
-    res.push_back(std::string("Text/x-FrameSource"));
-    res.push_back(std::string("text/uri-list"));
-    return res;
+    QStringList l =  LaserMimeObject::mimeTypes();
+    l.push_back (QString("text/uri-list"));
+    return l;
 }
-
-
 
 bool Engine::mimeHandler(const QMimeData* data, int pos)
 {
-    if (data->hasFormat("Text/x-index")) {
-        QString id(data->data("Text/x-index").constData());
-        int source_id = id.toInt();
-        slog()->infoStream() <<"Dropped copy onto of " << source_id << " onto " << pos;
-        // The copy can potentially take a while so run it in the background
-        QtConcurrent::run(this,&Engine::copy,pos,source_id);
-        return true;
-    } else if (data->hasFormat("Text/x-FrameSource")) {
-        std::string s((char *) data->data("x-Text/FrameSource").constData());
-        SourceImplPtr f = FrameSource_impl::fromString(s);
-        if (f) {
-            slog()->infoStream() << "Dropped framesource into position  "<< pos;
-            addFrameSource(f,pos);
-            return true;
-        }
-        return false;
-    } else if (data->hasFormat("text/uri-list")) {
+
+    // There is an additional type handled here....
+    if (data->hasFormat("text/uri-list")) {
         QList<QUrl> urls = data->urls();
         if (urls.size() >0) {
             QStringList l;
             for (int i=0; i < urls.size(); i++) {
                 l.append(urls[i].toLocalFile());
             }
-            importShow(l,pos);
-            pos = -1;
+	    importShow(l,pos);
+	}
+        return true;
+    } else {
+        SourceImplPtr p = LaserMimeObject::getSource(data);
+        if (p) {
+            addFrameSource(p,pos);
             return true;
         }
-        return false;
     }
     return false;
 }
 
 QMimeData* Engine::mimeData(int pos)
 {
-    QMimeData *mime = new QMimeData;
-    mime->setData("Text/x-index",QString().number(pos).toAscii());
+    LaserMimeObject *mime = new LaserMimeObject;
+    mime->setFrame(getFrameSource(pos));
     return mime;
 }
 
@@ -366,7 +406,7 @@ bool Engine::saveShow(QString filename)
         }
         savef.setFileName (filename);
         saveCompressor = new QtIOCompressor (&savef,6,10 * 1024 * 1024);
-        //saveCompressor->setStreamFormat(QtIOCompressor::GzipFormat);
+        saveCompressor->setStreamFormat(QtIOCompressor::GzipFormat);
         if (!saveCompressor->open(QIODevice::WriteOnly)) {
             delete saveCompressor;
             save_mutex.unlock();
@@ -387,7 +427,6 @@ bool Engine::saveShow(QString filename)
     }
 }
 
-
 bool Engine::loadShow(QString filename, const bool clear)
 {
     slog()->infoStream() << "Loading file : " << filename.toStdString();
@@ -397,6 +436,7 @@ bool Engine::loadShow(QString filename, const bool clear)
         }
         loadf.setFileName(filename);
         loadCompressor = new QtIOCompressor (&loadf,6,10 *1024 * 1024);
+        loadCompressor->setStreamFormat(QtIOCompressor::GzipFormat);
         if (!loadCompressor->open(QFile::ReadOnly)) {
             delete loadCompressor;
             load_mutex.unlock();
@@ -431,7 +471,6 @@ bool Engine::loadShow(QString filename, const bool clear)
         return false;
     }
 }
-
 
 ShowSaver::ShowSaver(Engine * engine_, QXmlStreamWriter *w_): QThread()
 {
@@ -538,7 +577,6 @@ bool Engine::importShow(QStringList filenames, int index)
     }
 }
 
-
 void Engine::Imported()
 {
     import_mutex.unlock();
@@ -546,8 +584,6 @@ void Engine::Imported()
     emit showImported();
     emit message (tr("Frames imported"),5000);
 }
-
-
 
 ShowImporter::ShowImporter (Engine* engine_, QStringList fileName, int index)
 {
@@ -567,6 +603,7 @@ void ShowImporter::run()
         SourceImplPtr fs = loader.load(name[i],err, false);
         if (fs) {
             e->addFrameSource(fs,idx);
+	    idx = -1;
         } else {
             // ILDA Load error
         }
