@@ -21,47 +21,72 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <vector>
 #include <boost/shared_ptr.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
 #include "point.h"
+#include <qmatrix4x4.h>
 
 class QPainter;
 
+
+/// \brief A set of Points and a geometry matrix comprising a single laser frame. 
+/// The geometry member supports the usual 4*4 affine operations as well as more general 
+/// matrix operators. 
 class Frame
 {
 public:
     Frame();
     ~Frame();
+    /// \brief Return a Point from the frame.
+    /// @param[in] pos is the index of the point to return.
+    /// @return A Point stucture.
     inline Point getPoint (size_t pos) const
     {
         assert (pos < points_.size());
         return points_[pos];
     };
+    /// \brief Set a point in the frame.
+    /// @param[in] pos the index of the point to set.
+    /// @param[in] p is the point to store.
+    /// @return the stored point.
+    inline Point setPoint (size_t pos, Point p)
+    {
+      assert (pos < points_.size());
+      points_[pos] = p;
+      return p;
+    }
+    /// @return the number of points in this frame.
     unsigned int getPointCount() const;
+    /// \brief Reseve space in the points storage structure.
+    /// @param[in] points is the total number of points to reserve space for.
     void reserve (size_t points);
+    /// \brief Clear out all the points.
     void clear ();
+    /// \brief Check if the frame contains any points.
+    /// @return true if there are no points stored, else false.
     bool isEmpty() const;
+    /// \brief Add a point to the end of the points list.
+    /// @param[in] p is the point to add.
     void addPoint (Point p);
-
-    // Geometry operations
-    void scale (const float x, const float y, const float z);
-    void rotate (const float angle,float x,float y,float z);
-    void translate (float x,float y,float z);
-    // Apply a projection transform to the output (note z != 0)
-    void projection (float x, float y, float z);
-
     // Rendering operations
-    /// Renders a frame using a supplied QPainter.
+    /// \brief Renders a frame using a supplied QPainter.
+    /// @param[in,out] p is the QPainter that the frame will be rendered onto.
+    /// @param[in] start_x is the x coordinate of the lefthand edge relative to the qpainter.
+    /// @param[in] start_y is the y coordinate of the bottom of the area being painted.
+    /// @param[in] height is the height of the image being painted.
+    /// @param[in] width is the width of the image being painted.
+    /// @return the reference to p.
     QPainter & render (QPainter& p,
                        const int start_x, const int start_y,
                        const int height, const int width) const;
-    /// Renders a frame to a series of points possibly
-    ///doing point pulling and optimisation if appropriate.
+    /// \brief Renders a frame to a series of points possibly doing point pulling and optimisation if appropriate.
+    /// @param[in] f is the frame to render to a point list.
+    /// @return a vector of Point structures representing the output from the frame.
     std::vector<Point> render (const Frame &f) const;
+    /// \brief The geometery matrix, this has methods for the usual affine operations.
+    mutable QMatrix4x4 geometry;
 private:
     std::vector<Point> points_;
-    mutable boost::numeric::ublas::matrix <float> geometry;
     /// Apply the geometry matrix to the frame
-    void simplify ();
+    void applyGeometry ();
 };
 
 typedef boost::shared_ptr<Frame> FramePtr;
