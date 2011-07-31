@@ -18,6 +18,44 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "head.h"
 #include "engine.h"
+#include "log.h"
+// Unix specific threads stuff (hard RT, things of that nature)
+#if __unix
+#include <unistd.h>
+#include <pthread.h>
+#include <sys/types.h>
+#endif
+
+HeadThread::HeadThread(Engine * e)
+{
+    engine = e;
+}
+
+HeadThread::~HeadThread()
+{
+}
+
+void HeadThread::run()
+{
+    slog()->debugStream() << "Starting laserhead thread " << std::hex << currentThreadId();
+    /// TODO - Come up with a way to put things into windows soft RT scheduling class
+#if __unix
+    pthread_t tid = pthread_self();
+    slog()->infoStream() << "Started laserhead thread ";
+    struct sched_param sp;
+    sp.sched_priority = 20;
+    int err;
+    err = pthread_setschedparam(tid,SCHED_FIFO,&sp);
+    if (err) {
+        slog()->errorStream() <<"Failed to set RT scheduling for laserhead control thread :" << strerror(err);
+    } else {
+        slog()->infoStream() <<"Set posix RT scheduling for projection thread";
+    }
+#endif
+    head = boost::make_shared<LaserHead>(engine);
+    exec();
+}
+
 
 LaserHead::LaserHead(Engine* e)
 {

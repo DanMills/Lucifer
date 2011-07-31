@@ -38,6 +38,26 @@ class LaserHead;
 typedef boost::shared_ptr<LaserHead> LaserHeadPtr;
 #include "engine.h"
 
+/// A tiny little shim to put each laser head into its own thread.
+/// With essentially all modern CPUs being multicore this does much to
+/// optimise performance.
+/// HeadThread->start must be called to actually start any head running
+class HeadThread : public QThread
+{
+    Q_OBJECT
+public:
+    HeadThread(Engine * e);
+    virtual ~HeadThread();
+    void run();
+    LaserHeadPtr head;
+private:
+    Engine * engine;
+};
+
+
+/// A Laser projection head. 
+/// This object is responsible for actually projecting framesoure trees, 
+/// requesting new ones from the engine as needed.
 class LaserHead : public QObject
 {
     Q_OBJECT
@@ -50,9 +70,7 @@ public:
     /// returns a list of the step modes this head supports
     QStringList enumerateStepModes() const;
     bool isSelected (const int pos);
-
 signals:
-    //FrameSourcePtr requestNewSource(unsigned int index);
     /// Emitted when the frame source runs out of frames.
     void endOfSource();
     /// Emitted when the scan hardware buffer empties.
@@ -61,7 +79,6 @@ signals:
     /// Useful for output window updates
     void newFrame (FramePtr frame);
     /// Emitted whenever the currently projected source changes
-    //void currentSelectionChanged (unsigned int oldsel, unsigned int newsel);
     /// Emitted when any selection changes
     void selectionChanged (unsigned int sel, bool active);
     void selectionModeChanged (unsigned int mode);
