@@ -41,29 +41,31 @@ class ShowTreeWidgetItem : public QTreeWidgetItem
 {
 public:
     ShowTreeWidgetItem(int type = Type) :
-            QTreeWidgetItem(type) {};
+            QTreeWidgetItem(type), icon(NULL) {};
     ShowTreeWidgetItem(const QStringList& strings, int type = Type) :
-            QTreeWidgetItem(strings,type) {};
+            QTreeWidgetItem(strings,type), icon(NULL) {};
     ShowTreeWidgetItem(QTreeWidget* view, int type = Type) :
-            QTreeWidgetItem(view,type) {};
+            QTreeWidgetItem(view,type), icon(NULL) {};
     ShowTreeWidgetItem(QTreeWidget* view, const QStringList& strings, int type = Type) :
-            QTreeWidgetItem(view,strings,type) {};
+            QTreeWidgetItem(view,strings,type), icon(NULL) {};
     ShowTreeWidgetItem(QTreeWidget* view, QTreeWidgetItem* after, int type = Type) :
-            QTreeWidgetItem(view,after,type) {};
+            QTreeWidgetItem(view,after,type), icon(NULL) {};
     ShowTreeWidgetItem(QTreeWidgetItem* parent, int type = Type) :
-            QTreeWidgetItem(parent,type) {};
+            QTreeWidgetItem(parent,type), icon(NULL) {};
     ShowTreeWidgetItem(QTreeWidgetItem* parent, const QStringList& strings, int type = Type) :
-            QTreeWidgetItem(parent,strings,type) {};
+            QTreeWidgetItem(parent,strings,type),icon(NULL) {};
     ShowTreeWidgetItem(QTreeWidgetItem* parent, QTreeWidgetItem* after, int type = Type) :
-            QTreeWidgetItem(parent,after,type) {};
+            QTreeWidgetItem(parent,after,type),icon(NULL) {};
     ShowTreeWidgetItem(const QTreeWidgetItem& other) :
-            QTreeWidgetItem(other) {};
+            QTreeWidgetItem(other), icon(NULL) {};
     ~ShowTreeWidgetItem () {
         data.reset();
     }
     void populateTree(SourceImplPtr f);
     SourceImplPtr data;
-
+private:
+  private:
+    const QIcon * icon;
 };
 
 class ParameterEditor : public QDialog

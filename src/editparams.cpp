@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <assert.h>
 #include "framesequencer.h"
 #include "log.h"
+#include "mime.h"
 
 ShowTreeWidget::ShowTreeWidget(QWidget *parent) : QTreeWidget(parent)
 {
@@ -34,7 +35,7 @@ ShowTreeWidget::ShowTreeWidget(QWidget *parent) : QTreeWidget(parent)
     setDragDropMode(QAbstractItemView::DragDrop);
 }
 
-bool ShowTreeWidget::dropMimeData ( QTreeWidgetItem * p, int index, const QMimeData * data, Qt::DropAction)
+bool ShowTreeWidget::dropMimeData (QTreeWidgetItem * p, int index, const QMimeData * data, Qt::DropAction)
 {
     ShowTreeWidgetItem *parent = (ShowTreeWidgetItem *) p;
     if (!parent) { // drop onto the root
@@ -56,7 +57,7 @@ bool ShowTreeWidget::dropMimeData ( QTreeWidgetItem * p, int index, const QMimeD
         //sequence->addChild(child);
         // and the sequencer becomes the new child.
         //parent->data->deleteChild(0);
-        //parent->removeChild(0);
+        //parent->removeChild(0); 
         //sequence->data->addChild(child->data());
         //parent->populateTree(sequence);
         //parent->addChild(child);
@@ -69,13 +70,15 @@ bool ShowTreeWidget::dropMimeData ( QTreeWidgetItem * p, int index, const QMimeD
             ((parent->data->numPossibleChildren() == FrameSource_impl::ONE) && (parent->data->numChildren() == 0))) {
         slog()->infoStream()<<"Drop is acceptable";
         // We can accept this drop
-        std::string d((char *) data->data("Text/FrameSource").constData());
-        SourceImplPtr f = FrameSource_impl::fromString(d);
+	SourceImplPtr f = LaserMimeObject::getSource(data);
         if (f) {
             ShowTreeWidgetItem *n = new ShowTreeWidgetItem;
             n->populateTree (f);
             parent->insertChild(index,n);
             parent->data->addChild(f,index);
+	    // update the playbacks to match the revised tree structure
+	    //PlaybackPtr pb = boost::make_shared<Playback>(rootIndex());
+
         }
         return true;
     }
@@ -85,20 +88,15 @@ bool ShowTreeWidget::dropMimeData ( QTreeWidgetItem * p, int index, const QMimeD
 
 QStringList ShowTreeWidget::mimeTypes () const
 {
-    QStringList l;
-    l.append(QString("Text/FrameSource"));
-    return l;
+    return LaserMimeObject::mimeTypes();
 }
 
 QMimeData * ShowTreeWidget::mimeData (const QList<QTreeWidgetItem *>  items ) const
 {
     slog()->infoStream()<<"Started dragging from editor";
-    QMimeData *mimeData = new QMimeData;
     ShowTreeWidgetItem *it = (ShowTreeWidgetItem*)items.first();
-    std::string text = it->data->toString();
-    // now setup the mime type to hold this data
-    QByteArray arr (text.c_str(),text.size());
-    mimeData->setData("Text/FrameSource", arr);
+    LaserMimeObject * mimeData = new LaserMimeObject;
+    mimeData->setFrame(it->data);
     return mimeData;
 }
 
@@ -108,9 +106,11 @@ void ShowTreeWidgetItem::populateTree(SourceImplPtr f)
     setText(0,QString().fromStdString(f->getName()));
     FrameGui * c = f->controls(NULL);
     if (c) {
-        const QIcon * i = c->icon();
-        setIcon(0,*i);
-        delete i;
+	if (icon){
+	    delete icon;
+	}
+        icon = c->icon();
+        setIcon(0,*icon);
         delete c;
     }
     data = f;
@@ -148,8 +148,6 @@ ParameterEditor::ParameterEditor(QWidget* parent) :
     display = new DisplayFrame (this);
     display->setFixedSize(300,300);
     controlLayout->addWidget(display,0,0,1,2);
-    // todo connect the display up
-    //controls=new QWidget(this);
     controlLayout->addWidget(controlWidget,2,0,1,2);
     tree = new ShowTreeWidget (this);
     tree->setIconSize(QSize(48,48));
@@ -194,7 +192,7 @@ ParameterEditor::ParameterEditor(QWidget* parent) :
 
 void ParameterEditor::playButtonData(bool)
 {
-    displayTimer->start(50);
+    displayTimer->start(60);
 }
 
 void ParameterEditor::stopButtonData(bool)
@@ -227,20 +225,15 @@ void ParameterEditor::closeEvent(QCloseEvent* event)
 void ParameterEditor::load(SourceImplPtr f)
 {
     if (!f) return;
-    fs = f;//->clone(); // copy the source
+    fs = f->clone(); // copy the source
     if (root) delete root;
     root = NULL;
     tree->clear();
-    //pixmapLabel->setPixmap(fs->icon()->pixmap(pixmapLabel->size()));
     if (fs) {
         setWindowTitle(QString().fromStdString(fs->getName()));
     } else {
         setWindowTitle("Editor");
     }
-    //FrameRootPtr r = boost::make_shared<FrameRoot>();
-    //if (fs){
-    //r->addChild(fs);
-    //}
     root = populateTree (root,fs);
     tree->addTopLevelItem(root);
     updateControls(fs);
@@ -250,7 +243,6 @@ void ParameterEditor::updateControls(SourceImplPtr p)
 {
     controlWidget->hide();
     controlLayout->removeWidget(controlWidget);
-    //hbox->removeWidget(controls);
     controlWidget->deleteLater();
     if (p) {
         controlWidget = p->controls(this);
@@ -265,9 +257,13 @@ void ParameterEditor::updateControls(SourceImplPtr p)
     update();
 }
 
-void ParameterEditor::updateDisplay()
+void ParameterEditor::updateDisplay() 
 {
     if (playback) {
+	//if (playback->getSource()->numChildren() != playback->getPlayback()->numChildren())
+	//{ // Playback is inconsistent with the source tree
+	//    playback = boost::make_shared<Playback>(playback->getSource());
+	//}
         FramePtr frame = playback->nextFrame();
         if (!frame) {
             playback->reset();
