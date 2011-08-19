@@ -38,7 +38,7 @@ bool AlsaMidi::open(const char* name)
 {
     if (input || output) close();
     QIODevice::open(QIODevice::ReadWrite);
-    if (snd_rawmidi_open(&input,&output,name,SND_RAWMIDI_NONBLOCK) <0) {
+    if (snd_rawmidi_open(&input,&output,name,SND_RAWMIDI_NONBLOCK | SND_RAWMIDI_APPEND) <0) {
         slog()->errorStream() <<"Error opening rawmidi device";
         QIODevice::close();
         return false;
