@@ -28,21 +28,21 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "point.h"
 #include "framesource.h"
 #include "displayframe.h"
+#include "arcball.h"
 
-// Points in general are floating point objects and somewhat large
-// For internal storage we use arrays of these because they are less then half
-// the size of the point structure (10 bytes packed, probably 12 in reality).
-// As most of the memory on a typical show goes on arrays of these, it is well
-// worth doing.
+///\brief A compact point representation for static frames
+
+/// Points in general are floating point objects and somewhat large
+/// For internal storage in staticframes. We use arrays of these because they are less then half
+/// the size of the point structure (10 bytes packed, probably 12 in reality).
+/// As most of the memory on a typical show goes on arrays of these, it is well
+/// worth doing.
 
 class ILDAPoint
 {
 public:
-    ILDAPoint()
+    ILDAPoint() : x_(0), y_(0), z_(0),blanked_(true),r_(0),g_(0),b_(0)
     {
-        x_=y_=z_= 0;
-        blanked_ = true;
-        r_ = g_ = b_ = 0;
     }
     short x() const {
         return x_;
@@ -67,8 +67,8 @@ public:
     }
 
     Point point() const {
-				Point p(QVector3D((float)x_,(float)y_,(float)z_)*=1.0f/32768.f,
-                QColor(r_,g_,b_));
+	Point p(QVector3D((float)x_,(float)y_,(float)z_)*=1.0f/32768.f,
+	    QColor(r_,g_,b_));
         p.blanked = blanked_;
         return p;
     }
@@ -103,7 +103,7 @@ private:
     unsigned char b_;
 };
 
-
+/// \brief Static frame per playback data.
 class StaticFramePlayback : public Playback_impl
 {
 public:
@@ -114,30 +114,52 @@ public:
     bool active;
     QTime dewellStart;
     unsigned int repeatsDone;
-    float angleX;
-    float angleY;
-    float angleZ;
 };
 
 typedef boost::shared_ptr<StaticFramePlayback> StaticFramePlaybackPtr;
 
-/// A single static frame leaf node.
+/// \brief A single static frame leaf node.
+
+/// This holds an array of ILDAPoint 16 bit points and returns them as a FramePtr pointing to a standard floating point frame.
+/// It is used to store single fixed frames either from ILDA files or imported from other image types.
 class StaticFrame : public FrameSource_impl
 {
 public:
     StaticFrame ();
     ~StaticFrame();
+    /// \brief Returns the next frame or NULL if playback exhausted.
+    /// @param [in] pb is the StaticFramePlayback controlling this framesource.
+    /// @return A pointer to a copy of the frame as a standard FramePtr shared pointer.
     FramePtr nextFrame(PlaybackImplPtr pb);
+    /// \brief reserve a number of points in the frame storage.
+    /// @param [in] points is the number of points to reserve.
     void reserve (size_t points);
+    /// \brief Add an ILDAPoint to the point data.
+    /// @param [in] p is the point to add to the end of the points data. 
     void add_data (const ILDAPoint &p);
+    /// \brief return the number of frames this frame source will generate.
+    /// @return the number of frames this source will return.
     size_t frames ();
-
+    /// \brief returns the position within the frames that is current.
+    /// \@return the number of frames into the total from frames() that has just been returned.
+    /// @param [in] p is the playback for which the data is desired.
     size_t pos(PlaybackImplPtr p);
+    /// \brief Resets the playback position and any other playback data.
+    /// @param [out] p is the playback to reset.
     void reset(PlaybackImplPtr p);
-
+    /// \brief Save the StaticFrame to xml.
+    /// @param [out] w is the xml stream to write to.
     void save (QXmlStreamWriter* w);
+    /// \brief load a StaticFrame from xml.
+    /// @param [in] e is the xml stream to load from.
     void load (QXmlStreamReader *e);
-
+    /// \brief A geometry matrix for affine transforms.
+    /// This can be manipulated directly and will propagate up the tree until a 
+    /// renderer eventually uses it to render the frame.
+    QMatrix4x4 geometry;
+    /// Get a gui interface object for a StaticFrame.
+    /// @param [in] parent is the parent QWidget in the usual QT way.
+    /// @return A pointer to a FrameGui object.
     FrameGui * controls (QWidget *parent);
 private:
     PlaybackImplPtr newPlayback();
@@ -150,10 +172,10 @@ private:
     friend class StaticFrameGui;
 };
 
-
 typedef boost::shared_ptr<StaticFrame> StaticFramePtr;
 typedef boost::shared_ptr<const StaticFrame> ConstStaticFramePtr;
 
+/// \brief A GUI For a StaticFrame object. 
 class StaticFrameGui : public FrameGui
 {
     Q_OBJECT
@@ -166,6 +188,9 @@ private slots:
     void buttonChangedData(int id);
     void dewellChangedData (int value);
     void repeatChangedData(int value);
+    void angleChangedData(QQuaternion q);
+    void arcballDown();
+    void arcballUp();
 private:
     QLabel * pointsDisplay;
     QGridLayout * grid;
@@ -174,7 +199,7 @@ private:
     QSpinBox * repeatEntry;
     QRadioButton * dewellSwitch;
     QRadioButton * repeatSwitch;
-
     StaticFrame * fp;
+    ArcBall * arcball;
 };
 #endif

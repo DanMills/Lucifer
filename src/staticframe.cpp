@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "log.h"
 #include "staticframe.h"
+#include "arcball.h"
 #include <netinet/in.h>
 
 #define NAME "Static_frame"
@@ -74,6 +75,13 @@ void StaticFrame::save (QXmlStreamWriter* w)
     w->writeAttribute("Use_Dewell", useDewell ? "True" : "False");
     w->writeAttribute("Dewell",QString().number(dewell));
     w->writeAttribute("Repeats",QString().number(repeats));
+    // Save the geometry matrix
+    for (unsigned int i=0; i < 4; i++){
+        for (unsigned j =0; j < 4; j++){
+            w->writeAttribute(QString().sprintf("Geometry%d%d",j,i), QString().number(geometry(j,i)));
+        }
+    }
+    // write out the point data
     QByteArray b;
     // 10 bytes per point
     b.reserve(10 * data.size());
@@ -114,10 +122,19 @@ void StaticFrame::load(QXmlStreamReader* e)
     slog()->debugStream() << "Dewell : " << dewell;
     slog()->debugStream() << "Repeats : " << repeats;
     slog()->debugStream() << "Use Dewell : " << (useDewell ? "True" : "False");
+    // Load the geometry matrix
+    for (unsigned int i=0; i < 4; i++){
+        for (unsigned j =0; j < 4; j++){
+            geometry(j,i) = e->attributes().value(QString().sprintf("Geometry%d%d",j,i)).toString().toFloat();
+        }
+    }
+    // Load the point list
     data.clear();
     data.reserve(pointcount);
     slog()->debugStream() << "Points : " << pointcount;
-    e->readNextStartElement();
+    while ((!e->atEnd()) && (e->name() != "PointList")){
+        e->readNext();
+    }
     if (e->name() == "PointList") {
         slog()->debugStream()<<"Found a PointList";
         e->readNext();
@@ -141,7 +158,7 @@ void StaticFrame::load(QXmlStreamReader* e)
             data.push_back(p);
         }
     } else {
-        slog()->errorStream()<<"Failed to find valid point data";
+        slog()->errorStream()<<"Failed to find valid point data: looking for 'PointList', found " << e->name().toString().toStdString();
     }
 }
 
@@ -173,6 +190,7 @@ FramePtr StaticFrame::nextFrame(PlaybackImplPtr pb)
 FramePtr StaticFrame::frame() const
 {
     FramePtr p = boost::make_shared<Frame>();
+    p->geometry = geometry;
     for (unsigned int i=0; i < data.size(); ++i) {
         p->addPoint(data[i].point());
     }
@@ -215,6 +233,8 @@ void StaticFrame::copyDataTo(SourceImplPtr p) const
     for (size_t i =0; i < data.size(); i++) {
         sf->data.push_back(data[i]);
     }
+    sf->geometry = geometry;
+    sf->setDescription(getDescription());
 }
 
 PlaybackImplPtr StaticFrame::newPlayback ()
@@ -308,6 +328,12 @@ StaticFrameGui::StaticFrameGui(QWidget* parent): FrameGui(parent)
 
     grid->addWidget(dewellEntry,2,1,1,1);
     grid->addWidget(repeatEntry,3,1,1,1);
+    
+    arcball = new ArcBall(this);
+    connect (arcball,SIGNAL(angleChanged(QQuaternion)),this,SLOT(angleChangedData(QQuaternion)));
+    connect (arcball,SIGNAL(mouseDown()),this,SLOT(arcballDown()));
+    connect (arcball,SIGNAL(mouseUp()),this,SLOT(arcballUp()));
+    grid->addWidget(arcball,4,0,1,2);
     setLayout(grid);
 }
 
@@ -315,6 +341,21 @@ StaticFrameGui::~StaticFrameGui()
 {
     fp = NULL;
     slog()->debugStream() << "Deleted Static frame GUI "<< this;
+}
+
+void StaticFrameGui::angleChangedData(QQuaternion q)
+{
+    fp->geometry = arcball->rotate();
+}
+
+void StaticFrameGui::arcballDown()
+{
+    arcball->setMatrix(fp->geometry);
+}
+
+void StaticFrameGui::arcballUp()
+{
+    fp->geometry = arcball->rotate();
 }
 
 FrameGui * StaticFrame::controls (QWidget *parent)
