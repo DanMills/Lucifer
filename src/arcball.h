@@ -53,7 +53,7 @@
 #include <QtGui/QMatrix4x4>
 #include <QtGui/qquaternion.h>
 
-class ArcBall : public QWidget
+class ArcBall : public QFrame
 {
 Q_OBJECT;  
 public:
@@ -61,6 +61,8 @@ public:
 
     QMatrix4x4 rotate ();
     void setMatrix (QMatrix4x4 &);
+
+    virtual QSize sizeHint () const;
 
 private:
     QVector3D sphere_from_mouse (QPointF);

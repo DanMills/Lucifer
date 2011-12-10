@@ -1,10 +1,19 @@
 #include "arcball.h"
 
 
-ArcBall::ArcBall(QWidget *parent) : QWidget (parent),
+ArcBall::ArcBall(QWidget *parent) : QFrame (parent),
     mouse_down(false)
 {
+    setFrameShape(QFrame::Panel);
+    setFrameStyle(QFrame::Panel | QFrame::Raised);
+    //setSizePolicy(QSizePolicy::Expanding);
 }
+
+QSize ArcBall::sizeHint() const
+{
+    return QSize (200,200);
+}
+
 
 void ArcBall::setMatrix(QMatrix4x4 &m)
 {

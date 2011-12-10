@@ -157,6 +157,9 @@ public:
     /// This can be manipulated directly and will propagate up the tree until a 
     /// renderer eventually uses it to render the frame.
     QMatrix4x4 geometry;
+    /// \brief The scale factor to apply to the matrix immediately before passing it up the tree.
+    /// This is kept separate to simplify giving it its own control.
+    float scale;
     /// Get a gui interface object for a StaticFrame.
     /// @param [in] parent is the parent QWidget in the usual QT way.
     /// @return A pointer to a FrameGui object.
@@ -191,6 +194,7 @@ private slots:
     void angleChangedData(QQuaternion q);
     void arcballDown();
     void arcballUp();
+    void scaleChanged (int);
 private:
     QLabel * pointsDisplay;
     QGridLayout * grid;
@@ -201,5 +205,6 @@ private:
     QRadioButton * repeatSwitch;
     StaticFrame * fp;
     ArcBall * arcball;
+    QSlider * size;
 };
 #endif

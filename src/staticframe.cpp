@@ -50,6 +50,7 @@ StaticFrame::StaticFrame () : FrameSource_impl(MAKES_FRAMES,NONE,NAME)
     slog()->debugStream() << "Created new static frame " << this;
     repeats = 1;
     dewell = 100;
+    scale = 1.0f;
     useDewell = false;
 }
 
@@ -75,6 +76,7 @@ void StaticFrame::save (QXmlStreamWriter* w)
     w->writeAttribute("Use_Dewell", useDewell ? "True" : "False");
     w->writeAttribute("Dewell",QString().number(dewell));
     w->writeAttribute("Repeats",QString().number(repeats));
+    w->writeAttribute("Scale",QString().number(scale));
     // Save the geometry matrix
     for (unsigned int i=0; i < 4; i++){
         for (unsigned j =0; j < 4; j++){
@@ -118,6 +120,7 @@ void StaticFrame::load(QXmlStreamReader* e)
     udw = e->attributes().value("Use_Dewell").toString().toStdString();
     dewell = e->attributes().value("Dewell").toString().toInt();
     repeats = e->attributes().value("Repeats").toString().toInt();
+    scale = e->attributes().value("Scale").toString().toFloat();
     useDewell = (udw=="True") ? true : false;
     slog()->debugStream() << "Dewell : " << dewell;
     slog()->debugStream() << "Repeats : " << repeats;
@@ -191,6 +194,7 @@ FramePtr StaticFrame::frame() const
 {
     FramePtr p = boost::make_shared<Frame>();
     p->geometry = geometry;
+    p->geometry.scale(scale);
     for (unsigned int i=0; i < data.size(); ++i) {
         p->addPoint(data[i].point());
     }
@@ -228,6 +232,7 @@ void StaticFrame::copyDataTo(SourceImplPtr p) const
     sf->useDewell = useDewell;
     sf->dewell = dewell;
     sf->repeats = repeats;
+    sf->scale = scale;
     sf->data.clear();
     sf->data.reserve(data.size());
     for (size_t i =0; i < data.size(); i++) {
@@ -284,10 +289,12 @@ void StaticFrameGui::set (StaticFrame * p)
     pointsDisplay->setNum((int)fp->data.size());
     dewellEntry->setValue(fp->dewell);
     repeatEntry->setValue (fp->repeats);
+    size->setValue(100.0 * log (fp->scale));
 
     connect (group,SIGNAL(buttonClicked(int)),this,SLOT(buttonChangedData(int)));
     connect (dewellEntry,SIGNAL(valueChanged(int)),this,SLOT(dewellChangedData(int)));
     connect (repeatEntry,SIGNAL(valueChanged(int)),this,SLOT(repeatChangedData(int)));
+    connect (size,SIGNAL(valueChanged(int)),this,SLOT(scaleChanged(int)));
 }
 
 StaticFrameGui::StaticFrameGui(QWidget* parent): FrameGui(parent)
@@ -328,12 +335,27 @@ StaticFrameGui::StaticFrameGui(QWidget* parent): FrameGui(parent)
 
     grid->addWidget(dewellEntry,2,1,1,1);
     grid->addWidget(repeatEntry,3,1,1,1);
-    
+    QLabel *l = new QLabel (this);
+    l->setText("ArcBall");
+    l->setFrameShape(QFrame::Panel);
+    l->setFrameShadow(QFrame::Raised);
+    l->setAlignment(Qt::AlignHCenter);
     arcball = new ArcBall(this);
     connect (arcball,SIGNAL(angleChanged(QQuaternion)),this,SLOT(angleChangedData(QQuaternion)));
     connect (arcball,SIGNAL(mouseDown()),this,SLOT(arcballDown()));
     connect (arcball,SIGNAL(mouseUp()),this,SLOT(arcballUp()));
-    grid->addWidget(arcball,4,0,1,2);
+    grid->addWidget(l,4,0);
+    grid->addWidget(arcball,5,0);
+    l = new QLabel (this);
+    l->setText ("Size");
+    l->setFrameShape(QFrame::Panel);
+    l->setFrameShadow(QFrame::Raised);
+    l->setAlignment(Qt::AlignHCenter);
+    grid->addWidget(l,4,1);
+    size = new QSlider(Qt::Vertical,this);
+    size->setRange(-200,100);
+    size->setSliderPosition(0);
+    grid->addWidget(size,5,1);
     setLayout(grid);
 }
 
@@ -357,6 +379,12 @@ void StaticFrameGui::arcballUp()
 {
     fp->geometry = arcball->rotate();
 }
+
+void StaticFrameGui::scaleChanged(int v)
+{
+    fp->scale = pow (10.0,v/100.0);
+}
+
 
 FrameGui * StaticFrame::controls (QWidget *parent)
 {
