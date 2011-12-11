@@ -1,4 +1,4 @@
-/*framesequencer.h is part of lucifer a laser show controller.
+/*colourrotator.h is part of lucifer a laser show controller.
 
 Copyrignt 2010 Dan Mills <dmills@exponent.myzen.co.uk>
 

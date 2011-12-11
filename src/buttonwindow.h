@@ -24,7 +24,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // The source selector window
 #include "engine.h"
-
 #include "outputview.h"
 
 class ButtonWindow : public QMainWindow
@@ -51,6 +50,8 @@ private slots:
     void importFiles ();
     void userKill();
     void userRestart();
+    void displayIOSetup();
+    
     void sourcesSizeChanged (size_t);
     void status(QString text, int time);
     void selectionModeData (int);
@@ -66,18 +67,25 @@ private:
     QMenu *viewMenu;
     QMenu *setupMenu;
     QMenu *helpMenu;
-
+    
+    // File menu actions
     QAction * openAct;
     QAction * saveAct;
     QAction * saveAsAct;
-    QAction * fullScreenAct;
-    QAction * windowScreenAct;
-    QAction * blankLasersAct;
     QAction * exitAct;
     QAction * importAct;
     QAction * startAct;
+    // Command buttons
+    QAction * fullScreenAct;
+    QAction * windowScreenAct;
+    QAction * blankLasersAct;
+    // Setup menu options
+    QAction * ioSetupAct;
+    
 
     QTabWidget * tabs;
+    QToolBox * effects;
+    
 
     QComboBox * selectionMode;
     QComboBox * stepMode;

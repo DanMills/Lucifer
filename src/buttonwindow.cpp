@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <fstream>
 #include "log.h"
 #include "outputview.h"
+#include "ioconfig.h"
 
 ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
 {
@@ -62,8 +63,21 @@ ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
     toolbar->addAction(startAct);
 
     addToolBar(toolbar);
+    QHBoxLayout *hbox = new QHBoxLayout(this);
     QFrame *frame = new QFrame(this);
-    setCentralWidget(frame);
+    hbox->addWidget(frame,0);
+    effects = new QToolBox (this);
+    hbox->addWidget(effects,1);
+    effects->addItem(new QWidget(this),QString("Colour Rotator"));
+    effects->addItem(new QWidget(this),QString("Blankeriser"));
+    effects->addItem(new QWidget(this),QString("Geometry"));
+    effects->addItem(new QWidget(this),QString("Mirror"));
+    
+    QFrame * frame2 = new QFrame (this);
+    frame2->setFrameStyle(QFrame::Box);
+    frame2->setLayout(hbox);
+    setCentralWidget(frame2);
+    
     QVBoxLayout *vlayout = new QVBoxLayout(frame);
     frame->setLayout(vlayout);
     tabs = new QTabWidget();
@@ -92,6 +106,7 @@ ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
         map->setMapping(ov,i);
         connect (ov,SIGNAL(leftClicked()),map,SLOT(map()));
     }
+    headSelectionChanged(0);
     ButtonGrid *g = new ButtonGrid(engine, 8,8,0,this);
     grids.push_back (g);
     // This connection ensures that the grids have a consistent view of what is loaded into the engine
@@ -116,6 +131,8 @@ ButtonWindow::ButtonWindow(EnginePtr e, QWidget* parent): QMainWindow(parent)
     fileMenu->addSeparator();
     fileMenu->addAction(exitAct);
 
+    setupMenu->addAction (ioSetupAct);
+    
     statusBar();
     show();
     unsaved = false;
@@ -401,10 +418,19 @@ void ButtonWindow::makeActions()
     importAct->setIcon(QIcon(":/icons/document-open.svg"));
     connect(importAct, SIGNAL(triggered()),this, SLOT(importFiles()));
 
-
     exitAct = new QAction (tr("Quit"),this);
     exitAct->setStatusTip(tr("Exit the application"));
     connect(exitAct, SIGNAL(triggered()),qApp, SLOT(quit()));
+
+    ioSetupAct = new QAction(tr("IO Ports"),this);
+    connect (ioSetupAct,SIGNAL(triggered()),this,SLOT(displayIOSetup()));
+    
+}
+
+void ButtonWindow::displayIOSetup()
+{
+     IOConfiguration * io = new IOConfiguration (engine,this);
+     io->show();
 }
 
 void ButtonWindow::userRestart()
