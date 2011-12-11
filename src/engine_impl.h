@@ -26,21 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "engine.h"
 #include "head.h"
 
-/// A tiny little shim to put each laser head into its own thread.
-/// With essentially all modern CPUs being multicore this does much to
-/// optimise performance.
-/// HeadThread->start must be called to actually start any head running
-class HeadThread : public QThread
-{
-    Q_OBJECT
-public:
-    HeadThread(Engine * e);
-    virtual ~HeadThread();
-    void run();
-    LaserHeadPtr head;
-private:
-    Engine * engine;
-};
+
 
 /// A Thread that saves the state of a show
 class ShowSaver : public QThread

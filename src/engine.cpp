@@ -108,15 +108,19 @@ Engine::Engine(QObject* parent) : QObject(parent)
         getHead(i)->getDriver()->enumerateHardware();
         getHead(i)->getDriver()->connect(0);
     }
+    // configure the midi interface
     settings.beginGroup("Midi");
     setMIDICard(settings.value("Device",QString("")).toString());
     for (unsigned int i=0; i < 15; i++) {
         surfaces[i] = NULL;
         setMIDIChannelDriver (i,settings.value(QString().sprintf("Controller %d",i+1),QString("")).toString());
+        if (surfaces[i]) {
+            surfaces[i]->connectEngine (this);
+        }
     }
     settings.endGroup();
     settings.endGroup();
-    emit message (tr("Laser projection engine is up and running"),5000);
+    emit message (tr("Laser projection system is ready"),5000);
 }
 
 void Engine::setMIDICard(QString name)
@@ -306,8 +310,8 @@ bool Engine::mimeHandler(const QMimeData* data, int pos)
             for (int i=0; i < urls.size(); i++) {
                 l.append(urls[i].toLocalFile());
             }
-	    importShow(l,pos);
-	}
+            importShow(l,pos);
+        }
         return true;
     } else {
         SourceImplPtr p = LaserMimeObject::getSource(data);
@@ -542,6 +546,10 @@ void ShowLoader::run()
                 index = r->attributes().value("Position").toString().toULong();
                 slog()->infoStream()<<"Loading sequence at : " << index;
                 r->readNextStartElement();
+                if (r->tokenType()==QXmlStreamReader::Invalid){
+                    slog()->errorStream() <<"Xml error : " << r->errorString().toStdString();
+                    break;
+                }
                 assert (r->tokenType() == QXmlStreamReader::StartElement);
                 SourceImplPtr fs = FrameSource_impl::loadFrames (r);
                 e->addFrameSource(fs,index);
@@ -603,7 +611,7 @@ void ShowImporter::run()
         SourceImplPtr fs = loader.load(name[i],err, false);
         if (fs) {
             e->addFrameSource(fs,idx);
-	    idx = -1;
+            idx = -1;
         } else {
             // ILDA Load error
         }
@@ -626,6 +634,11 @@ void Engine::deselect(const int pos)
             h->select (pos,false);
         }
     }
+}
+
+void Engine::selectOutputEffect (int effect)
+{
+    emit outputEffectSelected(effect);
 }
 
 void Engine::selectionChangedData(unsigned int pos, bool active)

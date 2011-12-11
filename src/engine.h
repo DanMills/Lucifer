@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ENGINE_INCL
 
 #include <QtCore>
+#include "config.h"
 #include <boost/shared_ptr.hpp>
 #include "frame.h"
 #include "framesource.h"
@@ -32,9 +33,6 @@ typedef boost::shared_ptr<Engine> EnginePtr;
 #include "alsamidi.h"
 #include "midi.h"
 #include "controlsurface.h"
-
-/// Maximum number of laser heads supported on a single PC
-#define MAX_HEADS (6)
 
 /// things from engine_impl.h
 class ShowSaver;
@@ -140,6 +138,10 @@ signals:
     void manualTrigger();
     /// head Selection changed
     void headSelectionChanged (int);
+    /// Head is projecting
+    void headActive (int, bool);
+    /// Output effect selected for editing
+    void outputEffectSelected (int);
 
 public slots:
     /// Kill all laser output, open the interlocks and scram the pile,
@@ -157,6 +159,8 @@ public slots:
     void manualNext();
     /// called to change the head selections will effect
     void selectHead (int head);
+    /// Select an output effect for editing 
+    void selectOutputEffect (int effect);
     /// MIDI driver parameters
     void setMIDICard (QString name);
     /// MIDI Channel drivers
@@ -189,7 +193,6 @@ private:
     // MIDI interface
     QString midiPortName;
     QString midiDrivers[16];
-
     AlsaMidi midiPort;
     MIDIParser midiParser;
     ControlSurface * surfaces[16];

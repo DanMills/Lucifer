@@ -67,7 +67,7 @@ LaserHead::LaserHead(Engine* e)
     killed = false;
     connect (&sources,SIGNAL(selectionChanged(uint,bool)),this,SLOT(selectionChangedData(uint,bool)));
     connect (&sources,SIGNAL(dumpCurrentSelection()),this,SLOT(dump()));
-		connect (&(*engine),SIGNAL(manualTrigger()),this,SLOT(manual()));
+    connect (&(*engine),SIGNAL(manualTrigger()),this,SLOT(manual()));
 }
 
 LaserHead::~LaserHead()
@@ -126,7 +126,7 @@ void LaserHead::dataRequested()
                     if (s > -1) {
                         assert (engine);
                         p = engine->getPlayback(s);
-												p->reset();
+                        p->reset();
                     }
                     loadFrameSource(p,false);
                     emit endOfSource();
@@ -167,8 +167,14 @@ bool LaserHead::loadFrameSource(PlaybackPtr f, bool immediate)
         frame_index = 0;
         pointBuf.clear();
     }
+    if (pb || (pointBuf.size() > 0)) {
+        emit headActive();
+    } else {
+        emit headInactive();
+    }
     return true;
 }
+
 
 DriverPtr LaserHead::getDriver() const
 {

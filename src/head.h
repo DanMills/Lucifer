@@ -32,13 +32,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "point.h"
 #include "playbacklist.h"
 
-// This neds to be forward declared to make LaserheadPtr available when engine.h
+// This needs to be forward declared to make LaserheadPtr available when engine.h
 // includes this file
 class LaserHead;
 typedef boost::shared_ptr<LaserHead> LaserHeadPtr;
 #include "engine.h"
 
-/// A tiny little shim to put each laser head into its own thread.
+/// \brief A tiny little shim to put each laser head into its own thread.
 /// With essentially all modern CPUs being multicore this does much to
 /// optimise performance.
 /// HeadThread->start must be called to actually start any head running
@@ -48,6 +48,9 @@ class HeadThread : public QThread
 public:
     HeadThread(Engine * e);
     virtual ~HeadThread();
+    /// \pre this method MUST be called before attempting to use the head for anything.
+    /// Further thre may be a delay afet calling run before the head actually becomes available.
+    /// head becoming non NULL should be taken as indicating that this head is ready.
     void run();
     LaserHeadPtr head;
 private:
@@ -83,6 +86,9 @@ signals:
     void selectionChanged (unsigned int sel, bool active);
     void selectionModeChanged (unsigned int mode);
     void stepModeChanged (unsigned int mode);
+    /// Emitted whenever head activity changes (Blank or projecting).
+    void headActive ();
+    void headInactive ();
 public slots:
     bool setDriver (std::string name);
     bool setPPS (unsigned int pps = 30000);
