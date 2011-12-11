@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <QtGui>
 #include "framesource.h"
 #include "displayframe.h"
+#include "mime.h"
 
 class ShowTreeWidgetItem;
 
@@ -37,8 +38,9 @@ protected:
     QMimeData * mimeData ( const QList<QTreeWidgetItem *>  items ) const;
 };
 
-class ShowTreeWidgetItem : public QTreeWidgetItem
+class ShowTreeWidgetItem : public QObject, public QTreeWidgetItem
 {
+    Q_OBJECT
 public:
     ShowTreeWidgetItem(int type = Type) :
             QTreeWidgetItem(type), icon(NULL) {};
@@ -63,10 +65,29 @@ public:
     }
     void populateTree(SourceImplPtr f);
     SourceImplPtr data;
+    ShowTreeWidgetItem * locateData (SourceImplPtr d);
+
 private:
-  private:
     const QIcon * icon;
+private slots:
+    void setIcon ();
+
 };
+
+class NodeSelectorWidget : public QListWidget
+{
+    Q_OBJECT
+public:
+    NodeSelectorWidget (QWidget *parent = NULL);
+    virtual ~NodeSelectorWidget();
+protected:
+    virtual LaserMimeObject * mimeData ( const QList<QListWidgetItem *> items ) const;
+    virtual QStringList mimeTypes () const;
+    virtual Qt::DropActions supportedDropActions () const;
+};
+
+
+
 
 class ParameterEditor : public QDialog
 {
@@ -93,13 +114,15 @@ private:
     QGridLayout *controlLayout;
     QHBoxLayout * hbox;
     ShowTreeWidget * tree;
-    QListWidget * available;
+    NodeSelectorWidget * available;
     ShowTreeWidgetItem *root;
     SourceImplPtr fs;
     // This is the control pane loaded from 
     // the frame we are looking at
     QWidget *controlWidget;
-    
+    QPushButton *playbutton;
+    QPushButton *stopbutton;
+
     void updateControls (SourceImplPtr p);  
     ShowTreeWidgetItem * populateTree(ShowTreeWidgetItem *p, SourceImplPtr f);
 private slots:

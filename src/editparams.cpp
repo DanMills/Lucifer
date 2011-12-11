@@ -100,20 +100,27 @@ QMimeData * ShowTreeWidget::mimeData (const QList<QTreeWidgetItem *>  items ) co
     return mimeData;
 }
 
+void ShowTreeWidgetItem::setIcon()
+{
+    if (data){
+        FrameGui * c = data->controls (NULL);
+        if (c) {
+            if (icon){
+                delete icon;
+            }
+            icon = c->icon();
+            QTreeWidgetItem::setIcon(0,*icon);
+            delete c;
+        }
+    }
+}
+
 void ShowTreeWidgetItem::populateTree(SourceImplPtr f)
 {
     assert (f);
     setText(0,QString().fromStdString(f->getName()));
-    FrameGui * c = f->controls(NULL);
-    if (c) {
-	if (icon){
-	    delete icon;
-	}
-        icon = c->icon();
-        setIcon(0,*icon);
-        delete c;
-    }
     data = f;
+    setIcon();
     ShowTreeWidgetItem *op = NULL;
     for (unsigned int i = 0; i < f->numChildren(); i ++) {
         ShowTreeWidgetItem *cp = new ShowTreeWidgetItem (this,op);
@@ -121,6 +128,28 @@ void ShowTreeWidgetItem::populateTree(SourceImplPtr f)
         cp->populateTree(f->child(i));
     }
 }
+
+ShowTreeWidgetItem * ShowTreeWidgetItem::locateData(SourceImplPtr d)
+{
+    //  recursive descent looking for the tree node that has the supplied source data
+    ShowTreeWidgetItem * st = NULL;
+    if (data == d){
+        return this;
+    }
+    for (size_t i=0; i < data->numChildren(); i++){
+        // scan the children
+        st = (ShowTreeWidgetItem*) child(i);
+        if (st){
+            st = st->locateData(d);
+            if (st){
+                return st;
+            }
+        }
+    }
+    return NULL;
+}
+
+
 
 ParameterEditor::ParameterEditor(QWidget* parent) :
         QDialog (parent)
@@ -159,20 +188,16 @@ ParameterEditor::ParameterEditor(QWidget* parent) :
     connect (tree,SIGNAL(itemClicked(QTreeWidgetItem *, int)),this,SLOT(itemClickedData(QTreeWidgetItem *, int)));
     connect (tree,SIGNAL(itemSelectionChanged()),this,SLOT(selectionChangedData()));
     root = NULL;
-    available = new QListWidget (this);
-    std::vector<std::string> fn = FrameSource_impl::enemerateFrameGenTypes();
-    for (unsigned int i=0; i < fn.size(); i++) {
-        QListWidgetItem *it = new QListWidgetItem(tr(fn[i].c_str()), available);
-    }
+    available = new NodeSelectorWidget (this);
     available->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Expanding);
-   
+
     displayTimer = new QTimer (this);
     connect (displayTimer,SIGNAL(timeout()),this,SLOT(updateDisplay()));
-    QPushButton *playbutton = new QPushButton (this);
+    playbutton = new QPushButton (this);
     playbutton->setText(tr("Run"));
     playbutton->setSizePolicy(QSizePolicy::Preferred,QSizePolicy::Fixed);
     connect (playbutton,SIGNAL(clicked(bool)),this,SLOT(playButtonData(bool)));
-    QPushButton * stopbutton = new QPushButton (this);
+    stopbutton = new QPushButton (this);
     stopbutton->setText(tr("Stop/Reset"));
     stopbutton->setSizePolicy(QSizePolicy::Preferred,QSizePolicy::Fixed);
     connect (stopbutton,SIGNAL(clicked(bool)),this,SLOT(stopButtonData(bool)));
@@ -189,6 +214,10 @@ ParameterEditor::ParameterEditor(QWidget* parent) :
     
     show();
 }
+
+
+
+
 
 void ParameterEditor::playButtonData(bool)
 {
@@ -245,11 +274,29 @@ void ParameterEditor::updateControls(SourceImplPtr p)
     controlLayout->removeWidget(controlWidget);
     controlWidget->deleteLater();
     if (p) {
-        controlWidget = p->controls(this);
+        FrameGui *fg = p->controls(this);
+        controlWidget = fg;
         assert (controlWidget);
+        connect (fg,SIGNAL(graphicsChanged()),this,SLOT(updateDisplay()));
+        ShowTreeWidgetItem *st = root;
+        st = st->locateData(p);
+        if (st){
+             connect (fg,SIGNAL(graphicsChanged()),st,SLOT(setIcon()));
+        }
         controlLayout->addWidget(controlWidget,2,0,1,2);
 	playback = boost::make_shared<Playback>(p);
+        if (p->numChildren()){
+            playbutton->setEnabled(true);
+            stopbutton->setEnabled(true);
+        } else {
+            playbutton->setDisabled(true);
+            stopbutton->setDisabled(true);
+            stopButtonData(true);
+        }
     } else {
+      playbutton->setDisabled(true);
+      stopbutton->setDisabled(true);
+      stopButtonData(true);
       playback =  PlaybackPtr();
     }
     updateDisplay();
@@ -260,10 +307,6 @@ void ParameterEditor::updateControls(SourceImplPtr p)
 void ParameterEditor::updateDisplay() 
 {
     if (playback) {
-	//if (playback->getSource()->numChildren() != playback->getPlayback()->numChildren())
-	//{ // Playback is inconsistent with the source tree
-	//    playback = boost::make_shared<Playback>(playback->getSource());
-	//}
         FramePtr frame = playback->nextFrame();
         if (!frame) {
             playback->reset();
@@ -302,4 +345,40 @@ void ParameterEditor::selectionChangedData()
     if (selected.size()) {
         itemClickedData(selected[0],0);
     }
+}
+
+
+NodeSelectorWidget::NodeSelectorWidget(QWidget *parent) : QListWidget (parent)
+{
+    // Build the list of available frame generator nodes
+    std::vector<std::string> fn = FrameSource_impl::enemerateFrameGenTypes();
+    for (unsigned int i=0; i < fn.size(); i++) {
+        QListWidgetItem *it = new QListWidgetItem(tr(fn[i].c_str()), this);
+        //it->setIcon();
+        addItem(it);
+    }
+    setDragEnabled(true);
+}
+
+NodeSelectorWidget::~NodeSelectorWidget()
+{
+}
+
+QStringList NodeSelectorWidget::mimeTypes() const
+{
+    return LaserMimeObject::mimeTypes();
+}
+
+LaserMimeObject * NodeSelectorWidget::mimeData(const QList<QListWidgetItem *> items) const
+{
+    QString name = items[0]->text();
+    LaserMimeObject *mo = new LaserMimeObject();
+    SourceImplPtr sp = FrameSource_impl::newSource(name.toStdString());
+    mo->setFrame(sp);
+    return mo;
+}
+
+Qt::DropActions NodeSelectorWidget::supportedDropActions() const
+{
+    return Qt::CopyAction;
 }
