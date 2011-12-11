@@ -27,25 +27,26 @@ AlsaMidi::AlsaMidi(QObject* parent): QIODevice(parent)
     num_write_fds = 0;
     txqueue.clear();
     rxqueue.clear();
+    writeMutex = new QMutex();
 }
 
 AlsaMidi::~AlsaMidi()
 {
     if (input || output) close();
+    delete writeMutex;
 }
 
 bool AlsaMidi::open(const char* name)
 {
     if (input || output) close();
     QIODevice::open(QIODevice::ReadWrite);
-    if (snd_rawmidi_open(&input,&output,name,SND_RAWMIDI_NONBLOCK | SND_RAWMIDI_APPEND) <0) {
+    if (snd_rawmidi_open(&input,&output,name,SND_RAWMIDI_NONBLOCK) <0) {
         slog()->errorStream() <<"Error opening rawmidi device";
         QIODevice::close();
         return false;
     }
     slog()->infoStream() <<"Opened rawmidi device";
     // next get the read fds monitored
-
     int num_read_fds = snd_rawmidi_poll_descriptors_count(input);
     pollfd *pfd = new pollfd[num_read_fds];
     snd_rawmidi_poll_descriptors(input,pfd,num_read_fds);
@@ -61,7 +62,6 @@ bool AlsaMidi::open(const char* name)
     }
     delete [] pfd;
     slog()->infoStream() << "Listening for midi on " << n;
-
     // and the write file descriptors also need monitoring
     num_write_fds = snd_rawmidi_poll_descriptors_count(output);
     pfd = new pollfd[num_write_fds];
@@ -100,6 +100,7 @@ void AlsaMidi::writeAvailable(int)
 {
     int res = 0;
     unsigned char buf[64];
+    QMutexLocker l(writeMutex);
     do {
         int avail = (txqueue.size() > 64) ? 64 : txqueue.size();
         for (int n=0; n < avail; n++) {
@@ -154,11 +155,13 @@ qint64 AlsaMidi::readData (char* data, qint64 maxsize)
 
 qint64 AlsaMidi::writeData(const char* data, qint64 maxsize)
 {
+    QMutexLocker l(writeMutex);
     for (int i=0; i < maxsize; i++)
     {
         txqueue.push_back(data[i]);
-        writeAvailable(0);
     }
+    l.unlock();
+    writeAvailable(0);
     return maxsize;
 }
 
@@ -187,7 +190,6 @@ std::vector<std::pair<QString,QString> > AlsaMidi::enumeratePorts()
         char card_name[32];
         int device;
         int err;
-
         sprintf(card_name, "hw:%d", card);
         if ((err = snd_ctl_open(&ctl, card_name, 0)) < 0) {
             slog()->errorStream() << "cannot open control for card " << card_name <<" :" <<snd_strerror(err);
@@ -201,7 +203,6 @@ std::vector<std::pair<QString,QString> > AlsaMidi::enumeratePorts()
                 return results;
             }
             slog()->debugStream() << "Enumerating device " << device;
-
             if (device < 0) {
                 goto NEXT_CARD;
             }

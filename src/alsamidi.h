@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <deque>
 #include <qsocketnotifier.h>
 #include <vector>
+#include <qmutex.h>
 
 /// \brief A MIDI IO port for ALSA Rawmidi devices under Linux.
 class AlsaMidi : public QIODevice
@@ -60,11 +61,10 @@ private:
   std::deque <unsigned char> rxqueue;
   QSocketNotifier **write_fds;
   int num_write_fds;
+  QMutex *writeMutex;
 private slots:
   void readAvailable (int socket);
   void writeAvailable (int socket);
-  
-  
 };
 
 #endif
