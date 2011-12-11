@@ -1,0 +1,16 @@
+#Lucifer - a show laser controller.
+
+## Intended audience.
+Developers, at this time, eventually laserists, but for now developers who have Lasers, and ideally either a soundcard of J4CBOs ethernet DAC board.
+
+## What it is. 
+A frame sequence based live laser playback tool that is eventually intended to suppoer extensive show control system interaction. 
+ 
+Eventually there will be a plug in architecture for the 'frame source' nodes, but that does not yet work. At present it is pretty much a play toy for experimenting with frame generators and interfaces. 
+
+ILDA import is supported, export is a todo and I am planning to add both SVG and eventually 3DS import. The system itself works in 3D space but does not yet have a proper rendering engine, I am probably going to have to rip the foundations up a bit to add some sort of KD/BSP arrangement to make that work well. 
+
+## License 
+GPL 2+. 
+
+
