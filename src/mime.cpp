@@ -1,4 +1,4 @@
-#include <mime.h>
+#include "mime.h"
 
 LaserMimeObject::LaserMimeObject(): QMimeData()
 {
