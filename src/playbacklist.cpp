@@ -155,7 +155,7 @@ int PlaybackList::getFrameSource()
 
 
 int PlaybackList::next(bool running)
-{		//selections.push_back(rand()%64);
+{
     QMutexLocker l (lock);
     if (selections.size()) {
         int oldsel = selections[0];

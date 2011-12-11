@@ -36,9 +36,9 @@ public:
     ~PlaybackList();
     enum SelectionModes {SINGLE=0,MULTIPLE,SHUFFLE};
     enum StepModes {ONCE=0,LOOP,MANUAL,BEAT};
-		QStringList selectionModeList() const;
-		QStringList stepModeList () const;
-		bool isSelected (const int i);
+    QStringList selectionModeList() const;
+    QStringList stepModeList () const;
+    bool isSelected (const int i);
 public slots:
     void select (unsigned int pos, bool active);
     void setSelectionMode (enum SelectionModes mode);
@@ -48,8 +48,8 @@ public slots:
     void manualStepClicked();
     void beatDetected();
     int getNextFramesource ();
-		int getFrameSource ();
-		void clear();
+    int getFrameSource ();
+    void clear();
 signals:
     /// Emitted whenever any selection in the list changes
     void selectionChanged (unsigned int pos, bool sel);
@@ -58,8 +58,8 @@ signals:
     /// Emitted when we wish to replace the current selection
     void dumpCurrentSelection();
 private:
-		// Recursive mutex
-		QMutex *lock;
+    // Recursive mutex
+    QMutex *lock;
     int next(bool running = true);
     std::vector <unsigned int> selections;
     enum SelectionModes selMode;
