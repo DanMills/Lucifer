@@ -64,9 +64,9 @@ QPainter & Frame::render (QPainter &p,
     if (getPointCount()>0) {
         // F gets modified by having the geometry matrix applied
         Frame f = *this;
-        static int theta = 0;
-//	f.geometry.translate(0,0,30);
-	//f.geometry.rotate (theta +=5,1,1,1);
+        //static int theta = 0;
+        //f.geometry.translate(0,0,30);
+        //f.geometry.rotate (theta +=5,1,1,1);
 	//f.geometry.lookAt(QVector3D(30.0,0,0),QVector3D(0,0,0),QVector3D(0,1,0));
 	//std::out<< f.geometry;
 	//f.scale (0.2,0.2,0.2);
