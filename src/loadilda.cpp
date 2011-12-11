@@ -40,6 +40,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "log.h"
 #include "loadilda.h"
 
+#include "colourrotator.h"
+
 
 Ildaloader::Ildaloader ()
 {
@@ -167,6 +169,13 @@ SourceImplPtr Ildaloader::load (QString filename, unsigned int &error, bool pang
     infile.close ();
     palette_.clear();
     colour.clear();
+
+    if (sequence){
+      ColourRotatorPtr r = boost::make_shared<ColourRotator>();
+      r->addChild(sequence);
+      return r;
+    }
+    
     if (sequence) {
         return sequence;
     } else {
