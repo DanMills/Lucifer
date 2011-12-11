@@ -22,6 +22,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <QtCore>
 #include "midi.h"
 
+class Engine;
+
 /// Virtual base class for control surfaces - Midi, USB, things of that ilk
 class ControlSurface : public QObject
 {
@@ -49,6 +51,8 @@ public:
   // This handles connecting to the control surface and any required initialisation.
   virtual bool connectMidi (MIDIChannel *midi);
   virtual void disconnectFromSurface (const unsigned int channel);
+  // Connect the engine so signals can be hooked up.
+  virtual void connectEngine (Engine * e) = 0;
   // get a control value 
   int getControlValue (const unsigned int control);
 protected slots:

@@ -28,6 +28,7 @@ int QFixedAspectWidget::heightForWidth(int w) const
 
 DisplayFrame::DisplayFrame(QWidget* parent): QFixedAspectWidget(parent)
 {
+    //setAttribute(Qt::WA_PaintOnScreen);
     setMinimumSize(50,50);
     bw = 0;
     iw = 0;
@@ -93,7 +94,7 @@ void DisplayFrame::paintEvent (QPaintEvent *)
     // Clear the display area
     p.setBrush(QBrush(Qt::black));
     p.drawRect(bw,bw,w,h);
-		if (points){
-			points->render (p,bw,bw,h,w);
-		}
+    if (points){
+	points->render (p,bw,bw,h,w);
+    }
 }

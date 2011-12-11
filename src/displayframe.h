@@ -29,16 +29,16 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 class QFixedAspectWidget : public QWidget
 {
-  Q_OBJECT
+    Q_OBJECT
 public:
     QFixedAspectWidget(QWidget* parent = 0, Qt::WindowFlags f = 0) : QWidget(parent,f)
     {
-      //setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
-      QSizePolicy p = sizePolicy();
-      p.setHeightForWidth(true);
-      setSizePolicy(p);
+        //setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+        QSizePolicy p = sizePolicy();
+        p.setHeightForWidth(true);
+        setSizePolicy(p);
     };
-    
+
     virtual int heightForWidth(int w) const;
 };
 
@@ -48,24 +48,24 @@ class DisplayFrame : public QFixedAspectWidget
 public:
     DisplayFrame (QWidget *parent = 0);
     virtual ~DisplayFrame ();
-		/// Set the frame to display.
-		/// @param frame a shared pointer to the frame to be displayed.
+    /// Set the frame to display.
+    /// @param[in] frame a shared pointer to the frame to be displayed.
     void setFrame (ConstFramePtr frame);
-		/// Set the width of the border around the displayed frame.
-		/// @param width the border width in pixels.
+    /// Set the width of the border around the displayed frame.
+    /// @param[in] width the border width in pixels.
     void setBorderWidth (unsigned int width);
-		/// Set the width of the indicator band around the displayed frame.
-		/// @param width the indicator width in pixels.
+    /// Set the width of the indicator band around the displayed frame.
+    /// @param[in] width the indicator width in pixels.
     void setIndicatorWidth (unsigned int width);
-		/// Set the indicator colour.
-		/// @param colour the colour to be used for the indicator.
-		/// Clear the display.
+    /// Clear the display.
     void clear ();
 public slots:
-		void setIndicatorColour (QColor colour);
-		/// Set the border colour.
-		/// @param colour the colour to be used for the border.
-		void setBorderColour (QColor colour);
+    /// Set the indicator colour. 
+    /// @param[in] colour is the colour for the indicator.
+    void setIndicatorColour (QColor colour);
+    /// Set the border colour.
+    /// @param[in] colour the colour to be used for the border.
+    void setBorderColour (QColor colour);
 
 protected:
     void paintEvent (QPaintEvent *e);
