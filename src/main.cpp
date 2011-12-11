@@ -145,23 +145,19 @@ int main (int argc, char **argv)
     QCoreApplication::setOrganizationDomain("exponent.myzen.co.uk");
     QCoreApplication::setApplicationName("Lucifer");
     slog()->info("Starting Galvanic Lucifer");
-
-    AlsaMidi midi;
-    midi.open("hw:1,0,0");
-    MIDIParser midiparser;
-    MotorMix surface;
-    surface.connectController(&midiparser.channels[0]);    
-    midiparser.setQIODevice(&midi);
- 
-    for (unsigned int i=8; i < surface.numberOfControls(); i++)
-      surface.setControl(i,i%3);
     
-    surface.displayWrite(0,0,"  GALVANIC LUCIFER - THE LIGHTBRINGER  ");
+//    for (unsigned int i=8; i < surface.numberOfControls(); i++)
+//      surface.setControl(i,i%3);
+    
+//    surface.displayWrite(0,0,"  GALVANIC LUCIFER - THE LIGHTBRINGER  ");
     
     EngineStarter s;
     s.start();
     EnginePtr e = s.engine();
     if (!e) exit (-1);
+    
+    //e->setMIDICard("USB Uno MIDI Interface MIDI 1");
+    //e->setMIDIChannelDriver(0,"MotorMix");
     
     ButtonWindow grid (e);
     for (unsigned int i=0; i < filenames.size(); i++) {
