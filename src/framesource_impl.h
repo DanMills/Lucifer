@@ -177,8 +177,6 @@ public:
     virtual const QIcon * icon() = 0;
 signals:
     void graphicsChanged();
-//protected:
-//    void graphicsChanged();
 
 };
 
