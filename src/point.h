@@ -22,13 +22,16 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <QVector3D>
 #include <QColor>
 #include <ostream>
+
+
+/// \brief A point in 3d space that may be blanked and has a colour.
+/// Used as a control point for various line types.
 class	Point : public QVector3D, public QColor
 {
 public:
     bool blanked;
-    Point (QVector3D v, QColor c) : QVector3D(v), QColor(c)
+    Point (QVector3D v, QColor c) : QVector3D(v), QColor(c), blanked (true)
     {}
-
     friend std::ostream&  operator << (std::ostream&  s, const Point & p);
 };
 
