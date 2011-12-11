@@ -9,3 +9,4 @@ add_subdirectory ( src )
 
 include_directories(${QT_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR} /usr/local/jdksmidi2.2-dev/include)
 LINK_DIRECTORIES( ${LINK_DIRECTORIES} /usr/local/jdksmidi-2.2-dev/lib )
+

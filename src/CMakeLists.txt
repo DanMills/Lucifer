@@ -21,19 +21,29 @@ set(lucifer_SRCS framesequencer.cpp
   colourrotator.cpp
   ioconfig.cpp
   qtcolortriangle.cpp
+  arcball.cpp
+  mime.cpp
 )
 
-set(lucifer_HDRS framesequencer.h loadilda.h
+set(lucifer_HDRS 
+  loadilda.h
   framesource.h point.h
-  framesource_impl.h
   screendisplay.h frame.h log.h colour.h
   resampler.h
   driver_portaudio_ilda.h
-
+  config.h
 )
 
-set(lucifer_MOC_HDRS screendisplay.h buttongrid.h buttonwindow.h
-  displayframe.h editparams.h staticframe.h head.h driver.h
+set(lucifer_MOC_HDRS 
+  framesource_impl.h
+  screendisplay.h 
+  buttongrid.h 
+  buttonwindow.h
+  displayframe.h 
+  editparams.h 
+  staticframe.h 
+  head.h 
+  driver.h
   driver_dummy_ilda.h
   outputview.h
   engine.h playbacklist.h
@@ -46,6 +56,9 @@ set(lucifer_MOC_HDRS screendisplay.h buttongrid.h buttonwindow.h
   colourrotator.h
   ioconfig.h
   qtcolortriangle.h
+  framesequencer.h
+  arcball.h
+  mime.h
 )
 
 SET(lucifer_RCS
