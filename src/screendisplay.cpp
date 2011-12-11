@@ -99,10 +99,10 @@ void ScreenDisplay::editData()
 
 void ScreenDisplay::dragEnterEvent(QDragEnterEvent *event)
 {
-    std::vector <std::string> valid_types;
+    QStringList valid_types;
     valid_types = engine->mimeTypes();
-    for (unsigned int i=0; i < valid_types.size(); i++) {
-        if (event->mimeData()->hasFormat(QString().fromStdString(valid_types[i]))) {
+    for (unsigned int i=0; i < (unsigned) valid_types.size(); i++) {
+        if (event->mimeData()->hasFormat(valid_types[i])) {
             event->acceptProposedAction();
             break;
         }
@@ -111,10 +111,10 @@ void ScreenDisplay::dragEnterEvent(QDragEnterEvent *event)
 
 void ScreenDisplay::dropEvent(QDropEvent *event)
 {
-    std::vector <std::string> valid_types;
+    QStringList valid_types;
     valid_types = engine->mimeTypes();
-    for (unsigned int i=0; i < valid_types.size(); i++) {
-        if (event->mimeData()->hasFormat(QString().fromStdString(valid_types[i]))) {
+    for (unsigned int i=0; i < (unsigned) valid_types.size(); i++) {
+        if (event->mimeData()->hasFormat(valid_types[i])) {
             if (engine->mimeHandler(event->mimeData(),id)) {
                 event->acceptProposedAction();
                 break;
