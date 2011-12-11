@@ -239,7 +239,7 @@ PlaybackImplPtr FrameSource_impl::createPlayback()
     return p;
 }
 
-std::string FrameSource_impl::getDescription()
+std::string FrameSource_impl::getDescription() const
 {
     return description;
 }
@@ -288,6 +288,8 @@ bool Playback_impl::addChild(PlaybackImplPtr child, int pos)
     return false;
 }
 
+
+
 PlaybackImplPtr Playback_impl::child(unsigned int pos)
 {
     if (pos < children.size()) {
@@ -299,5 +301,4 @@ PlaybackImplPtr Playback_impl::child(unsigned int pos)
 FrameGui::~FrameGui()
 {
 }
-
 

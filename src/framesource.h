@@ -28,9 +28,12 @@ class Playback;
 
 typedef boost::shared_ptr<Playback> PlaybackPtr;
 
+/// \brief An object which holds the playback and the associated framesource.
 class Playback
 {
 public:
+    /// \brief Constructs a Playback appropriate to a given SourceImplPtr
+    /// @param [in] fs_ is the shared pointer to the source that is serving as the framesource.
     Playback (SourceImplPtr fs_)
     {
         frame = fs_;
@@ -41,12 +44,15 @@ public:
         }
     }
     ~Playback() {};
+    /// \brief Resets the playback by calling the frames reset(pb) method.
     void reset ()
     {
         if (frame) {
             frame->reset(pb);
         }
     }
+    /// \brief Returns the next frame.
+    /// @return a FramePtr to the next frame.
     FramePtr nextFrame()
     {
         if (frame) {
@@ -55,10 +61,14 @@ public:
             return FramePtr();
         }
     };
-    SourceImplPtr getSource()
+    /// \brief returns the framesource that this playback references.
+    /// @return A SourceImplPtr shared pointer to the source this references.
+    SourceImplPtr getSource() 
     {
         return frame;
     }
+    /// \brief returns the PlaybackImplPtr shared pointer this references.
+    /// @return A PlaybackImplPtr shared pointer to the source this references.
     PlaybackImplPtr getPlayback()
     {
         return pb;

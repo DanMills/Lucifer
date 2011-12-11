@@ -46,6 +46,7 @@ public:
     enum FLAGS {
         NOTHING=0,
         MAKES_FRAMES=1,///< Object generates laser frame data.
+	EFFECT=2, /// List this in the effects section, has at least one child that produces frames that this then modifies.
     };
     /// Can this object support child nodes.
     enum POSSIBLE_CHILDREN {
@@ -95,7 +96,7 @@ public:
     /// @returns the allowable number of children // NONE, ONE, TWO or MANY
     enum POSSIBLE_CHILDREN numPossibleChildren () const;
     /// Set the description of this object to string des
-		std::string getDescription();
+    std::string getDescription() const;
     void setDescription (std::string des);
     /// File IO
     static SourceImplPtr loadFrames (QXmlStreamReader* e);
@@ -157,6 +158,10 @@ public:
     virtual ~Playback_impl();
     PlaybackImplPtr child (unsigned int pos);
     bool addChild (PlaybackImplPtr child, int pos=-1);
+    unsigned int numChildren() const
+    {
+      return children.size();
+    }
 private:
     std::vector<PlaybackImplPtr> children;
 };
@@ -164,11 +169,17 @@ private:
 
 class FrameGui : public QGroupBox
 {
+    Q_OBJECT
 public:
     FrameGui (QWidget * parent) : QGroupBox (parent) {};
     virtual ~FrameGui();
 
     virtual const QIcon * icon() = 0;
+signals:
+    void graphicsChanged();
+//protected:
+//    void graphicsChanged();
+
 };
 
 #endif
