@@ -289,12 +289,13 @@ void StaticFrameGui::set (StaticFrame * p)
     pointsDisplay->setNum((int)fp->data.size());
     dewellEntry->setValue(fp->dewell);
     repeatEntry->setValue (fp->repeats);
-    size->setValue(100.0 * log (fp->scale));
+    size->setValue(100.0 * log10 (fp->scale));
 
     connect (group,SIGNAL(buttonClicked(int)),this,SLOT(buttonChangedData(int)));
     connect (dewellEntry,SIGNAL(valueChanged(int)),this,SLOT(dewellChangedData(int)));
     connect (repeatEntry,SIGNAL(valueChanged(int)),this,SLOT(repeatChangedData(int)));
     connect (size,SIGNAL(valueChanged(int)),this,SLOT(scaleChanged(int)));
+    emit graphicsChanged();
 }
 
 StaticFrameGui::StaticFrameGui(QWidget* parent): FrameGui(parent)
@@ -368,6 +369,7 @@ StaticFrameGui::~StaticFrameGui()
 void StaticFrameGui::angleChangedData(QQuaternion q)
 {
     fp->geometry = arcball->rotate();
+    emit graphicsChanged(); //Update the thumbnail
 }
 
 void StaticFrameGui::arcballDown()
@@ -383,8 +385,8 @@ void StaticFrameGui::arcballUp()
 void StaticFrameGui::scaleChanged(int v)
 {
     fp->scale = pow (10.0,v/100.0);
+    emit graphicsChanged(); // update the thumbnail
 }
-
 
 FrameGui * StaticFrame::controls (QWidget *parent)
 {
